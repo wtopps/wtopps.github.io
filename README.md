@@ -6,7 +6,7 @@
 
 ## Click [here](https://github.com/wtopps?tab=repositories) to explore more wonderful things!
 
-## And there are also many interesting technology blog in my CSDN blog, click [here](https://blog.csdn.net/wtopps) to visit.
+## And there are also many interesting technology blog in my CSDN blog, click [here](https://blog.csdn.net/wtopps) to visit it.
 
 ## You can also find me in Wechat, please serach "laoxuan_chat_java" in WeChat Official Accounts, or scan the image below, I'm waiting for you!!!
 
