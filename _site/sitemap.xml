@@ -1,8 +1,28 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9 http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd" xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 <url>
-<loc>http://localhost:4000/markdown/2024/09/22/Java-ThreadPoolExecutor%E7%BA%BF%E7%A8%8B%E6%B1%A0%E6%A6%82%E8%BF%B0.html</loc>
-<lastmod>2024-09-22T00:00:00+08:00</lastmod>
+<loc>http://localhost:4000/java/2024/09/25/Java-ThreadPoolExecutor%E7%BA%BF%E7%A8%8B%E6%B1%A0%E6%A6%82%E8%BF%B0.html</loc>
+<lastmod>2024-09-25T00:00:00+08:00</lastmod>
+</url>
+<url>
+<loc>http://localhost:4000/mysql/2024/09/25/MySQL%E4%B8%BA%E4%BB%80%E4%B9%88%E6%9C%89%E4%BA%86redolog%E8%BF%98%E9%9C%80%E8%A6%81double-write-buffer.html</loc>
+<lastmod>2024-09-25T00:00:00+08:00</lastmod>
+</url>
+<url>
+<loc>http://localhost:4000/mysql/2024/09/25/MySQL%E4%B8%BB%E9%94%AE%E8%87%AA%E5%A2%9E%E6%9C%89%E5%87%A0%E7%A7%8D%E6%A8%A1%E5%BC%8F.html</loc>
+<lastmod>2024-09-25T00:00:00+08:00</lastmod>
+</url>
+<url>
+<loc>http://localhost:4000/mysql/2024/09/25/MySQL%E6%85%A2SQL%E6%8E%A2%E7%A9%B6.html</loc>
+<lastmod>2024-09-25T00:00:00+08:00</lastmod>
+</url>
+<url>
+<loc>http://localhost:4000/redis/2024/09/25/Redis-key%E8%BF%87%E6%9C%9F%E5%88%A0%E9%99%A4%E6%9C%BA%E5%88%B6.html</loc>
+<lastmod>2024-09-25T00:00:00+08:00</lastmod>
+</url>
+<url>
+<loc>http://localhost:4000/redis/2024/09/25/Redis6.0-Client-Side%E7%BC%93%E5%AD%98%E6%98%AF%E4%BB%80%E4%B9%88.html</loc>
+<lastmod>2024-09-25T00:00:00+08:00</lastmod>
 </url>
 <url>
 <loc>http://localhost:4000/about.html</loc>

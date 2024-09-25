@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="4.3.4">Jekyll</generator><link href="http://localhost:4000/feed.xml" rel="self" type="application/atom+xml" /><link href="http://localhost:4000/" rel="alternate" type="text/html" /><updated>2024-09-25T16:38:11+08:00</updated><id>http://localhost:4000/feed.xml</id><title type="html">wtopps</title><subtitle>Write an awesome description for your new site here. You can edit this line in _config.yml. It will appear in your document head meta (for Google search results) and in your feed.xml site description.</subtitle><author><name>GitHub User</name></author><entry><title type="html">Java ThreadPoolExecutor线程池概述</title><link href="http://localhost:4000/markdown/2024/09/22/Java-ThreadPoolExecutor%E7%BA%BF%E7%A8%8B%E6%B1%A0%E6%A6%82%E8%BF%B0.html" rel="alternate" type="text/html" title="Java ThreadPoolExecutor线程池概述" /><published>2024-09-22T00:00:00+08:00</published><updated>2024-09-22T00:00:00+08:00</updated><id>http://localhost:4000/markdown/2024/09/22/Java%20ThreadPoolExecutor%E7%BA%BF%E7%A8%8B%E6%B1%A0%E6%A6%82%E8%BF%B0</id><content type="html" xml:base="http://localhost:4000/markdown/2024/09/22/Java-ThreadPoolExecutor%E7%BA%BF%E7%A8%8B%E6%B1%A0%E6%A6%82%E8%BF%B0.html"><![CDATA[<p><img src="https://github.com/jeffreytse/jekyll-theme-yat/assets/9413601/2ed22d49-90b1-4f7e-8e8f-b77b21dee505" alt="banner" /></p>
+<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="4.3.4">Jekyll</generator><link href="http://localhost:4000/feed.xml" rel="self" type="application/atom+xml" /><link href="http://localhost:4000/" rel="alternate" type="text/html" /><updated>2024-09-25T17:06:46+08:00</updated><id>http://localhost:4000/feed.xml</id><title type="html">wtopps</title><subtitle>Write an awesome description for your new site here. You can edit this line in _config.yml. It will appear in your document head meta (for Google search results) and in your feed.xml site description.</subtitle><author><name>GitHub User</name></author><entry><title type="html">Java ThreadPoolExecutor线程池概述</title><link href="http://localhost:4000/java/2024/09/25/Java-ThreadPoolExecutor%E7%BA%BF%E7%A8%8B%E6%B1%A0%E6%A6%82%E8%BF%B0.html" rel="alternate" type="text/html" title="Java ThreadPoolExecutor线程池概述" /><published>2024-09-25T00:00:00+08:00</published><updated>2024-09-25T00:00:00+08:00</updated><id>http://localhost:4000/java/2024/09/25/Java%20ThreadPoolExecutor%E7%BA%BF%E7%A8%8B%E6%B1%A0%E6%A6%82%E8%BF%B0</id><content type="html" xml:base="http://localhost:4000/java/2024/09/25/Java-ThreadPoolExecutor%E7%BA%BF%E7%A8%8B%E6%B1%A0%E6%A6%82%E8%BF%B0.html"><![CDATA[<p><img src="https://github.com/jeffreytse/jekyll-theme-yat/assets/9413601/2ed22d49-90b1-4f7e-8e8f-b77b21dee505" alt="banner" /></p>
 
 <h1 id="导航">导航</h1>
 
@@ -484,4 +484,1222 @@ pool-1-thread-2, currentIndex is : 7
 
 <h1 id="结语">结语</h1>
 
-<p>本文介绍了Java 线程池的使用，线程池是非常复杂的一种工具，使用好是一种利器，使用不好也会造成很多问题，所以深入研究线程池还是非常有必要的，希望本文能对您有所帮助。如果您有更好的见解或对本文的内容有指正的地方，请留言给我。</p>]]></content><author><name>GitHub User</name></author><category term="markdown" /><category term="Java" /><summary type="html"><![CDATA[]]></summary></entry></feed>
+<p>本文介绍了Java 线程池的使用，线程池是非常复杂的一种工具，使用好是一种利器，使用不好也会造成很多问题，所以深入研究线程池还是非常有必要的，希望本文能对您有所帮助。如果您有更好的见解或对本文的内容有指正的地方，请留言给我。</p>]]></content><author><name>GitHub User</name></author><category term="Java" /><category term="Java" /><summary type="html"><![CDATA[]]></summary></entry><entry><title type="html">MySQL为什么有了redolog还需要double write buffer</title><link href="http://localhost:4000/mysql/2024/09/25/MySQL%E4%B8%BA%E4%BB%80%E4%B9%88%E6%9C%89%E4%BA%86redolog%E8%BF%98%E9%9C%80%E8%A6%81double-write-buffer.html" rel="alternate" type="text/html" title="MySQL为什么有了redolog还需要double write buffer" /><published>2024-09-25T00:00:00+08:00</published><updated>2024-09-25T00:00:00+08:00</updated><id>http://localhost:4000/mysql/2024/09/25/MySQL%E4%B8%BA%E4%BB%80%E4%B9%88%E6%9C%89%E4%BA%86redolog%E8%BF%98%E9%9C%80%E8%A6%81double%20write%20buffer</id><content type="html" xml:base="http://localhost:4000/mysql/2024/09/25/MySQL%E4%B8%BA%E4%BB%80%E4%B9%88%E6%9C%89%E4%BA%86redolog%E8%BF%98%E9%9C%80%E8%A6%81double-write-buffer.html"><![CDATA[<p><img src="https://github.com/jeffreytse/jekyll-theme-yat/assets/9413601/2ed22d49-90b1-4f7e-8e8f-b77b21dee505" alt="banner" /></p>
+
+<h2 id="问题">问题</h2>
+
+<p>我们知道MySQL InnoDB引擎使用redolog作为异常容灾恢复的机制，当MySQL进程发生异常退出、机器断电等，在重新启动时，使用redolog恢复。</p>
+
+<p>OK，redolog是被MySQL设计为异常崩溃恢复的，double write buffer同样是为了保证数据完整性，那么既然已经有了redolog，为什么还需要double write buffer（双写缓冲区）呢？</p>
+
+<h2 id="double-write-buffer">double write buffer</h2>
+
+<p>InnoDB用double write buffer（双写缓冲区）来避免页没写完整所导致的数据损坏。当一个磁盘写操作不能完整地完成时，不完整的页写入就可能发生，16KB的页可能只有一部分被写到磁盘上。有多种多样的原因（崩溃、Bug，等等）可能导致页没有写完整。double write buffer在这种情况发生时可以保证数据完整性。</p>
+
+<p>MySQL的buffer一页的大小是16K，但是底层文件系统一页的大小是4K，换句话说，MySQL将一页buffer数据刷入磁盘，需要写4个文件系统里的页。</p>
+
+<p>假如MySQL内page=1的页准备刷入磁盘，才刷了2个(a1和b1)到文件系统里的页，这个时候停电或者机器宕机，当机器恢复后，buffer的一页数据完整性已经遭到破坏，这时MySQL通过double write buffer来解决数据损坏。</p>
+
+<p>double write buffer是表空间一个特殊的保留区域，在一些连续的块中足够保存100个页。本质上是一个最近写回的页面的备份拷贝。当InnoDB从缓冲池刷新页面到磁盘时，首先把它们写（或者刷新）到double write buffer，然后再把它们写到其所属的数据区域中。这可以保证每个页面的写人都是原子并且持久化的。</p>
+
+<p><img src="https://img-blog.csdnimg.cn/1aad6486bc7d43bc90892a235fd814dc.png" alt="数据更新过程" /></p>
+
+<p>如果有一个不完整的页写到了double write buffer，原始的页依然会在磁盘上它的真实位置。当InnoDB恢复时，它将用原始页面替换掉双写缓冲中的损坏页面。</p>
+
+<p>然而，如果double write buffer成功写人，但写到页的真实位置失败了，InnoDB在恢复时将使用双写缓冲中的拷贝来替换。</p>
+
+<p>InnoDB知道什么时候页面损坏了，因为每个页面在末尾都有校验值（Checksum）。校验值是最后写到页面的东西，所以如果页面的内容跟校验值不匹配，说明这个页面是损坏的。因此，在恢复的时候，InnoDB只需要读取double write buffer中每个页面并且验证校验值。如果一个页面的校验值不对，就从它的原始位置读取这个页面。</p>
+
+<p>我们来梳理一下整个数据页落盘刷新的过程：</p>
+
+<ol>
+  <li>buffer数据页先copy到double write buffer的内存里；</li>
+  <li>double write buffer的内存数据刷到double write buffer的磁盘上；</li>
+  <li>double write buffer的内存再刷到数据磁盘上；</li>
+</ol>
+
+<p>当MySQL出现异常崩溃时，有如下几种情况发生：</p>
+
+<p>情况一：步骤1前宕机，刷盘未开始，数据在redo log，后期可以恢复</p>
+
+<p>情况二：步骤1后，步骤2前宕机，因为是在内存中，宕机清空内存，和情况1一样</p>
+
+<p>情况三：步骤2后，步骤3前宕机，因为DWB的磁盘有完整的数据，可以修复损坏的页数据</p>
+
+<p>由此我们可以得出结论，double write buffer是针对实际的buffer数据页的原子性保证，就是避免MySQL异常崩溃时，写的那几个data page不会出错，要么都写了，要么什么都没有做。</p>
+
+<h2 id="为什么redolog无法代替double-write-buffer">为什么redolog无法代替double write buffer？</h2>
+
+<p>redolog的设计之初，是“账本的作用”，是一种操作日志，用于MySQL异常崩溃恢复使用，是InnoDB引擎特有的日志，本质上是物理日志，记录的是 “ 在某个数据页上做了什么修改 ” ，<b>但如果数据页本身已经发生了损坏，redolog来恢复已经损坏的数据块是无效的，数据块的本身已经损坏，再次重做依然是一个坏块。</b></p>
+
+<p>所以此时需要一个数据块的副本来还原该损坏的数据块，再利用重做日志进行其他数据块的重做操作，这就是double write buffer的原因作用。</p>
+
+<p>因此，double write buffer与redolog对于容灾场景，缺一不可。</p>
+
+<p>本文参考：</p>
+
+<p>《高性能MySQL第三版》</p>]]></content><author><name>GitHub User</name></author><category term="MySQL" /><category term="MySQL" /><summary type="html"><![CDATA[问题 我们知道MySQL InnoDB引擎使用redolog作为异常容灾恢复的机制，当MySQL进程发生异常退出、机器断电等，在重新启动时，使用redolog恢复。 OK，redolog是被MySQL设计为异常崩溃恢复的，double write buffer同样是为了保证数据完整性，那么既然已经有了redolog，为什么还需要double write buffer（双写缓冲区）呢？ double write buffer InnoDB用double write buffer（双写缓冲区）来避免页没写完整所导致的数据损坏。当一个磁盘写操作不能完整地完成时，不完整的页写入就可能发生，16KB的页可能只有一部分被写到磁盘上。有多种多样的原因（崩溃、Bug，等等）可能导致页没有写完整。double write buffer在这种情况发生时可以保证数据完整性。 MySQL的buffer一页的大小是16K，但是底层文件系统一页的大小是4K，换句话说，MySQL将一页buffer数据刷入磁盘，需要写4个文件系统里的页。 假如MySQL内page=1的页准备刷入磁盘，才刷了2个(a1和b1)到文件系统里的页，这个时候停电或者机器宕机，当机器恢复后，buffer的一页数据完整性已经遭到破坏，这时MySQL通过double write buffer来解决数据损坏。 double write buffer是表空间一个特殊的保留区域，在一些连续的块中足够保存100个页。本质上是一个最近写回的页面的备份拷贝。当InnoDB从缓冲池刷新页面到磁盘时，首先把它们写（或者刷新）到double write buffer，然后再把它们写到其所属的数据区域中。这可以保证每个页面的写人都是原子并且持久化的。 如果有一个不完整的页写到了double write buffer，原始的页依然会在磁盘上它的真实位置。当InnoDB恢复时，它将用原始页面替换掉双写缓冲中的损坏页面。 然而，如果double write buffer成功写人，但写到页的真实位置失败了，InnoDB在恢复时将使用双写缓冲中的拷贝来替换。 InnoDB知道什么时候页面损坏了，因为每个页面在末尾都有校验值（Checksum）。校验值是最后写到页面的东西，所以如果页面的内容跟校验值不匹配，说明这个页面是损坏的。因此，在恢复的时候，InnoDB只需要读取double write buffer中每个页面并且验证校验值。如果一个页面的校验值不对，就从它的原始位置读取这个页面。 我们来梳理一下整个数据页落盘刷新的过程： buffer数据页先copy到double write buffer的内存里； double write buffer的内存数据刷到double write buffer的磁盘上； double write buffer的内存再刷到数据磁盘上； 当MySQL出现异常崩溃时，有如下几种情况发生： 情况一：步骤1前宕机，刷盘未开始，数据在redo log，后期可以恢复 情况二：步骤1后，步骤2前宕机，因为是在内存中，宕机清空内存，和情况1一样 情况三：步骤2后，步骤3前宕机，因为DWB的磁盘有完整的数据，可以修复损坏的页数据 由此我们可以得出结论，double write buffer是针对实际的buffer数据页的原子性保证，就是避免MySQL异常崩溃时，写的那几个data page不会出错，要么都写了，要么什么都没有做。 为什么redolog无法代替double write buffer？ redolog的设计之初，是“账本的作用”，是一种操作日志，用于MySQL异常崩溃恢复使用，是InnoDB引擎特有的日志，本质上是物理日志，记录的是 “ 在某个数据页上做了什么修改 ” ，但如果数据页本身已经发生了损坏，redolog来恢复已经损坏的数据块是无效的，数据块的本身已经损坏，再次重做依然是一个坏块。 所以此时需要一个数据块的副本来还原该损坏的数据块，再利用重做日志进行其他数据块的重做操作，这就是double write buffer的原因作用。 因此，double write buffer与redolog对于容灾场景，缺一不可。 本文参考： 《高性能MySQL第三版》]]></summary></entry><entry><title type="html">MySQL主键自增有几种模式？</title><link href="http://localhost:4000/mysql/2024/09/25/MySQL%E4%B8%BB%E9%94%AE%E8%87%AA%E5%A2%9E%E6%9C%89%E5%87%A0%E7%A7%8D%E6%A8%A1%E5%BC%8F.html" rel="alternate" type="text/html" title="MySQL主键自增有几种模式？" /><published>2024-09-25T00:00:00+08:00</published><updated>2024-09-25T00:00:00+08:00</updated><id>http://localhost:4000/mysql/2024/09/25/MySQL%E4%B8%BB%E9%94%AE%E8%87%AA%E5%A2%9E%E6%9C%89%E5%87%A0%E7%A7%8D%E6%A8%A1%E5%BC%8F%EF%BC%9F</id><content type="html" xml:base="http://localhost:4000/mysql/2024/09/25/MySQL%E4%B8%BB%E9%94%AE%E8%87%AA%E5%A2%9E%E6%9C%89%E5%87%A0%E7%A7%8D%E6%A8%A1%E5%BC%8F.html"><![CDATA[<p><img src="https://github.com/jeffreytse/jekyll-theme-yat/assets/9413601/2ed22d49-90b1-4f7e-8e8f-b77b21dee505" alt="banner" /></p>
+
+<h2 id="前言">前言</h2>
+
+<p>在大多数的业务场景下，我们的数据表的一般会默认使用主键自增长(<code class="language-plaintext highlighter-rouge">AUTO_INCREMENT</code>)模式，在执行<code class="language-plaintext highlighter-rouge">insert</code>语句时，MySQL会自动为数据行生成主键ID，保证其单调递增和不重复的。一般情况下，我们很少会关注<code class="language-plaintext highlighter-rouge">AUTO_INCREMENT</code>的策略模型，事实上，InnoDB提供了一个可配置的自增长模型机制，可以显著提高向带有<code class="language-plaintext highlighter-rouge">AUTO_INCREMENT</code>列的表添加记录的SQL语句的可扩展性和性能。</p>
+
+<p>本篇，我们就来简要了解一下MySQL InnoDB的主键自增长策略模式。</p>
+
+<h2 id="insert种类">INSERT种类</h2>
+
+<p>MySQL将<code class="language-plaintext highlighter-rouge">INSERT</code>操作分为三类：</p>
+
+<p>1、<code class="language-plaintext highlighter-rouge">Simple inserts</code></p>
+
+<p>插入的记录行数是可以事先确定的。包括最常见的单条<code class="language-plaintext highlighter-rouge">INSERT</code>、<code class="language-plaintext highlighter-rouge">REPLACE</code>，但不包括<code class="language-plaintext highlighter-rouge">INSERT ... ON DUPLICATE KEY UPDATE</code></p>
+
+<p>2、<code class="language-plaintext highlighter-rouge">Bulk inserts</code></p>
+
+<p>插入的记录行数是无法事先确定的。包括 <code class="language-plaintext highlighter-rouge">INSERT ... SELECT</code>,<code class="language-plaintext highlighter-rouge"> REPLACE ... SELECT</code>, <code class="language-plaintext highlighter-rouge">LOAD DATA</code>，不包括普通的<code class="language-plaintext highlighter-rouge">INSERT</code>操作</p>
+
+<p>3、<code class="language-plaintext highlighter-rouge">Mixed-mode inserts</code></p>
+
+<p>该种类型也属于<code class="language-plaintext highlighter-rouge">Simple inserts</code>类型，插入的记录行数是可以事先确定的，但与<code class="language-plaintext highlighter-rouge">Simple inserts</code>不同的是，<code class="language-plaintext highlighter-rouge">INSERT</code>语句中有部分记录自行指定了自增长字段的值，例如：</p>
+
+<div class="language-sql highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">INSERT</span> <span class="k">INTO</span> <span class="n">t1</span> <span class="p">(</span><span class="n">c1</span><span class="p">,</span><span class="n">c2</span><span class="p">)</span> <span class="k">VALUES</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="s1">'a'</span><span class="p">),</span> <span class="p">(</span><span class="k">NULL</span><span class="p">,</span><span class="s1">'b'</span><span class="p">),</span> <span class="p">(</span><span class="mi">5</span><span class="p">,</span><span class="s1">'c'</span><span class="p">),</span> <span class="p">(</span><span class="k">NULL</span><span class="p">,</span><span class="s1">'d'</span><span class="p">);</span>
+</code></pre></div></div>
+
+<p>该模式也包括了<code class="language-plaintext highlighter-rouge">INSERT ... ON DUPLICATE KEY UPDATE</code></p>
+
+<h2 id="自增长锁模型auto_increment-lock-modes">自增长锁模型（AUTO_INCREMENT Lock Modes）</h2>
+
+<p><code class="language-plaintext highlighter-rouge">InnoDB</code>引擎提供了三种锁模型来支持<code class="language-plaintext highlighter-rouge">AUTO_INCREMENT </code>，可以通过<code class="language-plaintext highlighter-rouge">innodb_autoinc_lock_mode</code>参数来进行指定，取值范围为(0，1，2)，分别对应”传统模式”、”连续模式”、”交错模式”，下面我们来依次看一下三种锁模式。</p>
+
+<h3 id="传统锁模式traditional-lock-mode">传统锁模式(Traditional lock mode)</h3>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>innodb_autoinc_lock_mode = 0
+</code></pre></div></div>
+
+<p>该种模式下，它会对所有的<code class="language-plaintext highlighter-rouge">Insert</code>模式操作都去获取一个特殊的表级别的自增长锁(<code class="language-plaintext highlighter-rouge">AUTO-INC</code>)，这种锁会持续到语句结束，以确保执行的<code class="language-plaintext highlighter-rouge">Insert</code>语句以可预测且可重复的顺序分配自动递增值。</p>
+
+<p>这种模式更多是为了兼容老版本的MySQL运行。实际生产环境中不推荐使用。</p>
+
+<p>由于对于所有的<code class="language-plaintext highlighter-rouge">Insert</code>执行时，都会尝试去获取表级别的自增锁，可以预见该种模式的并发性会非常的差，当同时存在多个事务同时执行<code class="language-plaintext highlighter-rouge">Insert</code>操作，只有其中一个事务可以获取到自增锁，而其他的事务必须等待其执行完毕释放锁后，才可以进行执行<code class="language-plaintext highlighter-rouge">Insert</code>操作。</p>
+
+<p>我们来看一个例子：</p>
+
+<div class="language-sql highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">CREATE</span> <span class="k">TABLE</span> <span class="n">t1</span> <span class="p">(</span>
+  <span class="n">c1</span> <span class="nb">INT</span><span class="p">(</span><span class="mi">11</span><span class="p">)</span> <span class="k">NOT</span> <span class="k">NULL</span> <span class="n">AUTO_INCREMENT</span><span class="p">,</span>
+  <span class="n">c2</span> <span class="nb">VARCHAR</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span> <span class="k">DEFAULT</span> <span class="k">NULL</span><span class="p">,</span>
+  <span class="k">PRIMARY</span> <span class="k">KEY</span> <span class="p">(</span><span class="n">c1</span><span class="p">)</span>
+<span class="p">)</span> <span class="n">ENGINE</span><span class="o">=</span><span class="n">InnoDB</span><span class="p">;</span>
+</code></pre></div></div>
+
+<p>我们有一张表<code class="language-plaintext highlighter-rouge">t1</code>，假定同时存在两个事务执行，并都使用自增长字段：</p>
+
+<div class="language-sql highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">Tx1</span><span class="p">:</span> <span class="k">INSERT</span> <span class="k">INTO</span> <span class="n">t1</span> <span class="p">(</span><span class="n">c2</span><span class="p">)</span> <span class="k">SELECT</span> <span class="mi">1000</span> <span class="k">rows</span> <span class="k">from</span> <span class="n">another</span> <span class="k">table</span> <span class="p">...</span>
+<span class="n">Tx2</span><span class="p">:</span> <span class="k">INSERT</span> <span class="k">INTO</span> <span class="n">t1</span> <span class="p">(</span><span class="n">c2</span><span class="p">)</span> <span class="k">VALUES</span> <span class="p">(</span><span class="s1">'xxx'</span><span class="p">);</span>
+</code></pre></div></div>
+
+<p>对于上面的场景，两个事务无法同时并行操作，如果<code class="language-plaintext highlighter-rouge">Tx1</code>先执行，则会获取<code class="language-plaintext highlighter-rouge">t1</code>的自增锁，直到该条语句执行结束，然后<code class="language-plaintext highlighter-rouge">Tx2</code>才可以重新获取锁进行执行插入，需要注意的是，表级自增锁的持有时间范围是语句级别，并非事务级别。</p>
+
+<p>该种模式下，虽然对于<code class="language-plaintext highlighter-rouge">Insert</code>的并发度非常差，但可以保证自增字段的连续性，并且对于基于<code class="language-plaintext highlighter-rouge">SQL BINLOG</code>的主从同步，可以保证从库的自增字段与主库一致。</p>
+
+<h3 id="连续锁模式consecutive-lock-mode">连续锁模式(Consecutive lock mode)</h3>
+
+<div class="language-sql highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">innodb_autoinc_lock_mode</span> <span class="o">=</span> <span class="mi">1</span>
+</code></pre></div></div>
+
+<p>在MySQL8.0之前，该种模式是InnoDB的默认自增模式。</p>
+
+<p>该种模式下，对于普通<code class="language-plaintext highlighter-rouge">Insert</code>语句，申请到自增锁后就马上释放，并非语句执行结束。但是对于<code class="language-plaintext highlighter-rouge">bulk insert</code>这样的批量插入数据语句，仍然会申请表级别的自增锁，会持有锁直到语句结束后才被释放。</p>
+
+<p>需要注意的是，虽然单条<code class="language-plaintext highlighter-rouge">Insert</code>语句会避免使用表级自增锁，但是当其他的事务正在持有表级自增锁，那么在当前事务内，<code class="language-plaintext highlighter-rouge">Insert</code>操作时也会被阻塞，等待其他事务释放锁资源。</p>
+
+<p>相较于传统锁模式，连续锁模式在语义上没有大的区别，但对于普通单条的<code class="language-plaintext highlighter-rouge">Insert</code>并发度有一定的提升。</p>
+
+<h3 id="交叉锁模式interleaved-lock-mode">交叉锁模式(Interleaved lock mode)</h3>
+
+<div class="language-sql highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">innodb_autoinc_lock_mode</span> <span class="o">=</span> <span class="mi">2</span>
+</code></pre></div></div>
+
+<p>在MySQL8.0中，该种模式是InnoDB的默认自增模式。</p>
+
+<p>该种模式下，对于<code class="language-plaintext highlighter-rouge">Insert</code>语句的执行不会使用表级别的自增锁，这意味着多个事务的多个<code class="language-plaintext highlighter-rouge">Insert</code>可以并发执行，是所有模型中执行效率最高的模式。</p>
+
+<p>但在该模式下，存在两个问题：</p>
+
+<p>​	1、在这种模式下，如果<code class="language-plaintext highlighter-rouge">binlog</code>格式为<code class="language-plaintext highlighter-rouge">statement (SBR)</code>，可能会引起数据不一致。也就是说，在主库的自增字段的值，同步到从库时，可能会不一致。</p>
+
+<p>​	2、对于<code class="language-plaintext highlighter-rouge">bulk inserts</code>语句来说，它得到的自增值可能不是连续的。但是对于普通的<code class="language-plaintext highlighter-rouge">Insert</code>语句，则不会出现这个问题。</p>
+
+<h2 id="总结">总结</h2>
+
+<p>OK，我们了解了MySQL InnoDB中自增长字段的三种执行模式，我们简单进行一下总结：</p>
+
+<p><code class="language-plaintext highlighter-rouge">Traditional lock mode</code>传统锁模式：</p>
+
+<p>此种模式可以说是最保守的执行模式，可以完全保证自增长键的连续性，但由于是通过表级锁进行的实现，性能较差，主要是为了兼容老版本，在目前的生产环境中不可能采用</p>
+
+<p><code class="language-plaintext highlighter-rouge">Consecutive lock mode</code>连续锁模式：</p>
+
+<p>传统锁模式的进阶版本，MySQL5.7及其之前的默认模式，该种模式对于普通的<code class="language-plaintext highlighter-rouge">Insert</code>语句进行了优化，相较于传统锁模式大大的提升了并发度，但对于<code class="language-plaintext highlighter-rouge">bulk inserts</code>等批量操作，仍会进行等待锁资源，如果可以保证不会使用<code class="language-plaintext highlighter-rouge">bulk inserts</code>等操作的话，该种模式是没有问题的，对于主从复制也较为友好，对于任何种类的<code class="language-plaintext highlighter-rouge">binlog</code>同步类型，都可以保证主从一致性</p>
+
+<p><code class="language-plaintext highlighter-rouge">Interleaved lock mode</code>交叉锁模式：</p>
+
+<p>MySQL8.0之后版本的默认模式，目前看起来的最优解模式，该种模式完全不使用表级锁，可以真正的实现多事务<code class="language-plaintext highlighter-rouge">Insert</code>并发执行，缺点是对于<code class="language-plaintext highlighter-rouge">bulk inserts</code>语句执行时可能会出现自增长值不连续的情况，同时对于主从复制的<code class="language-plaintext highlighter-rouge">statement  binlog</code>，无法保证主从的一致性。</p>
+
+<p>本篇关于MySQL自增长键的介绍就到这里，关于更多的细节，可以查阅官方文档的解释：</p>
+
+<p>https://dev.mysql.com/doc/refman/8.0/en/innodb-auto-increment-handling.html</p>]]></content><author><name>GitHub User</name></author><category term="MySQL" /><category term="MySQL" /><summary type="html"><![CDATA[前言 在大多数的业务场景下，我们的数据表的一般会默认使用主键自增长(AUTO_INCREMENT)模式，在执行insert语句时，MySQL会自动为数据行生成主键ID，保证其单调递增和不重复的。一般情况下，我们很少会关注AUTO_INCREMENT的策略模型，事实上，InnoDB提供了一个可配置的自增长模型机制，可以显著提高向带有AUTO_INCREMENT列的表添加记录的SQL语句的可扩展性和性能。 本篇，我们就来简要了解一下MySQL InnoDB的主键自增长策略模式。 INSERT种类 MySQL将INSERT操作分为三类： 1、Simple inserts 插入的记录行数是可以事先确定的。包括最常见的单条INSERT、REPLACE，但不包括INSERT ... ON DUPLICATE KEY UPDATE 2、Bulk inserts 插入的记录行数是无法事先确定的。包括 INSERT ... SELECT, REPLACE ... SELECT, LOAD DATA，不包括普通的INSERT操作 3、Mixed-mode inserts 该种类型也属于Simple inserts类型，插入的记录行数是可以事先确定的，但与Simple inserts不同的是，INSERT语句中有部分记录自行指定了自增长字段的值，例如： INSERT INTO t1 (c1,c2) VALUES (1,'a'), (NULL,'b'), (5,'c'), (NULL,'d'); 该模式也包括了INSERT ... ON DUPLICATE KEY UPDATE 自增长锁模型（AUTO_INCREMENT Lock Modes） InnoDB引擎提供了三种锁模型来支持AUTO_INCREMENT ，可以通过innodb_autoinc_lock_mode参数来进行指定，取值范围为(0，1，2)，分别对应”传统模式”、”连续模式”、”交错模式”，下面我们来依次看一下三种锁模式。 传统锁模式(Traditional lock mode) innodb_autoinc_lock_mode = 0 该种模式下，它会对所有的Insert模式操作都去获取一个特殊的表级别的自增长锁(AUTO-INC)，这种锁会持续到语句结束，以确保执行的Insert语句以可预测且可重复的顺序分配自动递增值。 这种模式更多是为了兼容老版本的MySQL运行。实际生产环境中不推荐使用。 由于对于所有的Insert执行时，都会尝试去获取表级别的自增锁，可以预见该种模式的并发性会非常的差，当同时存在多个事务同时执行Insert操作，只有其中一个事务可以获取到自增锁，而其他的事务必须等待其执行完毕释放锁后，才可以进行执行Insert操作。 我们来看一个例子： CREATE TABLE t1 ( c1 INT(11) NOT NULL AUTO_INCREMENT, c2 VARCHAR(10) DEFAULT NULL, PRIMARY KEY (c1) ) ENGINE=InnoDB; 我们有一张表t1，假定同时存在两个事务执行，并都使用自增长字段： Tx1: INSERT INTO t1 (c2) SELECT 1000 rows from another table ... Tx2: INSERT INTO t1 (c2) VALUES ('xxx'); 对于上面的场景，两个事务无法同时并行操作，如果Tx1先执行，则会获取t1的自增锁，直到该条语句执行结束，然后Tx2才可以重新获取锁进行执行插入，需要注意的是，表级自增锁的持有时间范围是语句级别，并非事务级别。 该种模式下，虽然对于Insert的并发度非常差，但可以保证自增字段的连续性，并且对于基于SQL BINLOG的主从同步，可以保证从库的自增字段与主库一致。 连续锁模式(Consecutive lock mode) innodb_autoinc_lock_mode = 1 在MySQL8.0之前，该种模式是InnoDB的默认自增模式。 该种模式下，对于普通Insert语句，申请到自增锁后就马上释放，并非语句执行结束。但是对于bulk insert这样的批量插入数据语句，仍然会申请表级别的自增锁，会持有锁直到语句结束后才被释放。 需要注意的是，虽然单条Insert语句会避免使用表级自增锁，但是当其他的事务正在持有表级自增锁，那么在当前事务内，Insert操作时也会被阻塞，等待其他事务释放锁资源。 相较于传统锁模式，连续锁模式在语义上没有大的区别，但对于普通单条的Insert并发度有一定的提升。 交叉锁模式(Interleaved lock mode) innodb_autoinc_lock_mode = 2 在MySQL8.0中，该种模式是InnoDB的默认自增模式。 该种模式下，对于Insert语句的执行不会使用表级别的自增锁，这意味着多个事务的多个Insert可以并发执行，是所有模型中执行效率最高的模式。 但在该模式下，存在两个问题： ​ 1、在这种模式下，如果binlog格式为statement (SBR)，可能会引起数据不一致。也就是说，在主库的自增字段的值，同步到从库时，可能会不一致。 ​ 2、对于bulk inserts语句来说，它得到的自增值可能不是连续的。但是对于普通的Insert语句，则不会出现这个问题。 总结 OK，我们了解了MySQL InnoDB中自增长字段的三种执行模式，我们简单进行一下总结： Traditional lock mode传统锁模式： 此种模式可以说是最保守的执行模式，可以完全保证自增长键的连续性，但由于是通过表级锁进行的实现，性能较差，主要是为了兼容老版本，在目前的生产环境中不可能采用 Consecutive lock mode连续锁模式： 传统锁模式的进阶版本，MySQL5.7及其之前的默认模式，该种模式对于普通的Insert语句进行了优化，相较于传统锁模式大大的提升了并发度，但对于bulk inserts等批量操作，仍会进行等待锁资源，如果可以保证不会使用bulk inserts等操作的话，该种模式是没有问题的，对于主从复制也较为友好，对于任何种类的binlog同步类型，都可以保证主从一致性 Interleaved lock mode交叉锁模式： MySQL8.0之后版本的默认模式，目前看起来的最优解模式，该种模式完全不使用表级锁，可以真正的实现多事务Insert并发执行，缺点是对于bulk inserts语句执行时可能会出现自增长值不连续的情况，同时对于主从复制的statement binlog，无法保证主从的一致性。 本篇关于MySQL自增长键的介绍就到这里，关于更多的细节，可以查阅官方文档的解释： https://dev.mysql.com/doc/refman/8.0/en/innodb-auto-increment-handling.html]]></summary></entry><entry><title type="html">MySQL慢SQL探究</title><link href="http://localhost:4000/mysql/2024/09/25/MySQL%E6%85%A2SQL%E6%8E%A2%E7%A9%B6.html" rel="alternate" type="text/html" title="MySQL慢SQL探究" /><published>2024-09-25T00:00:00+08:00</published><updated>2024-09-25T00:00:00+08:00</updated><id>http://localhost:4000/mysql/2024/09/25/MySQL%E6%85%A2SQL%E6%8E%A2%E7%A9%B6</id><content type="html" xml:base="http://localhost:4000/mysql/2024/09/25/MySQL%E6%85%A2SQL%E6%8E%A2%E7%A9%B6.html"><![CDATA[<p><img src="https://github.com/jeffreytse/jekyll-theme-yat/assets/9413601/2ed22d49-90b1-4f7e-8e8f-b77b21dee505" alt="banner" /></p>
+
+<h2 id="前言">前言</h2>
+
+<p>我们在日常开发中，一定遇见过某些SQL执行较慢的情况，我们俗称“慢SQL”，如果你对系统的接口性能要求较高的话，一定不会放过这种SQL，肯定会想办法进行解决，那么，导致慢SQL出现的原因，究竟可能都有哪些呢？</p>
+
+<p>这是一道经典的面试题，就此我们来研究一番，下面，我们就来好好看一下，原因可能出在哪里。</p>
+
+<p>本篇我们将从如下几个方面进行讨论：</p>
+
+<p>1、慢SQL捕获</p>
+
+<p>2、执行计划分析</p>
+
+<p>3、引擎参数配置分析</p>
+
+<p>让我们就此开启本次慢SQL分析之旅，Let’s go！</p>
+
+<blockquote>
+  <p>ps: 本篇文章的讨论，主要基于MySQL8.0数据库，Oracle等其他数据库不在本篇讨论范围之列。</p>
+</blockquote>
+
+<h2 id="1慢sql捕获">1、慢SQL捕获</h2>
+
+<p>追查应用服务的慢SQL，首先需要追踪哪些SQL可能是慢SQL，对于Java服务，很多数据库中间件提供了慢SQL的追踪能力，例如Alibaba Druid，会将服务运行过程中的慢SQL打印到日志文件，方便开发运维人员追查。</p>
+
+<p>MySQL当然也提供了捕获慢查询的监控能力，记录在MySQL中执行时间超过指定时间的SQL语句。</p>
+
+<p>默认情况下，MySQL 并没有开启慢日志，可以通过修改 <code class="language-plaintext highlighter-rouge">slow_query_log</code> 参数来打开慢日志。与慢日志相关的参数介绍如下：</p>
+
+<ul>
+  <li><strong>slow_query_log</strong>：是否启用慢查询日志，1表示开启，0表示关闭，默认为关闭。</li>
+  <li><strong>slow_query_log_file</strong>：指定慢查询日志位置及名称，默认值为<code class="language-plaintext highlighter-rouge">host_name-slow.log</code>，可指定绝对路径。</li>
+  <li><strong>long_query_time</strong>：慢查询执行时间阈值，超过此时间会记录，默认为10，取值范围0~31536000，单位为秒。</li>
+  <li><strong>min_examined_row_limit</strong>：对于查询扫描行数小于此参数的SQL，将不会记录到慢查询日志中，默认为0，最大值(bit-64)为18446744073709551615。</li>
+  <li><strong>log_output</strong>：慢查询日志输出目标，默认为FILE，即输出到文件，取值为TABLE、FILE、NONE。</li>
+  <li><strong>log_timestamps</strong>：主要是控制 error log、slow log、genera log 日志文件中的显示时区，默认使用UTC时区，取值为UTC、SYSTEM，建议改为 SYSTEM 系统时区。</li>
+  <li><strong>log_queries_not_using_indexes</strong>：是否记录所有未使用索引的查询语句，默认为OFF。</li>
+  <li><strong>log_slow_admin_statements</strong>：慢速管理语句是否写入慢日志中，管理语句包含 <code class="language-plaintext highlighter-rouge">ALTER TABLE, ANALYZE TABLE, CHECK TABLE, CREATE INDEX, DROP INDEX, OPTIMIZE TABLE, REPAIR TABLE</code>，默认为 OFF 即不写入。</li>
+</ul>
+
+<p>一般情况下，我们只需开启慢日志记录，配置下阈值时间，其余参数可按默认配置。对于阈值时间，可灵活调整，比如说可以设置为 1s 或 3s 。</p>
+
+<h3 id="慢查询追踪配置方式">慢查询追踪配置方式</h3>
+
+<p>MySQL提供了两种配置慢查询参数的方式，提供给开发者使用，下面我们依次来看一下。</p>
+
+<p>第一种，将慢查询参数配置写入 MySQL 配置文件，永久生效</p>
+
+<div class="language-shell highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># 慢查询日志相关配置，可根据实际情况修改</span>
+vim /etc/my.cnf 
+<span class="o">[</span>mysqld] 
+slow_query_log <span class="o">=</span> 1
+slow_query_log_file <span class="o">=</span> /var/log/mysql/sql-slow.log
+long_query_time <span class="o">=</span> 1
+log_timestamps <span class="o">=</span> SYSTEM
+log_output <span class="o">=</span> FILE
+</code></pre></div></div>
+
+<p>第二种，MySQL Server 中临时开启慢查询功能，当 MySQL Server 重启时，配置修改则全部失效并恢复原状</p>
+
+<div class="language-shell highlighter-rouge"><div class="highlight"><pre class="highlight"><code>SET GLOBAL slow_query_log <span class="o">=</span> <span class="s1">'ON'</span><span class="p">;</span>
+SET GLOBAL slow_query_log_file <span class="o">=</span> <span class="s1">'/var/log/mysql/sql-slow.log'</span><span class="p">;</span>
+SET GLOBAL log_queries_not_using_indexes <span class="o">=</span> <span class="s1">'ON'</span><span class="p">;</span>
+SET SESSION long_query_time <span class="o">=</span> 1<span class="p">;</span>
+SET SESSION min_examined_row_limit <span class="o">=</span> 100<span class="p">;</span>
+</code></pre></div></div>
+
+<p>下面我们具体看下，慢日志会记录哪些内容？我们执行一条较慢的查询 SQL ，来看下在慢日志中的体现。</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># Time: 2022-11-02T09:23:37.004885Z</span>
+<span class="c"># User@Host: wtopps[wtopps] @ localhost []  Id: 10831</span>
+<span class="c"># Query_time: 1.609214  Lock_time: 0.003828 Rows_sent: 2050008  Rows_examined: 2150010</span>
+SET <span class="nv">timestamp</span><span class="o">=</span>1667381015<span class="p">;</span>
+SELECT A.<span class="k">*</span> FROM <span class="sb">`</span>user<span class="sb">`</span> A LEFT JOIN grade B ON A.<span class="sb">`</span><span class="nb">id</span><span class="sb">`</span> <span class="o">=</span> B.<span class="sb">`</span>user_id<span class="sb">`</span><span class="p">;</span>
+</code></pre></div></div>
+
+<p>对于每一组慢SQL，日志内容格式如下：</p>
+
+<p>第一行记录的是该条 SQL 执行的时刻（如果 log_timestamps 参数为 UTC ，则改时间会显示 UTC 时区时间）</p>
+
+<p>第二行记录的是执行该语句的用户和 IP 以及链接 id</p>
+
+<p>第三行的几个字段含义如下：</p>
+
+<ul>
+  <li><strong>Query_time</strong>：语句执行时间，以秒为单位。</li>
+  <li><strong>Lock_time</strong>：获取锁的时间(以秒为单位)。</li>
+  <li><strong>Rows_sent</strong>：发送给 Client 端的行数。</li>
+  <li><strong>Rows_examined</strong>：服务器层检查的行数(不计算存储引擎内部的任何处理)</li>
+</ul>
+
+<p>通过慢查询日志，我们可以捕获到具体的慢SQL，接下来，则要具体分析慢SQL产生的可能原因。</p>
+
+<h2 id="2情况分析">2、情况分析</h2>
+
+<h3 id="为什么查询会慢">为什么查询会慢？</h3>
+
+<p>在尝试编写快速的查询之前，需要清楚一点，真正重要是响应时间。如果把查询看作是一个任务，那么它由一系列子任务组成，每个子任务都会消耗一定的时间。如果要优化查询，实际上要优化其子任务，要么消除其中一些子任务，要么减少子任务的执行次数，要么让子任务运行得更快。</p>
+
+<p>MySQL在执行查询的时候有哪些子任务，哪些子任务运行的速度很慢？这里很难给出完整的列表，通常来说，查询的生命周期大致可以按照顺序来看：</p>
+
+<p>从客户端，到服务器，然后在服务器上进行解析，生成执行计划，执行，并返回结果给客户端。其中“执行”可以认为是整个生命周期中最重要的阶段，这其中包括了大量为了检索数据到存储引擎的调用以及调用后的数据处理，包括排序、分组等。</p>
+
+<p><img src="https://img-blog.csdnimg.cn/cd8a41908bfb440f839ff4af1b58e49d.png#pic_center" alt="mysql执行过程" /></p>
+
+<p>在完成这些任务的时候，查询需要在不同的地方花费时间，包括网络，CPU计算，生成统计信息和执行计划、锁等待（互斥等待）等操作，尤其是向底层存储引擎检索数据的调用操作，这些调用需要在内存操作、CPU操作和内存不足时导致的I/O操作上消耗时间。</p>
+
+<p>根据存储引擎不同，可能还会产生大量的上下文切换以及系统调用。</p>
+
+<p>在每一个消耗大量时间的查询案例中，大概率会出现一些不必要的额外操作、某些操作被额外地重复了很多次、某些操作执行得太慢等。优化查询的目的就是减少和消除这些操作所花费的时间。</p>
+
+<p>再次申明一点，对于一个查询的全部生命周期，上面列的并不完整。这里我们只是想说明：了解查询的生命周期、清楚查询的时间消耗情况对于优化查询有很大的意义。有了这些概念，我们再一起来看看如何优化查询。</p>
+
+<p>捕获具体的慢查询SQL后，我们需要对可能导致慢查询的原因进行分析，我们可以从如下几个角度，对问题进行拆解：</p>
+
+<ul>
+  <li>SQL执行计划分析</li>
+  <li>引擎参数配置分析</li>
+  <li>引擎参数配置分析（网络，物理机配置，内存，机器负载I/O）</li>
+</ul>
+
+<h2 id="21-sql执行计划分析">2.1 SQL执行计划分析</h2>
+
+<p>查询性能低下最基本的原因是访问的数据太多。某些查询可能不可避免地需要筛选大量数据，但在实际业务场景中，这并不常见。</p>
+
+<p>大部分性能低下的查询都可以通过减少访问的数据量的方式进行优化。对于低效的查询，我们发现通过下面两个步骤来分析总是很有效：</p>
+
+<p>1．确认应用程序是否在检索大量超过需要的数据。这通常意味着访问了太多的行，但有时候也可能是访问了太多的列。</p>
+
+<p>2．确认MySQL服务器层是否在分析大量超过需要的数据行。</p>
+
+<p>有些查询会请求超过实际需要的数据，然后这些多余的数据会被应用程序丢弃。这会给MySQL服务器带来额外的负担，并增加网络开销，另外也会消耗应用服务器的CPU 和内存资源。</p>
+
+<p>因此，合理的使用索引的重要性就凸显出来，如果查询中的查询条件未命中索引字段，MySQL引擎则只能对全量的数据进行检索，再根据查询条件进行过滤，筛选出目标的数据集，这个过程是非常耗时且低效的。</p>
+
+<p>接下来，我们将逐步对SQL执行的过程进行分析拆解，通过工具手段剖析慢查询的具体原因。</p>
+
+<p><img src="https://img-blog.csdnimg.cn/b3f6e845c2494fd9bdcaa7141f2758d3.png#pic_center" alt="SQL分析三步走" /></p>
+
+<h3 id="explain执行计划分析">explain执行计划分析</h3>
+
+<p>对于SQL执行过程分析，最先登场的毫无疑问就是 <code class="language-plaintext highlighter-rouge">explain</code>语句了， <code class="language-plaintext highlighter-rouge">explain</code>是我们在日常开发最常使用的分析命令。其使用方式，这里不再赘述，一般来说，95% 的慢查询问题只需要 <code class="language-plaintext highlighter-rouge">explain</code> 就可以解决了。</p>
+
+<p>对于<code class="language-plaintext highlighter-rouge">explain</code>执行计划的分析，我们需要关注最简单的衡量查询开销的两个点：</p>
+
+<ul>
+  <li>扫描的行数</li>
+  <li>返回的行数</li>
+</ul>
+
+<p>通过<code class="language-plaintext highlighter-rouge">explain</code>执行计划可以获得SQL在执行时预估的扫描行数以及返回行数的大概比例，这在一定程度上能够说明该查询找到需要的数据的效率高不高。</p>
+
+<p>但这个指标也并不是绝对的，因为并不是所有的行的访问代价都是相同的。较短的行的访问速度更快，内存中的行也比磁盘中的行的访问速度要，快得多。</p>
+
+<p>理想情况下扫描的行数和返回的行数应该是相同的。但实际情况中这种情况并不多见。</p>
+
+<p>例如在做一个多表的<code class="language-plaintext highlighter-rouge">join</code>关联查询时，服务器必须要扫描多行才能生成结果集中的一行。扫描的行数对返回的行数的比率通常很小，一般在1：1和10：1之间，不过有时候这个值也可能非常非常大。</p>
+
+<p><b>比值越大则意味着查询效率越低，因为引擎执行扫描出的大部分数据行都会被丢弃，这也意味着需要执行更多的I/O操作，因此尽可能降低扫描的行数对返回的行数的比率，是我们对慢查询优化的关键所在。</b></p>
+
+<p>一般MySQL 能够使用如下三种方式应用<code class="language-plaintext highlighter-rouge">where</code>条件，从好到坏依次为：</p>
+
+<ul>
+  <li>在索引中使用<code class="language-plaintext highlighter-rouge">where</code>条件来过滤不匹配的记录。这是在存储引擎层完成的。</li>
+  <li>使用索引覆盖扫描（在<code class="language-plaintext highlighter-rouge">Extra</code>列中出现了<code class="language-plaintext highlighter-rouge">Using index</code>）来返回记录，直接从索引中过滤不需要的记录并返回命中的结果。这是在MySQL服务器层完成的，但无须再回表查询记录。</li>
+  <li>从数据表中返回数据，然后过滤不满足条件的记录（在<code class="language-plaintext highlighter-rouge">Extra</code>列中出现<code class="language-plaintext highlighter-rouge">Using Where</code>）。这在MySQL服务器层完成，MySQL需要先从数据表读出记录然后过滤。</li>
+</ul>
+
+<blockquote>
+  <p>Extra中Using Index与Using Where，MySQL官方文档的解释如下：</p>
+
+  <p>Using Index</p>
+
+  <p>The column information is retrieved from the table using only information in the index tree without having to do an additional seek to read the actual row. This strategy can be used when the query uses only columns that are part of a single index.</p>
+
+  <p>Using Where</p>
+
+  <p>A <code class="language-plaintext highlighter-rouge">WHERE</code> clause is used to restrict which rows to match against the next table or send to the client. Unless you specifically intend to fetch or examine all rows from the table, you may have something wrong in your query if the <code class="language-plaintext highlighter-rouge">Extra</code> value is not <code class="language-plaintext highlighter-rouge">Using where</code> and the table join type is <a href="https://dev.mysql.com/doc/refman/8.0/en/explain-output.html#jointype_all"><code class="language-plaintext highlighter-rouge">ALL</code></a> or <a href="https://dev.mysql.com/doc/refman/8.0/en/explain-output.html#jointype_index"><code class="language-plaintext highlighter-rouge">index</code></a>.</p>
+</blockquote>
+
+<p>使用<code class="language-plaintext highlighter-rouge">explain</code>判断导致查询慢的原因，判断依据可以根据如下几点：</p>
+
+<ul>
+  <li>
+    <p><code class="language-plaintext highlighter-rouge">where</code>查询条件中的字段，是否是索引字段，索引字段是否满足了最左匹配原则</p>
+  </li>
+  <li>
+    <p><code class="language-plaintext highlighter-rouge">where</code>查询条件中是否对索引字段使用了函数处理</p>
+
+    <ul>
+      <li><code class="language-plaintext highlighter-rouge">对索引字段使用函数操作，会使得索引失效</code></li>
+    </ul>
+  </li>
+  <li>
+    <p><code class="language-plaintext highlighter-rouge">where</code>查询条件中是否存在<code class="language-plaintext highlighter-rouge">like %字段%</code> 情况</p>
+
+    <ul>
+      <li><code class="language-plaintext highlighter-rouge">like %%的全模糊匹配，会使得索引失效，如需使用like，请使用like 字段%</code></li>
+    </ul>
+  </li>
+  <li>
+    <p>对于<code class="language-plaintext highlighter-rouge">select *</code>的查询，该表的字段数量为多少</p>
+
+    <ul>
+      <li><code class="language-plaintext highlighter-rouge">对于巨型宽表，例如上百个字段的大表，select * 是效率低下的选择，实际业务中很少有情况会需要全部字段的情况，根据需要查询特定的字段是非常必要的</code></li>
+    </ul>
+  </li>
+  <li>
+    <p><code class="language-plaintext highlighter-rouge">where</code>查询条件中是否使用<code class="language-plaintext highlighter-rouge">or</code>，如果使用了，<code class="language-plaintext highlighter-rouge">or</code>的字段是否是主键或者索引字段</p>
+
+    <ul>
+      <li>
+        <p><code class="language-plaintext highlighter-rouge">对于主键或索引字段，or与in不存在性能差距，对于非索引字段，or的性能会低于in</code></p>
+
+        <div class="language-markdown highlighter-rouge"><div class="highlight"><pre class="highlight"><code>In many database servers, IN() is just a synonym for multiple OR clauses, 
+because the two are logically equivalent. Not so in MySQL, 
+which sorts the values in the IN() list and uses a fast binary search to see whether a value is in the list. 
+This is O(Log n) in the size of the list, whereas an equivalent series of OR clauses is O(n) in the size of the list (i.e., much slower for large lists)
+</code></pre></div>        </div>
+      </li>
+    </ul>
+  </li>
+  <li>
+    <p>查询是否使用了多个表(大于3张) 的<code class="language-plaintext highlighter-rouge">join</code>操作，<code class="language-plaintext highlighter-rouge">join</code>表的数据量级如何，是否使用了索引字段进行查询</p>
+
+    <ul>
+      <li><code class="language-plaintext highlighter-rouge">对于多表join的复杂联合查询，是可能产生慢SQL的重灾区，join子表的顺序决定了扫描结果集会有多大，需要结合explain进行分析判断</code></li>
+      <li><code class="language-plaintext highlighter-rouge">实际业务场景中，也尽可能的避免多表join操作，需要在表设计阶段就做好冗余字段的考虑</code></li>
+    </ul>
+  </li>
+  <li>
+    <p><code class="language-plaintext highlighter-rouge">where</code>查询条件是否使用了分页查询，分页深度是多大</p>
+
+    <ul>
+      <li>
+        <p><code class="language-plaintext highlighter-rouge">limit 10, offset 100000，MySQL在实际执行时，会查询出100010条记录，然后丢弃前100000条，性能会极为的糟糕</code></p>
+
+        <p><code class="language-plaintext highlighter-rouge">对于深分页查询优化，当执行深度分页时，可以带入主键ID作为查询条件，执行下一页的查询时，将上一页最大的主键ID作为条件，id &gt; last_page_max_id</code></p>
+      </li>
+    </ul>
+  </li>
+</ul>
+
+<p>综上我们总结，SQL执行时其扫描的行数决定了执行的效率，而决定扫描行数的关键，则是索引的命中情况与索引的质量。</p>
+
+<div class="language-markdown highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Tips:关于索引的一些小建议
+
+1、唯一索引命名uk字段，普通索引命名idx字段，过长时可用首字母替代
+
+2、尽量避免三张表以上的join，对于多表join的情况，可以视情况考虑将一个大查询拆分成多个子查询，对结果集在业务层进行聚合处理。如必须要多表join的场景，特别注意多连表查询的扫描行数问题以及索引的命中情况。
+
+3、varchar长字段建立索引，需要指定索引长度，根据文本区分度来决定长度。
+
+4、避免左模糊，全模糊匹配。
+
+5、order by 字段放在索引最后列，避免filesort
+
+6、考虑利用覆盖索引来进行查询操作，避免回表
+
+7、性能优化目标，需要为range级别以上，最好是ref级别，或者const最好。
+
+8、区分度高的列在索引最左边。
+
+9、避免字段类型不同造成的隐式转换，导致索引失效。例如：varchar和数字类型
+
+10、根据大多数SQL来创建索引。
+
+11、对于运行较久的大表，需要关注索引字段的区分度问题，当索引值出现了严重倾斜时，需要考虑优化拆分索引值。
+</code></pre></div></div>
+
+<h3 id="profile分析">PROFILE分析</h3>
+
+<p>通过使用<code class="language-plaintext highlighter-rouge">explain</code>分析SQL的执行计划，我们可以看到SQL执行过程中是否使用索引，使用了哪些索引，索引扫描的行数等，但MySQL的慢查询，并不一定慢在有没有索引，SQL的执行环节中任意一环出了问题都会表现为查询变慢，所以即使执行过程命中了索引，<code class="language-plaintext highlighter-rouge">explain</code>的结果也很完美，但是还是慢，怎么办？</p>
+
+<p>这时候，就需要<code class="language-plaintext highlighter-rouge">profile</code>工具来帮忙了，这个命令可以详细的列出 SQL 语句在每一个步骤消耗的时间，前提（缺点）是先执行一遍语句。</p>
+
+<p>PROFILE 默认是关闭的，所以需要在<code class="language-plaintext highlighter-rouge">client</code>端先打开，操作如下：</p>
+
+<div class="language-sql highlighter-rouge"><div class="highlight"><pre class="highlight"><code> <span class="k">set</span> <span class="k">session</span> <span class="n">profiling</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
+</code></pre></div></div>
+
+<p>在实际的生产环境中，可能会需要加大<code class="language-plaintext highlighter-rouge">profile</code>的队列，保证想要查看的 <code class="language-plaintext highlighter-rouge">profile</code>结果还保存着，因此可以用如下操作来增加<code class="language-plaintext highlighter-rouge">profile</code>的队列大小：</p>
+
+<div class="language-sql highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">set</span> <span class="k">session</span> <span class="n">profiling_history_size</span> <span class="o">=</span> <span class="mi">50</span><span class="p">;</span>
+</code></pre></div></div>
+
+<p>让我们一起来看一下<code class="language-plaintext highlighter-rouge">profile</code>分析如何使用，我们先执行下面的SQL：</p>
+
+<div class="language-sql highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">mysql</span><span class="o">&gt;</span> <span class="k">explain</span> <span class="k">select</span> <span class="o">*</span> <span class="k">from</span> <span class="k">user</span> <span class="k">where</span> <span class="n">name</span> <span class="o">=</span> <span class="s1">'小六'</span> <span class="k">and</span> <span class="n">code</span> <span class="o">=</span> <span class="mi">300000003</span><span class="p">;</span>
+<span class="o">+</span><span class="c1">----+-------------+-------+------------+------+---------------+------+---------+------+---------+----------+-------------+</span>
+<span class="o">|</span> <span class="n">id</span> <span class="o">|</span> <span class="n">select_type</span> <span class="o">|</span> <span class="k">table</span> <span class="o">|</span> <span class="n">partitions</span> <span class="o">|</span> <span class="k">type</span> <span class="o">|</span> <span class="n">possible_keys</span> <span class="o">|</span> <span class="k">key</span>  <span class="o">|</span> <span class="n">key_len</span> <span class="o">|</span> <span class="k">ref</span>  <span class="o">|</span> <span class="k">rows</span>    <span class="o">|</span> <span class="n">filtered</span> <span class="o">|</span> <span class="n">Extra</span>       <span class="o">|</span>
+<span class="o">+</span><span class="c1">----+-------------+-------+------------+------+---------------+------+---------+------+---------+----------+-------------+</span>
+<span class="o">|</span>  <span class="mi">1</span> <span class="o">|</span> <span class="k">SIMPLE</span>      <span class="o">|</span> <span class="k">user</span>  <span class="o">|</span> <span class="k">NULL</span>       <span class="o">|</span> <span class="k">ALL</span>  <span class="o">|</span> <span class="k">NULL</span>          <span class="o">|</span> <span class="k">NULL</span> <span class="o">|</span> <span class="k">NULL</span>    <span class="o">|</span> <span class="k">NULL</span> <span class="o">|</span> <span class="mi">2043040</span> <span class="o">|</span>     <span class="mi">1</span><span class="p">.</span><span class="mi">00</span> <span class="o">|</span> <span class="k">Using</span> <span class="k">where</span> <span class="o">|</span>
+<span class="o">+</span><span class="c1">----+-------------+-------+------------+------+---------------+------+---------+------+---------+----------+-------------+</span>
+<span class="mi">1</span> <span class="k">row</span> <span class="k">in</span> <span class="k">set</span><span class="p">,</span> <span class="mi">1</span> <span class="n">warning</span> <span class="p">(</span><span class="mi">0</span><span class="p">.</span><span class="mi">00</span> <span class="n">sec</span><span class="p">)</span>
+</code></pre></div></div>
+
+<p>这个一个典型的效果较差的查询，<code class="language-plaintext highlighter-rouge">type=ALL</code>，没有命中索引，执行了全表扫描，我们使用<code class="language-plaintext highlighter-rouge">profile</code>分析一下各阶段的执行时间：</p>
+
+<div class="language-sql highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">mysql</span><span class="o">&gt;</span> <span class="k">show</span> <span class="n">profiles</span><span class="p">;</span>
+<span class="o">+</span><span class="c1">----------+------------+---------------------------------------------------------------+</span>
+<span class="o">|</span> <span class="n">Query_ID</span> <span class="o">|</span> <span class="n">Duration</span>   <span class="o">|</span> <span class="n">Query</span>                                                         <span class="o">|</span>
+<span class="o">+</span><span class="c1">----------+------------+---------------------------------------------------------------+</span>
+<span class="o">|</span>        <span class="mi">1</span> <span class="o">|</span> <span class="mi">0</span><span class="p">.</span><span class="mi">55695825</span> <span class="o">|</span> <span class="k">select</span> <span class="o">*</span> <span class="k">from</span> <span class="k">user</span> <span class="k">where</span> <span class="n">name</span> <span class="o">=</span> <span class="s1">'小六'</span> <span class="k">and</span> <span class="n">code</span> <span class="o">=</span> <span class="mi">300000003</span>   <span class="o">|</span>
+<span class="o">+</span><span class="c1">----------+------------+---------------------------------------------------------------+</span>
+<span class="mi">1</span> <span class="k">row</span> <span class="k">in</span> <span class="k">set</span><span class="p">,</span> <span class="mi">1</span> <span class="n">warning</span> <span class="p">(</span><span class="mi">0</span><span class="p">.</span><span class="mi">00</span> <span class="n">sec</span><span class="p">)</span>
+</code></pre></div></div>
+
+<p>找到我们需要分析的语句，查询执行耗时详情：</p>
+
+<div class="language-sql highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">mysql</span><span class="o">&gt;</span> <span class="k">show</span> <span class="n">profile</span> <span class="n">block</span> <span class="n">io</span><span class="p">,</span><span class="n">cpu</span><span class="p">,</span><span class="n">memory</span><span class="p">,</span><span class="k">source</span> <span class="k">for</span> <span class="n">query</span> <span class="mi">1</span><span class="p">;</span>
+</code></pre></div></div>
+
+<p><img src="https://img-blog.csdnimg.cn/15dbb62df5fe4b958dce9d0f866d2f9e.png#pic_center" alt="profile执行耗时详情" /></p>
+
+<p>从<code class="language-plaintext highlighter-rouge">profile</code>执行结果中，我们可以清晰的看到一条SQL在每个执行阶段的耗时、CPU使用率、IO等指标，帮助我们定位到慢查询具体执行耗时的阶段，对于该条SQL，执行过程中最耗时的部分是<code class="language-plaintext highlighter-rouge">executing</code>部分，<code class="language-plaintext highlighter-rouge">executing</code>阶段包括了执行线程正在为<code class="language-plaintext highlighter-rouge">SELECT</code>读取和处理数据行，并将数据发送到客户端。因为在这个状态下发生的操作往往执行大量的磁盘读取，所以它往往是在整个查询的生命周期中运行时间最长的一个阶段。</p>
+
+<p>经过了对SQL语句进行<code class="language-plaintext highlighter-rouge">explain</code>与<code class="language-plaintext highlighter-rouge">profile</code>分析之后，一个 SQL 为什么慢，慢在哪里基本上可以定位出来了，那么最后的手段主要是解决什么问题呢？</p>
+
+<p>我们将使用最终的分析工具，<code class="language-plaintext highlighter-rouge">OPTIMIZER_TRACE</code>。</p>
+
+<h3 id="optimizer_trace分析">OPTIMIZER_TRACE分析</h3>
+
+<p><code class="language-plaintext highlighter-rouge">OPTIMIZER_TRAC</code>E 是 MySQL 5.6 添加的新功能，这个功能可以看到内部查询计划的 <code class="language-plaintext highlighter-rouge">TRACE</code> 信息，也就是MySQL在执行过程中的具体决策细节，从而可以知道 MySQL 是如何在众多索引中的挑选最合适的索引。</p>
+
+<p>如果我们通过执行计划，发现MySQL选择的索引并不符合我们的预期，就需要根据 <code class="language-plaintext highlighter-rouge">OPTIMIZER_TRACE</code> 的信息来判断为什么会选择它，是 MySQL 的配置原因，还是 SQL 某些地方写的不好导致 MySQL 误判。</p>
+
+<p>开启这个功能的方式如下：</p>
+
+<div class="language-sql highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">set</span> <span class="k">session</span> <span class="n">optimizer_trace</span><span class="o">=</span><span class="s1">'enabled=on'</span><span class="p">;</span>
+</code></pre></div></div>
+
+<p>在客户端执行一个<code class="language-plaintext highlighter-rouge">EXPLAIN</code>语句，生成一个执行计划，然后在<code class="language-plaintext highlighter-rouge">information_chema.optimizer_trace</code>的表里面查找这一条语句对应的信息：</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>mysql&gt; <span class="k">select</span> <span class="k">*</span> from information_schema.optimizer_trace<span class="p">;</span>
+| explain <span class="k">select</span> <span class="k">*</span> from user where age <span class="o">=</span> 21 | <span class="o">{</span>
+  <span class="s2">"steps"</span>: <span class="o">[</span>
+    <span class="o">{</span>
+      <span class="s2">"join_preparation"</span>: <span class="o">{</span>
+        <span class="s2">"select#"</span>: 1,
+        <span class="s2">"steps"</span>: <span class="o">[</span>
+          <span class="o">{</span>
+            <span class="s2">"expanded_query"</span>: <span class="s2">"/* select#1 */ select </span><span class="sb">`</span>user<span class="sb">`</span><span class="s2">.</span><span class="sb">`</span><span class="nb">id</span><span class="sb">`</span><span class="s2"> AS </span><span class="sb">`</span><span class="nb">id</span><span class="sb">`</span><span class="s2">,</span><span class="sb">`</span>user<span class="sb">`</span><span class="s2">.</span><span class="sb">`</span>name<span class="sb">`</span><span class="s2"> AS </span><span class="sb">`</span>name<span class="sb">`</span><span class="s2">,</span><span class="sb">`</span>user<span class="sb">`</span><span class="s2">.</span><span class="sb">`</span>age<span class="sb">`</span><span class="s2"> AS </span><span class="sb">`</span>age<span class="sb">`</span><span class="s2">,</span><span class="sb">`</span>user<span class="sb">`</span><span class="s2">.</span><span class="sb">`</span>code<span class="sb">`</span><span class="s2"> AS </span><span class="sb">`</span>code<span class="sb">`</span><span class="s2"> from </span><span class="sb">`</span>user<span class="sb">`</span><span class="s2"> where (</span><span class="sb">`</span>user<span class="sb">`</span><span class="s2">.</span><span class="sb">`</span>age<span class="sb">`</span><span class="s2"> = 21)"</span>
+          <span class="o">}</span>
+        <span class="o">]</span>
+      <span class="o">}</span>
+    <span class="o">}</span>,
+    <span class="o">{</span>
+      <span class="s2">"join_optimization"</span>: <span class="o">{</span>
+        <span class="s2">"select#"</span>: 1,
+        <span class="s2">"steps"</span>: <span class="o">[</span>
+          <span class="o">{</span>
+            <span class="s2">"condition_processing"</span>: <span class="o">{</span>
+              <span class="s2">"condition"</span>: <span class="s2">"WHERE"</span>,
+              <span class="s2">"original_condition"</span>: <span class="s2">"(</span><span class="sb">`</span>user<span class="sb">`</span><span class="s2">.</span><span class="sb">`</span>age<span class="sb">`</span><span class="s2"> = 21)"</span>,
+              <span class="s2">"steps"</span>: <span class="o">[</span>
+                <span class="o">{</span>
+                  <span class="s2">"transformation"</span>: <span class="s2">"equality_propagation"</span>,
+                  <span class="s2">"resulting_condition"</span>: <span class="s2">"multiple equal(21, </span><span class="sb">`</span>user<span class="sb">`</span><span class="s2">.</span><span class="sb">`</span>age<span class="sb">`</span><span class="s2">)"</span>
+                <span class="o">}</span>,
+                <span class="o">{</span>
+                  <span class="s2">"transformation"</span>: <span class="s2">"constant_propagation"</span>,
+                  <span class="s2">"resulting_condition"</span>: <span class="s2">"multiple equal(21, </span><span class="sb">`</span>user<span class="sb">`</span><span class="s2">.</span><span class="sb">`</span>age<span class="sb">`</span><span class="s2">)"</span>
+                <span class="o">}</span>,
+                <span class="o">{</span>
+                  <span class="s2">"transformation"</span>: <span class="s2">"trivial_condition_removal"</span>,
+                  <span class="s2">"resulting_condition"</span>: <span class="s2">"multiple equal(21, </span><span class="sb">`</span>user<span class="sb">`</span><span class="s2">.</span><span class="sb">`</span>age<span class="sb">`</span><span class="s2">)"</span>
+                <span class="o">}</span>
+              <span class="o">]</span>
+            <span class="o">}</span>
+          <span class="o">}</span>,
+          <span class="o">{</span>
+            <span class="s2">"substitute_generated_columns"</span>: <span class="o">{</span>
+            <span class="o">}</span>
+          <span class="o">}</span>,
+          <span class="o">{</span>
+            <span class="s2">"table_dependencies"</span>: <span class="o">[</span>
+              <span class="o">{</span>
+                <span class="s2">"table"</span>: <span class="s2">"</span><span class="sb">`</span>user<span class="sb">`</span><span class="s2">"</span>,
+                <span class="s2">"row_may_be_null"</span>: <span class="nb">false</span>,
+                <span class="s2">"map_bit"</span>: 0,
+                <span class="s2">"depends_on_map_bits"</span>: <span class="o">[</span>
+                <span class="o">]</span>
+              <span class="o">}</span>
+            <span class="o">]</span>
+          <span class="o">}</span>,
+          <span class="o">{</span>
+            <span class="s2">"ref_optimizer_key_uses"</span>: <span class="o">[</span>
+              <span class="o">{</span>
+                <span class="s2">"table"</span>: <span class="s2">"</span><span class="sb">`</span>user<span class="sb">`</span><span class="s2">"</span>,
+                <span class="s2">"field"</span>: <span class="s2">"age"</span>,
+                <span class="s2">"equals"</span>: <span class="s2">"21"</span>,
+                <span class="s2">"null_rejecting"</span>: <span class="nb">true</span>
+              <span class="o">}</span>
+            <span class="o">]</span>
+          <span class="o">}</span>,
+          <span class="o">{</span>
+            <span class="s2">"rows_estimation"</span>: <span class="o">[</span>
+              <span class="o">{</span>
+                <span class="s2">"table"</span>: <span class="s2">"</span><span class="sb">`</span>user<span class="sb">`</span><span class="s2">"</span>,
+                <span class="s2">"range_analysis"</span>: <span class="o">{</span>
+                  <span class="s2">"table_scan"</span>: <span class="o">{</span>
+                    <span class="s2">"rows"</span>: 2043040,
+                    <span class="s2">"cost"</span>: 205676
+                  <span class="o">}</span>,
+                  <span class="s2">"potential_range_indexes"</span>: <span class="o">[</span>
+                    <span class="o">{</span>
+                      <span class="s2">"index"</span>: <span class="s2">"PRIMARY"</span>,
+                      <span class="s2">"usable"</span>: <span class="nb">false</span>,
+                      <span class="s2">"cause"</span>: <span class="s2">"not_applicable"</span>
+                    <span class="o">}</span>,
+                    <span class="o">{</span>
+                      <span class="s2">"index"</span>: <span class="s2">"idx_age"</span>,
+                      <span class="s2">"usable"</span>: <span class="nb">true</span>,
+                      <span class="s2">"key_parts"</span>: <span class="o">[</span>
+                        <span class="s2">"age"</span>,
+                        <span class="s2">"id"</span>
+                      <span class="o">]</span>
+                    <span class="o">}</span>
+                  <span class="o">]</span>,
+                  <span class="s2">"setup_range_conditions"</span>: <span class="o">[</span>
+                  <span class="o">]</span>,
+                  <span class="s2">"group_index_range"</span>: <span class="o">{</span>
+                    <span class="s2">"chosen"</span>: <span class="nb">false</span>,
+                    <span class="s2">"cause"</span>: <span class="s2">"not_group_by_or_distinct"</span>
+                  <span class="o">}</span>,
+                  <span class="s2">"skip_scan_range"</span>: <span class="o">{</span>
+                    <span class="s2">"potential_skip_scan_indexes"</span>: <span class="o">[</span>
+                      <span class="o">{</span>
+                        <span class="s2">"index"</span>: <span class="s2">"idx_age"</span>,
+                        <span class="s2">"usable"</span>: <span class="nb">false</span>,
+                        <span class="s2">"cause"</span>: <span class="s2">"query_references_nonkey_column"</span>
+                      <span class="o">}</span>
+                    <span class="o">]</span>
+                  <span class="o">}</span>,
+                  <span class="s2">"analyzing_range_alternatives"</span>: <span class="o">{</span>
+                    <span class="s2">"range_scan_alternatives"</span>: <span class="o">[</span>
+                      <span class="o">{</span>
+                        <span class="s2">"index"</span>: <span class="s2">"idx_age"</span>,
+                        <span class="s2">"ranges"</span>: <span class="o">[</span>
+                          <span class="s2">"21 &lt;= age &lt;= 21"</span>
+                        <span class="o">]</span>,
+                        <span class="s2">"index_dives_for_eq_ranges"</span>: <span class="nb">true</span>,
+                        <span class="s2">"rowid_ordered"</span>: <span class="nb">true</span>,
+                        <span class="s2">"using_mrr"</span>: <span class="nb">false</span>,
+                        <span class="s2">"index_only"</span>: <span class="nb">false</span>,
+                        <span class="s2">"in_memory"</span>: 0.788627,
+                        <span class="s2">"rows"</span>: 1,
+                        <span class="s2">"cost"</span>: 0.61,
+                        <span class="s2">"chosen"</span>: <span class="nb">true</span>
+                      <span class="o">}</span>
+                    <span class="o">]</span>,
+                    <span class="s2">"analyzing_roworder_intersect"</span>: <span class="o">{</span>
+                      <span class="s2">"usable"</span>: <span class="nb">false</span>,
+                      <span class="s2">"cause"</span>: <span class="s2">"too_few_roworder_scans"</span>
+                    <span class="o">}</span>
+                  <span class="o">}</span>,
+                  <span class="s2">"chosen_range_access_summary"</span>: <span class="o">{</span>
+                    <span class="s2">"range_access_plan"</span>: <span class="o">{</span>
+                      <span class="s2">"type"</span>: <span class="s2">"range_scan"</span>,
+                      <span class="s2">"index"</span>: <span class="s2">"idx_age"</span>,
+                      <span class="s2">"rows"</span>: 1,
+                      <span class="s2">"ranges"</span>: <span class="o">[</span>
+                        <span class="s2">"21 &lt;= age &lt;= 21"</span>
+                      <span class="o">]</span>
+                    <span class="o">}</span>,
+                    <span class="s2">"rows_for_plan"</span>: 1,
+                    <span class="s2">"cost_for_plan"</span>: 0.61,
+                    <span class="s2">"chosen"</span>: <span class="nb">true</span>
+                  <span class="o">}</span>
+                <span class="o">}</span>
+              <span class="o">}</span>
+            <span class="o">]</span>
+          <span class="o">}</span>,
+          <span class="o">{</span>
+            <span class="s2">"considered_execution_plans"</span>: <span class="o">[</span>
+              <span class="o">{</span>
+                <span class="s2">"plan_prefix"</span>: <span class="o">[</span>
+                <span class="o">]</span>,
+                <span class="s2">"table"</span>: <span class="s2">"</span><span class="sb">`</span>user<span class="sb">`</span><span class="s2">"</span>,
+                <span class="s2">"best_access_path"</span>: <span class="o">{</span>
+                  <span class="s2">"considered_access_paths"</span>: <span class="o">[</span>
+                    <span class="o">{</span>
+                      <span class="s2">"access_type"</span>: <span class="s2">"ref"</span>,
+                      <span class="s2">"index"</span>: <span class="s2">"idx_age"</span>,
+                      <span class="s2">"rows"</span>: 1,
+                      <span class="s2">"cost"</span>: 0.35,
+                      <span class="s2">"chosen"</span>: <span class="nb">true</span>
+                    <span class="o">}</span>,
+                    <span class="o">{</span>
+                      <span class="s2">"access_type"</span>: <span class="s2">"range"</span>,
+                      <span class="s2">"range_details"</span>: <span class="o">{</span>
+                        <span class="s2">"used_index"</span>: <span class="s2">"idx_age"</span>
+                      <span class="o">}</span>,
+                      <span class="s2">"chosen"</span>: <span class="nb">false</span>,
+                      <span class="s2">"cause"</span>: <span class="s2">"heuristic_index_cheaper"</span>
+                    <span class="o">}</span>
+                  <span class="o">]</span>
+                <span class="o">}</span>,
+                <span class="s2">"condition_filtering_pct"</span>: 100,
+                <span class="s2">"rows_for_plan"</span>: 1,
+                <span class="s2">"cost_for_plan"</span>: 0.35,
+                <span class="s2">"chosen"</span>: <span class="nb">true</span>
+              <span class="o">}</span>
+            <span class="o">]</span>
+          <span class="o">}</span>,
+          <span class="o">{</span>
+            <span class="s2">"attaching_conditions_to_tables"</span>: <span class="o">{</span>
+              <span class="s2">"original_condition"</span>: <span class="s2">"(</span><span class="sb">`</span>user<span class="sb">`</span><span class="s2">.</span><span class="sb">`</span>age<span class="sb">`</span><span class="s2"> = 21)"</span>,
+              <span class="s2">"attached_conditions_computation"</span>: <span class="o">[</span>
+              <span class="o">]</span>,
+              <span class="s2">"attached_conditions_summary"</span>: <span class="o">[</span>
+                <span class="o">{</span>
+                  <span class="s2">"table"</span>: <span class="s2">"</span><span class="sb">`</span>user<span class="sb">`</span><span class="s2">"</span>,
+                  <span class="s2">"attached"</span>: <span class="s2">"(</span><span class="sb">`</span>user<span class="sb">`</span><span class="s2">.</span><span class="sb">`</span>age<span class="sb">`</span><span class="s2"> = 21)"</span>
+                <span class="o">}</span>
+              <span class="o">]</span>
+            <span class="o">}</span>
+          <span class="o">}</span>,
+          <span class="o">{</span>
+            <span class="s2">"finalizing_table_conditions"</span>: <span class="o">[</span>
+              <span class="o">{</span>
+                <span class="s2">"table"</span>: <span class="s2">"</span><span class="sb">`</span>user<span class="sb">`</span><span class="s2">"</span>,
+                <span class="s2">"original_table_condition"</span>: <span class="s2">"(</span><span class="sb">`</span>user<span class="sb">`</span><span class="s2">.</span><span class="sb">`</span>age<span class="sb">`</span><span class="s2"> = 21)"</span>,
+                <span class="s2">"final_table_condition   "</span>: null
+              <span class="o">}</span>
+            <span class="o">]</span>
+          <span class="o">}</span>,
+          <span class="o">{</span>
+            <span class="s2">"refine_plan"</span>: <span class="o">[</span>
+              <span class="o">{</span>
+                <span class="s2">"table"</span>: <span class="s2">"</span><span class="sb">`</span>user<span class="sb">`</span><span class="s2">"</span>
+              <span class="o">}</span>
+            <span class="o">]</span>
+          <span class="o">}</span>
+        <span class="o">]</span>
+      <span class="o">}</span>
+    <span class="o">}</span>,
+    <span class="o">{</span>
+      <span class="s2">"join_explain"</span>: <span class="o">{</span>
+        <span class="s2">"select#"</span>: 1,
+        <span class="s2">"steps"</span>: <span class="o">[</span>
+        <span class="o">]</span>
+      <span class="o">}</span>
+    <span class="o">}</span>
+  <span class="o">]</span>
+<span class="o">}</span>
+1 row <span class="k">in </span><span class="nb">set</span> <span class="o">(</span>0.02 sec<span class="o">)</span>
+</code></pre></div></div>
+
+<p>内容是非常长的 JSON 格式，所以推荐把结果转存到其他地方，然后用 JSON 的转换工具来辅助查看，如果要看索引的选择情况，就重点关注这个 JSON 的<code class="language-plaintext highlighter-rouge">ref_optimizer_key_uses</code>，<code class="language-plaintext highlighter-rouge">rows_estimation</code> 及之后的部分，这里会展示索引选择相关的信息，截取一部分结果作为示例：</p>
+
+<div class="language-sql highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">{</span>
+    <span class="nv">"ref_optimizer_key_uses"</span><span class="p">:</span> <span class="p">[</span>
+        <span class="p">{</span>
+            <span class="nv">"table"</span><span class="p">:</span> <span class="nv">"`user`"</span><span class="p">,</span>
+            <span class="nv">"field"</span><span class="p">:</span> <span class="nv">"age"</span><span class="p">,</span>
+            <span class="nv">"equals"</span><span class="p">:</span> <span class="nv">"21"</span><span class="p">,</span>
+            <span class="nv">"null_rejecting"</span><span class="p">:</span> <span class="k">true</span>
+        <span class="p">}</span>
+    <span class="p">]</span>
+<span class="p">}</span>
+<span class="p">......</span>
+
+<span class="nv">"chosen_range_access_summary"</span><span class="p">:</span> <span class="p">{</span>
+    <span class="nv">"range_access_plan"</span><span class="p">:</span> <span class="p">{</span>
+        <span class="nv">"type"</span><span class="p">:</span> <span class="nv">"range_scan"</span><span class="p">,</span>
+        <span class="nv">"index"</span><span class="p">:</span> <span class="nv">"idx_age"</span><span class="p">,</span>
+        <span class="nv">"rows"</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
+        <span class="nv">"ranges"</span><span class="p">:</span> <span class="p">[</span>
+            <span class="nv">"21 &lt;= age &lt;= 21"</span>
+        <span class="p">]</span>
+    <span class="p">},</span>
+    <span class="nv">"rows_for_plan"</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
+    <span class="nv">"cost_for_plan"</span><span class="p">:</span> <span class="mi">0</span><span class="p">.</span><span class="mi">61</span><span class="p">,</span>
+    <span class="nv">"chosen"</span><span class="p">:</span> <span class="k">true</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<h2 id="3引擎参数配置分析">3、引擎参数配置分析</h2>
+
+<p>上面的篇幅中，我们针对SQL层面进行了可能导致慢查询的原因分析，MySQL的数据最终都会存储在磁盘上，因此操作系统的I/O情况也会影响MySQL的运行性能，这一章节我们将从底层入手，从操作系统I/O层面分析MySQL执行性能问题。</p>
+
+<h3 id="io性能分析">I/O性能分析</h3>
+
+<p>Linux系统查看系统I/O情况，可以使用<code class="language-plaintext highlighter-rouge">iostat</code>命令：</p>
+
+<div class="language-shell highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="o">[</span>root@VM-16-14-centos ~]# iostat <span class="nt">-x</span> 1 <span class="nt">-m</span>
+Linux 3.10.0-1160.11.1.el7.x86_64 <span class="o">(</span>VM-16-14-centos<span class="o">)</span>     12/21/2022      _x86_64_        <span class="o">(</span>1 CPU<span class="o">)</span>
+
+avg-cpu:  %user   %nice %system %iowait  %steal   %idle
+           0.82    0.00    0.67    0.07    0.00   98.44
+
+Device:         rrqm/s   wrqm/s     r/s     w/s    rMB/s    wMB/s avgrq-sz avgqu-sz   await r_await w_await  svctm  %util
+vda               0.00     1.67    0.04    2.49     0.00     0.02    17.55     0.01    2.34    3.74    2.31   0.29   0.07
+scd0              0.00     0.00    0.00    0.00     0.00     0.00     7.10     0.00    0.89    0.89    0.00   0.88   0.00
+</code></pre></div></div>
+
+<p>avg-cpu 自然就是 CPU 相关的指标，判断 IO 问题时可以关注 %iowait，其他指标的意义如下：</p>
+
+<ul>
+  <li>r/s 和 w/s：<strong>合并过后的</strong>读请求和写请求的每秒请求数，可以当做 IOPS 来理解。</li>
+  <li>rMB/s 和 wMB/s：磁盘的读写吞吐量。</li>
+  <li>rrqm/s 和 wrqm/s：每秒合并的读请求和写请求数量。</li>
+  <li>r_await 和 w_await：读请求和写请求的平均响应时间，包含真正的处理时间和队列中的等待时间（ms）。</li>
+  <li>avgrq-sz：平均每次设备I/O操作的数据大小 (扇区)。</li>
+  <li>avgqu-sz：平均I/O队列长度。</li>
+  <li>await：平均每次设备I/O操作的等待时间 (毫秒)。</li>
+  <li>scvtm：计算出来的平均 IO 响应时间，目前已经不准确，不用再关注。</li>
+  <li>%util：如果使用了 RAID 或者 SSD，则忽略这个指标，仅在单块机械盘上准确。</li>
+</ul>
+
+<p>一般来说，评价一块 IO 设备（忽略机械盘的情况，没有评价的意义）是否达到了高负载情况，可以看这几个指标：r/s，w/s，rMB/s，wMB/s，r_await，w_await，avgqu-sz。</p>
+
+<h4 id="mysql-io参数">MySQL I/O参数</h4>
+
+<p>MySQL 涉及到 IO 相关的参数会比较多，因此这里仅一部分经常用到的参数：</p>
+
+<table>
+  <thead>
+    <tr>
+      <th style="text-align: left">参数</th>
+      <th style="text-align: left">默认设置</th>
+      <th style="text-align: left">备注</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td style="text-align: left">innodb_io_capacity</td>
+      <td style="text-align: left">200</td>
+      <td style="text-align: left">定义了后台任务可用的 IOPS 量，InnoDB后台任务可用的每秒I/O操作数（IOPS），例如从缓冲池冲刷页面和从变更缓冲区合并数据。</td>
+    </tr>
+    <tr>
+      <td style="text-align: left">innodb_io_capacity_max</td>
+      <td style="text-align: left">动态</td>
+      <td style="text-align: left">定义了后台任务可用的最大 IOPS 量</td>
+    </tr>
+    <tr>
+      <td style="text-align: left">innodb_flush_log_at_trx_commit</td>
+      <td style="text-align: left">1</td>
+      <td style="text-align: left">控制事务的提交策略 <br />0：日志缓存区将每隔一秒写到日志文件中，并且将日志文件的数据刷新到磁盘上。该模式下在事务提交时不会主动触发写入磁盘的操作。 <br />1：每次事务提交时RDS for MySQL都会把日志缓存区的数据写入日志文件中，并且刷新到磁盘中，该模式为系统默认。 <br />2：每次事务提交时RDS for MySQL都会把日志缓存区的数据写入日志文件中，但是并不会同时刷新到磁盘上。该模式下，MySQL会每秒执行一次刷新磁盘操作。</td>
+    </tr>
+    <tr>
+      <td style="text-align: left">sync_binlog</td>
+      <td style="text-align: left">1</td>
+      <td style="text-align: left">控制 binlog 落盘的频率<br />**0 ：**存储引擎不进行binlog的刷新到磁盘，而由操作系统的文件系统控制缓存刷新。<br />**1：**每提交一次事务，存储引擎调用文件系统的sync操作进行一次缓存的刷新，这种方式最安全，但性能较低。<br />**n：**在每N次binlog日志文件写入后与磁盘同步，存储引擎调用文件系统的sync操作进行一次缓存的刷新。</td>
+    </tr>
+  </tbody>
+</table>
+
+<p><code class="language-plaintext highlighter-rouge">innodb_io_capacity</code> 和 <code class="language-plaintext highlighter-rouge">innodb_io_capacity_max</code> 是最直接限制 <code class="language-plaintext highlighter-rouge">IOPS</code> 的指标，<strong>大多数时候</strong>，SSD 可以设置成 16000 或者更高的数值，如果是云主机或者其他的共享存储设备，则需要了解一下详细的 <code class="language-plaintext highlighter-rouge">IOPS</code> 上限再具体调整。</p>
+
+<p><code class="language-plaintext highlighter-rouge">trx_commit</code> 和 <code class="language-plaintext highlighter-rouge">sync_binlog</code> 这两个参数也放进来的原因是不同的参数组合对 IO 的压力也会有区别。</p>
+
+<p>通常的用法是<strong>双 1</strong> 或者 <strong>20（二零）</strong>，参考官方文档的描述，<strong>双 1</strong> 在每次提交事务的时候都会刷盘，对 IO 的压力要高不少；</p>
+
+<p>20 则是滞后刷盘，对 IO 的压力会较小，因此写入 QPS 会高一些。</p>
+
+<p>另外，可以关注到一个细节，<code class="language-plaintext highlighter-rouge">innodb_io_capacity</code> 的描述对象是：<strong>后台任务</strong>。这代表着 MySQL 后台的 flush，purge 操作会受到这个参数设置的限制。</p>
+
+<p>吞吐量和 IOPS ，一般情况下衡量 IO 系统性能最直观的指标，并没有特别的提及，主要原因还是判断起来很简单：如果<code class="language-plaintext highlighter-rouge">iostat</code>的指标已经<strong>达到或者接近了实际硬件的指标（比如达到了 75%）</strong>，那么根据业务量增长的情况及早规划硬件升级或者<strong>其他的手段</strong>来分散读写压力。</p>
+
+<p>常规的手段，可以简单的遵循以下场景来酌情使用：<strong>读多写少读写分离，写多读少拆库拆表加缓存</strong>。</p>
+
+<h2 id="其他原因分析">其他原因分析</h2>
+
+<h3 id="网络抖动">网络抖动</h3>
+
+<p>目前的互联网应用服务，数据库的部署与应用服务的部署，不会在一台服务器上，那么应用服务器与数据库服务器之间就需要通过网络通信，一般情况来讲，都会在同机房或同一个可用区进行部署，以保证网络通信的质量。</p>
+
+<p>但是难免可能会出现网络抖动的情况，这种情况下，对应用服务来讲，可能会出现一条SQL执行较慢的情况，但不是由于数据库原因导致的，而是由于网络原因导致的。</p>
+
+<p>发现偶现的SQL执行慢，且SQL本身执行计划没有问题，可以从网络的角度分析问题，在服务所在的机器ping数据库服务器，查看响应时间，特别针对数据库服务器与业务服务器跨城市的情况，如果没有拉通专线访问，会很容易出现网络慢导致的问题。</p>
+
+<h3 id="单表数据量过大">单表数据量过大</h3>
+
+<p>上面我们提到了InnoDB的数据存储方式是<b>面向主键索引进行数据存储的。</b> InnoDB的数据表数量级超过几千万后，性能会出现下降，核心是由于B+Tree的数据结构导致的。</p>
+
+<p>因此，当你的数据表超过几千万量级的时候，SQL执行即使全部命中的索引，也有可能出现执行慢的情况。</p>
+
+<p>这个时候，建议考虑采用拆表。目前开源的优秀的分库分表中间件有很多，例如<code class="language-plaintext highlighter-rouge">sharing-JDBC</code>、<code class="language-plaintext highlighter-rouge">MyCat</code>等，可以根据业务的实际情况进行选择，这里就不过多的进行赘述。</p>
+
+<h2 id="总结">总结</h2>
+
+<p>本篇，我们围绕着一个问题：<code class="language-plaintext highlighter-rouge">一条SQL执行较慢可能有哪些原因导致的？</code> 进行了研究，总结一下，大部分的慢查询其实均由SQL书写不当导致的，通过explain命令结合实际业务场景分析，可以解决绝大多数的慢查询问题，对于一些疑难杂症SQL，使用MySQL强大的SQL分析工具，也可以找出真正的问题原因。</p>
+
+<p>另外，系统层面的分析也是必不可少的，作为开发人员，我们也需要掌握一些DBA的分析手段，检查MySQL运行性能情况，保证数据库服务的稳定运行。</p>
+
+<p>本篇参考：</p>
+
+<p>MySQL官方文档The Slow Query Log：</p>
+
+<p>https://dev.mysql.com/doc/refman/5.7/en/slow-query-log.html</p>
+
+<p>https://dev.mysql.com/doc/refman/5.7/en/server-system-variables.html#sysvar_long_query_time</p>
+
+<p>https://dev.mysql.com/doc/refman/8.0/en/explain-output.html#explain-extra-information</p>
+
+<p>mysql or/in性能对比：</p>
+
+<p>https://www.cnblogs.com/chihirotan/p/7457204.html</p>
+
+<p>MySQL explain结果Extra中”Using Index”与”Using where; Using index”区别探究：</p>
+
+<p>https://www.cnblogs.com/AcAc-t/p/mysql_explain_difference_between_using_index_and_using_where.html</p>
+
+<p>MySQL General Thread States：</p>
+
+<p>https://dev.mysql.com/doc/refman/8.0/en/general-thread-states.html</p>
+
+<p>innodb_flush_log_at_trx_commit和sync_binlog参数详解：</p>
+
+<p>https://support.huaweicloud.com/bestpractice-rds/rds_02_0010.html</p>]]></content><author><name>GitHub User</name></author><category term="MySQL" /><category term="MySQL" /><summary type="html"><![CDATA[]]></summary></entry><entry><title type="html">Redis key过期删除机制</title><link href="http://localhost:4000/redis/2024/09/25/Redis-key%E8%BF%87%E6%9C%9F%E5%88%A0%E9%99%A4%E6%9C%BA%E5%88%B6.html" rel="alternate" type="text/html" title="Redis key过期删除机制" /><published>2024-09-25T00:00:00+08:00</published><updated>2024-09-25T00:00:00+08:00</updated><id>http://localhost:4000/redis/2024/09/25/Redis%20key%E8%BF%87%E6%9C%9F%E5%88%A0%E9%99%A4%E6%9C%BA%E5%88%B6</id><content type="html" xml:base="http://localhost:4000/redis/2024/09/25/Redis-key%E8%BF%87%E6%9C%9F%E5%88%A0%E9%99%A4%E6%9C%BA%E5%88%B6.html"><![CDATA[<p><img src="https://github.com/jeffreytse/jekyll-theme-yat/assets/9413601/2ed22d49-90b1-4f7e-8e8f-b77b21dee505" alt="banner" /></p>
+
+<p>##</p>
+
+<h2 id="前言">前言</h2>
+
+<p>当我们创建Redis key时，可以通过<code class="language-plaintext highlighter-rouge">expire</code>命令指定key的过期时间(TTL)，当超过指定的TTL时间后，key将会失效。</p>
+
+<p>那么当key失效后，Redis会立刻将其删除么？如果不会，那么何时Redis才将其真正的删除呢？我们来一起一探究竟。</p>
+
+<h2 id="redis-key过期淘汰机制">Redis key过期淘汰机制</h2>
+
+<p>Redis中的key过期淘汰机制是由两种方式实现：</p>
+
+<ul>
+  <li>惰性删除机制</li>
+  <li>定时扫描删除机制</li>
+</ul>
+
+<p>两种模式都不会在key达到过期时间后，第一时间删除key，而是等待特定的时机触发淘汰机制，这个很好理解，如果每一个key到达过期时间后，redis都需要第一时间检测到，并将其删除，那么将会消耗大量的资源，去实时的扫描全部key值，这显然是不合理的。</p>
+
+<p>下面我们来看一下两种方式的具体实现机制。</p>
+
+<h2 id="惰性删除机制">惰性删除机制</h2>
+
+<p>惰性删除很简单，就是当有客户端的请求查询该 key 的时候，检查下 key 是否过期，如果过期，则删除该 key。</p>
+
+<p>在此种模式下，触发key淘汰的时机，是将删除过期数据的主动权交给了每次访问请求。</p>
+
+<p>那么Redis具体是如何实现的，我们来一起看一下源码实现。</p>
+
+<p>淘汰删除的具体实现，在<code class="language-plaintext highlighter-rouge">db.c</code>的<code class="language-plaintext highlighter-rouge">#expireIfNeeded()</code>：</p>
+
+<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kt">int</span> <span class="nf">expireIfNeeded</span><span class="p">(</span><span class="n">redisDb</span> <span class="o">*</span><span class="n">db</span><span class="p">,</span> <span class="n">robj</span> <span class="o">*</span><span class="n">key</span><span class="p">)</span> <span class="p">{</span>
+    <span class="cm">/* 通过调用getExpire函数获取key的过期时间。*/</span>
+    <span class="n">mstime_t</span> <span class="n">when</span> <span class="o">=</span> <span class="n">getExpire</span><span class="p">(</span><span class="n">db</span><span class="p">,</span><span class="n">key</span><span class="p">);</span>
+    <span class="n">mstime_t</span> <span class="n">now</span><span class="p">;</span>
+	
+    <span class="cm">/* 当过期时间小于0时，表示key没有设置过期时间，直接返回0 */</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">when</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">)</span> <span class="k">return</span> <span class="mi">0</span><span class="p">;</span> <span class="cm">/* No expire for this key */</span>
+
+    <span class="cm">/* 如果Redis正在进行数据加载，直接返回0，不进行后续的过期检查。 */</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">server</span><span class="p">.</span><span class="n">loading</span><span class="p">)</span> <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+
+    <span class="cm">/* 获取当前时间，如果当前是在执行Lua脚本中，使用server.lua_time_start作为当前时间；否则，使用系统当前时间mstime作为当前时间 */</span>
+    <span class="n">now</span> <span class="o">=</span> <span class="n">server</span><span class="p">.</span><span class="n">lua_caller</span> <span class="o">?</span> <span class="n">server</span><span class="p">.</span><span class="n">lua_time_start</span> <span class="o">:</span> <span class="n">mstime</span><span class="p">();</span>
+
+    <span class="cm">/* 如果Redis是主从复制模式，并且当前节点是从节点，则直接返回当前时间是否大于过期时间，不进行后续的过期操作 */</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">server</span><span class="p">.</span><span class="n">masterhost</span> <span class="o">!=</span> <span class="nb">NULL</span><span class="p">)</span> <span class="k">return</span> <span class="n">now</span> <span class="o">&gt;</span> <span class="n">when</span><span class="p">;</span>
+
+    <span class="cm">/* 如果当前时间小于等于过期时间，则直接返回0，表示key还没有过期 */</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">now</span> <span class="o">&lt;=</span> <span class="n">when</span><span class="p">)</span> <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+
+    <span class="cm">/* Delete the key */</span>
+    <span class="cm">/* 增加已过期key的数量统计 */</span>
+    <span class="n">server</span><span class="p">.</span><span class="n">stat_expiredkeys</span><span class="o">++</span><span class="p">;</span>
+    <span class="cm">/* 向从节点发送key过期的命令，保证从节点也能及时删除过期的key */</span>
+    <span class="n">propagateExpire</span><span class="p">(</span><span class="n">db</span><span class="p">,</span><span class="n">key</span><span class="p">);</span>
+    <span class="cm">/* 向Redis的事件通知机制发送key过期的事件通知 */</span>
+    <span class="n">notifyKeyspaceEvent</span><span class="p">(</span><span class="n">REDIS_NOTIFY_EXPIRED</span><span class="p">,</span>
+        <span class="s">"expired"</span><span class="p">,</span><span class="n">key</span><span class="p">,</span><span class="n">db</span><span class="o">-&gt;</span><span class="n">id</span><span class="p">);</span>
+    <span class="cm">/* 删除已过期的key，并返回1表示删除成功 */</span>
+    <span class="k">return</span> <span class="n">dbDelete</span><span class="p">(</span><span class="n">db</span><span class="p">,</span><span class="n">key</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="cm">/* Delete a key, value, and associated expiration entry if any, from the DB */</span>
+<span class="kt">int</span> <span class="nf">dbDelete</span><span class="p">(</span><span class="n">redisDb</span> <span class="o">*</span><span class="n">db</span><span class="p">,</span> <span class="n">robj</span> <span class="o">*</span><span class="n">key</span><span class="p">)</span> <span class="p">{</span>
+    <span class="cm">/* Deleting an entry from the expires dict will not free the sds of
+     * the key, because it is shared with the main dictionary. */</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">dictSize</span><span class="p">(</span><span class="n">db</span><span class="o">-&gt;</span><span class="n">expires</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="n">dictDelete</span><span class="p">(</span><span class="n">db</span><span class="o">-&gt;</span><span class="n">expires</span><span class="p">,</span><span class="n">key</span><span class="o">-&gt;</span><span class="n">ptr</span><span class="p">);</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">dictDelete</span><span class="p">(</span><span class="n">db</span><span class="o">-&gt;</span><span class="n">dict</span><span class="p">,</span><span class="n">key</span><span class="o">-&gt;</span><span class="n">ptr</span><span class="p">)</span> <span class="o">==</span> <span class="n">DICT_OK</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">return</span> <span class="mi">1</span><span class="p">;</span>
+    <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+        <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>上面的源码即Redis执行key淘汰删除的核心过程，具体操作可以参见注释，通过方法名字<code class="language-plaintext highlighter-rouge">expireIfNeeded()</code>这是一个检查类型的方法，那么说明是在进行key操作时，会触发该方法进行检查key是否需要进行淘汰删除，那么其调用时机在何时呢？</p>
+
+<p>在<code class="language-plaintext highlighter-rouge">db.c</code>的<code class="language-plaintext highlighter-rouge">#lookupKeyRead()与lookupKeyWrite()</code>：</p>
+
+<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">robj</span> <span class="o">*</span><span class="nf">lookupKeyRead</span><span class="p">(</span><span class="n">redisDb</span> <span class="o">*</span><span class="n">db</span><span class="p">,</span> <span class="n">robj</span> <span class="o">*</span><span class="n">key</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">robj</span> <span class="o">*</span><span class="n">val</span><span class="p">;</span>
+
+    <span class="n">expireIfNeeded</span><span class="p">(</span><span class="n">db</span><span class="p">,</span><span class="n">key</span><span class="p">);</span>
+    <span class="n">val</span> <span class="o">=</span> <span class="n">lookupKey</span><span class="p">(</span><span class="n">db</span><span class="p">,</span><span class="n">key</span><span class="p">);</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">val</span> <span class="o">==</span> <span class="nb">NULL</span><span class="p">)</span>
+        <span class="n">server</span><span class="p">.</span><span class="n">stat_keyspace_misses</span><span class="o">++</span><span class="p">;</span>
+    <span class="k">else</span>
+        <span class="n">server</span><span class="p">.</span><span class="n">stat_keyspace_hits</span><span class="o">++</span><span class="p">;</span>
+    <span class="k">return</span> <span class="n">val</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="n">robj</span> <span class="o">*</span><span class="nf">lookupKeyWrite</span><span class="p">(</span><span class="n">redisDb</span> <span class="o">*</span><span class="n">db</span><span class="p">,</span> <span class="n">robj</span> <span class="o">*</span><span class="n">key</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">expireIfNeeded</span><span class="p">(</span><span class="n">db</span><span class="p">,</span><span class="n">key</span><span class="p">);</span>
+    <span class="k">return</span> <span class="n">lookupKey</span><span class="p">(</span><span class="n">db</span><span class="p">,</span><span class="n">key</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="n">robj</span> <span class="o">*</span><span class="nf">lookupKeyReadOrReply</span><span class="p">(</span><span class="n">redisClient</span> <span class="o">*</span><span class="n">c</span><span class="p">,</span> <span class="n">robj</span> <span class="o">*</span><span class="n">key</span><span class="p">,</span> <span class="n">robj</span> <span class="o">*</span><span class="n">reply</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">robj</span> <span class="o">*</span><span class="n">o</span> <span class="o">=</span> <span class="n">lookupKeyRead</span><span class="p">(</span><span class="n">c</span><span class="o">-&gt;</span><span class="n">db</span><span class="p">,</span> <span class="n">key</span><span class="p">);</span>
+    <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">o</span><span class="p">)</span> <span class="n">addReply</span><span class="p">(</span><span class="n">c</span><span class="p">,</span><span class="n">reply</span><span class="p">);</span>
+    <span class="k">return</span> <span class="n">o</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="n">robj</span> <span class="o">*</span><span class="nf">lookupKeyWriteOrReply</span><span class="p">(</span><span class="n">redisClient</span> <span class="o">*</span><span class="n">c</span><span class="p">,</span> <span class="n">robj</span> <span class="o">*</span><span class="n">key</span><span class="p">,</span> <span class="n">robj</span> <span class="o">*</span><span class="n">reply</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">robj</span> <span class="o">*</span><span class="n">o</span> <span class="o">=</span> <span class="n">lookupKeyWrite</span><span class="p">(</span><span class="n">c</span><span class="o">-&gt;</span><span class="n">db</span><span class="p">,</span> <span class="n">key</span><span class="p">);</span>
+    <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">o</span><span class="p">)</span> <span class="n">addReply</span><span class="p">(</span><span class="n">c</span><span class="p">,</span><span class="n">reply</span><span class="p">);</span>
+    <span class="k">return</span> <span class="n">o</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>上面的代码是调用<code class="language-plaintext highlighter-rouge">expireIfNeeded()</code>的上游function，通过名字可以看出，<code class="language-plaintext highlighter-rouge">#lookupKeyRead()与lookupKeyWrite()</code>是读取和写入key的方法（不得不说，redis的代码命名非常的优秀，值得我们学习），那么调用该方法的一定就是执行获取key的地方，这里我们以最简单的<code class="language-plaintext highlighter-rouge">string</code>的<code class="language-plaintext highlighter-rouge">get</code>命令为例：</p>
+
+<p>在<code class="language-plaintext highlighter-rouge">t_string.c</code>的<code class="language-plaintext highlighter-rouge">#getCommand()</code>：</p>
+
+<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="cm">/* string的get命令 */</span>
+<span class="kt">void</span> <span class="nf">getCommand</span><span class="p">(</span><span class="n">redisClient</span> <span class="o">*</span><span class="n">c</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">getGenericCommand</span><span class="p">(</span><span class="n">c</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="kt">int</span> <span class="nf">getGenericCommand</span><span class="p">(</span><span class="n">redisClient</span> <span class="o">*</span><span class="n">c</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">robj</span> <span class="o">*</span><span class="n">o</span><span class="p">;</span>
+	<span class="cm">/* 通过调用lookupKeyReadOrReply函数查找指定key的值，如果key不存在，则向客户端返回空值并返回REDIS_OK；如果查找到了key的值，则将值保存到变量o中，继续后续的操作 */</span>
+    <span class="k">if</span> <span class="p">((</span><span class="n">o</span> <span class="o">=</span> <span class="n">lookupKeyReadOrReply</span><span class="p">(</span><span class="n">c</span><span class="p">,</span><span class="n">c</span><span class="o">-&gt;</span><span class="n">argv</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span><span class="n">shared</span><span class="p">.</span><span class="n">nullbulk</span><span class="p">))</span> <span class="o">==</span> <span class="nb">NULL</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">REDIS_OK</span><span class="p">;</span>
+	
+    <span class="cm">/* 判断获取到的值的类型是否为字符串类型 */</span>
+    <span class="cm">/* 如果值的类型不是字符串类型，向客户端返回错误响应，并返回REDIS_ERR表示获取失败 */</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">o</span><span class="o">-&gt;</span><span class="n">type</span> <span class="o">!=</span> <span class="n">REDIS_STRING</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">addReply</span><span class="p">(</span><span class="n">c</span><span class="p">,</span><span class="n">shared</span><span class="p">.</span><span class="n">wrongtypeerr</span><span class="p">);</span>
+        <span class="k">return</span> <span class="n">REDIS_ERR</span><span class="p">;</span>
+    <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+        <span class="cm">/* 如果值的类型是字符串类型，向客户端返回获取到的字符串值，并返回REDIS_OK表示获取成功 */</span>
+        <span class="n">addReplyBulk</span><span class="p">(</span><span class="n">c</span><span class="p">,</span><span class="n">o</span><span class="p">);</span>
+        <span class="k">return</span> <span class="n">REDIS_OK</span><span class="p">;</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>上述就是<code class="language-plaintext highlighter-rouge">string get</code>命令的执行过程，我们可以清晰的看到，redis是如何实现惰性淘汰删除机制，其他的数据结构，例如<code class="language-plaintext highlighter-rouge">Hash</code>、<code class="language-plaintext highlighter-rouge">List</code>、<code class="language-plaintext highlighter-rouge">Set</code>、<code class="language-plaintext highlighter-rouge">Zset</code>也是如此，这里就不一样贴出源码进行举例说明了，感兴趣的读者可以翻阅redis源码。</p>
+
+<p>这里我们用一张<code class="language-plaintext highlighter-rouge">string get</code>命令的时序图，总结一下<code class="language-plaintext highlighter-rouge">get</code>命令的执行流程：</p>
+
+<p><img src="https://img2018.cnblogs.com/i-beta/830731/202001/830731-20200122172051350-1377334291.png" alt="img" /></p>
+
+<h2 id="定时扫描删除机制">定时扫描删除机制</h2>
+
+<p>上面部分我们了解了惰性淘汰删除机制，但是仅仅靠客户端访问来判断 key 是否过期才执行删除肯定不够，因为有的 key 过期了，但未来再也没人访问，那岂不是GG，这些数据要怎么删除呢？</p>
+
+<p>Redis在后台，会启动一个定时任务，定期扫描数据库中的所有key，检查它们的过期时间是否已到期。但是这里需要注意，定时任务并不是一次运行就检查所有的库，所有的键，而是随机检查一定数量的键。</p>
+
+<p>为什么是随机抽查，而不是全量从头到尾扫描一遍？</p>
+
+<p>很好理解，如果redis中的key特别多，如果进行全量扫描，那对redis的性能会存在巨大的影响，如果有一个亿的key，每次定时任务执行都进行全量扫描，CPU岂不是爆炸。</p>
+
+<p><img src="https://mmbiz.qpic.cn/mmbiz_png/EoJib2tNvVtcOv8BrjWQFzmr4jXnQmsuGnHnXDiavLKozEfh7qiaBmWD1TIkXLgpd1iaib5SwR12v6w60rjd1YkJnuw/640?wx_fmt=png&amp;wxfrom=5&amp;wx_lazy=1&amp;wx_co=1" alt="图片" /></p>
+
+<p>上图的流程图，简单的描述了定时任务的执行逻辑（实际上会复杂很多），还是老规矩，不多逼逼，上源码，Redis具体是如何实现的，我们来一起看一下源码实现。</p>
+
+<p>定时任务的实现在<code class="language-plaintext highlighter-rouge">redis.c</code>的<code class="language-plaintext highlighter-rouge">#activeExpireCycle()</code>：</p>
+
+<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kt">void</span> <span class="nf">activeExpireCycle</span><span class="p">(</span><span class="kt">int</span> <span class="n">type</span><span class="p">)</span> <span class="p">{</span>
+    <span class="p">....</span><span class="err">此处省略部分前置逻辑</span>
+	
+    <span class="cm">/* 循环redis全部的db */</span>
+    <span class="k">for</span> <span class="p">(</span><span class="n">j</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">j</span> <span class="o">&lt;</span> <span class="n">dbs_per_call</span><span class="p">;</span> <span class="n">j</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
+        <span class="p">....</span><span class="err">此处省略部分前置逻辑</span>
+
+        <span class="k">do</span> <span class="p">{</span>
+            <span class="kt">unsigned</span> <span class="kt">long</span> <span class="n">num</span><span class="p">,</span> <span class="n">slots</span><span class="p">;</span>
+            <span class="kt">long</span> <span class="kt">long</span> <span class="n">now</span><span class="p">,</span> <span class="n">ttl_sum</span><span class="p">;</span>
+            <span class="kt">int</span> <span class="n">ttl_samples</span><span class="p">;</span>
+			
+            <span class="cm">/* 获取dict中设置了TTL的key集合中，计算集合的数量 */</span>
+            <span class="k">if</span> <span class="p">((</span><span class="n">num</span> <span class="o">=</span> <span class="n">dictSize</span><span class="p">(</span><span class="n">db</span><span class="o">-&gt;</span><span class="n">expires</span><span class="p">))</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+                <span class="n">db</span><span class="o">-&gt;</span><span class="n">avg_ttl</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+                <span class="k">break</span><span class="p">;</span>
+            <span class="p">}</span>
+            
+            <span class="p">....</span><span class="err">此处省略部分前置逻辑</span>
+			
+            <span class="cm">/* 如果过期的key数量，超过了20，那么扫描数量设置为20 */</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">num</span> <span class="o">&gt;</span> <span class="n">ACTIVE_EXPIRE_CYCLE_LOOKUPS_PER_LOOP</span><span class="p">)</span>
+                <span class="n">num</span> <span class="o">=</span> <span class="n">ACTIVE_EXPIRE_CYCLE_LOOKUPS_PER_LOOP</span><span class="p">;</span> <span class="cm">/* ACTIVE_EXPIRE_CYCLE_LOOKUPS_PER_LOOP = 20 */</span>
+			
+            <span class="cm">/* 循环处理 */</span>
+            <span class="k">while</span> <span class="p">(</span><span class="n">num</span><span class="o">--</span><span class="p">)</span> <span class="p">{</span>
+                <span class="n">dictEntry</span> <span class="o">*</span><span class="n">de</span><span class="p">;</span>
+                <span class="kt">long</span> <span class="kt">long</span> <span class="n">ttl</span><span class="p">;</span>
+				
+                <span class="cm">/* 获取dict中设置了TTL的key集合中，随机获取一个key */</span>
+                <span class="k">if</span> <span class="p">((</span><span class="n">de</span> <span class="o">=</span> <span class="n">dictGetRandomKey</span><span class="p">(</span><span class="n">db</span><span class="o">-&gt;</span><span class="n">expires</span><span class="p">))</span> <span class="o">==</span> <span class="nb">NULL</span><span class="p">)</span> <span class="k">break</span><span class="p">;</span>
+                <span class="cm">/* 计算TTL剩余时间 */</span>
+                <span class="n">ttl</span> <span class="o">=</span> <span class="n">dictGetSignedIntegerVal</span><span class="p">(</span><span class="n">de</span><span class="p">)</span><span class="o">-</span><span class="n">now</span><span class="p">;</span>
+                <span class="cm">/* 如果当前的key已经过期，则执行删除操作，并将过期key的数量加1 */</span>
+                <span class="k">if</span> <span class="p">(</span><span class="n">activeExpireCycleTryExpire</span><span class="p">(</span><span class="n">db</span><span class="p">,</span><span class="n">de</span><span class="p">,</span><span class="n">now</span><span class="p">))</span> <span class="n">expired</span><span class="o">++</span><span class="p">;</span>
+                
+                <span class="k">if</span> <span class="p">(</span><span class="n">ttl</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">)</span> <span class="n">ttl</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+                <span class="n">ttl_sum</span> <span class="o">+=</span> <span class="n">ttl</span><span class="p">;</span>
+                <span class="n">ttl_samples</span><span class="o">++</span><span class="p">;</span>
+            <span class="p">}</span>
+
+            <span class="p">....</span><span class="err">此处省略部分后置逻辑</span>
+        <span class="cm">/* 如果过期的key数量，超过阈值的25%，继续循环，否则退出扫描 */</span>
+        <span class="cm">/* 这也就意味着在任何时候，过期 key 的最大数量等于每秒最大写入操作量除以4 = 5*/</span>        
+        <span class="p">}</span> <span class="k">while</span> <span class="p">(</span><span class="n">expired</span> <span class="o">&gt;</span> <span class="n">ACTIVE_EXPIRE_CYCLE_LOOKUPS_PER_LOOP</span><span class="o">/</span><span class="mi">4</span><span class="p">);</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>上面的代码就是定时任务扫描过期key的执行流程，笔者删除了部分代码，仅保留的核心执行部分，方便读者阅读，核心执行逻辑可以参见注释部分</p>
+
+<p>如果用一句话概括说明定时任务的流程，那么可以总结为：</p>
+
+<blockquote>
+  <p>定时任务循环扫描每个redis数据库，从设置了TTL的key的集合中，随机挑选N个key进行检查，如果过期，干掉，否则跳过，直到过期key的数量小于25%，退出扫描</p>
+</blockquote>
+
+<p>以上，就是Redis删除过期key的两种实现方式，由于笔者对C的理解很有限，因此仅仅截取了部分源码进行解读，也可能有很多解读不对的地方，望读者见谅。</p>
+
+<p>事实上，仅仅通过惰性删除+定时任务扫描，仍会可能存在很多“漏网之鱼”，毕竟定时任务删除，并非全量扫描，那么如果Redis的使用容量达到了最大内存，Redis会如何操作？</p>
+
+<p>这就涉及到了Redis的key淘汰策略，本篇的内容就此为止，关于Redis的淘汰策略解读，我们下次再聊。</p>]]></content><author><name>GitHub User</name></author><category term="Redis" /><category term="Redis" /><summary type="html"><![CDATA[## 前言 当我们创建Redis key时，可以通过expire命令指定key的过期时间(TTL)，当超过指定的TTL时间后，key将会失效。 那么当key失效后，Redis会立刻将其删除么？如果不会，那么何时Redis才将其真正的删除呢？我们来一起一探究竟。 Redis key过期淘汰机制 Redis中的key过期淘汰机制是由两种方式实现： 惰性删除机制 定时扫描删除机制 两种模式都不会在key达到过期时间后，第一时间删除key，而是等待特定的时机触发淘汰机制，这个很好理解，如果每一个key到达过期时间后，redis都需要第一时间检测到，并将其删除，那么将会消耗大量的资源，去实时的扫描全部key值，这显然是不合理的。 下面我们来看一下两种方式的具体实现机制。 惰性删除机制 惰性删除很简单，就是当有客户端的请求查询该 key 的时候，检查下 key 是否过期，如果过期，则删除该 key。 在此种模式下，触发key淘汰的时机，是将删除过期数据的主动权交给了每次访问请求。 那么Redis具体是如何实现的，我们来一起看一下源码实现。 淘汰删除的具体实现，在db.c的#expireIfNeeded()： int expireIfNeeded(redisDb *db, robj *key) { /* 通过调用getExpire函数获取key的过期时间。*/ mstime_t when = getExpire(db,key); mstime_t now; /* 当过期时间小于0时，表示key没有设置过期时间，直接返回0 */ if (when &lt; 0) return 0; /* No expire for this key */ /* 如果Redis正在进行数据加载，直接返回0，不进行后续的过期检查。 */ if (server.loading) return 0; /* 获取当前时间，如果当前是在执行Lua脚本中，使用server.lua_time_start作为当前时间；否则，使用系统当前时间mstime作为当前时间 */ now = server.lua_caller ? server.lua_time_start : mstime(); /* 如果Redis是主从复制模式，并且当前节点是从节点，则直接返回当前时间是否大于过期时间，不进行后续的过期操作 */ if (server.masterhost != NULL) return now &gt; when; /* 如果当前时间小于等于过期时间，则直接返回0，表示key还没有过期 */ if (now &lt;= when) return 0; /* Delete the key */ /* 增加已过期key的数量统计 */ server.stat_expiredkeys++; /* 向从节点发送key过期的命令，保证从节点也能及时删除过期的key */ propagateExpire(db,key); /* 向Redis的事件通知机制发送key过期的事件通知 */ notifyKeyspaceEvent(REDIS_NOTIFY_EXPIRED, "expired",key,db-&gt;id); /* 删除已过期的key，并返回1表示删除成功 */ return dbDelete(db,key); } /* Delete a key, value, and associated expiration entry if any, from the DB */ int dbDelete(redisDb *db, robj *key) { /* Deleting an entry from the expires dict will not free the sds of * the key, because it is shared with the main dictionary. */ if (dictSize(db-&gt;expires) &gt; 0) dictDelete(db-&gt;expires,key-&gt;ptr); if (dictDelete(db-&gt;dict,key-&gt;ptr) == DICT_OK) { return 1; } else { return 0; } } 上面的源码即Redis执行key淘汰删除的核心过程，具体操作可以参见注释，通过方法名字expireIfNeeded()这是一个检查类型的方法，那么说明是在进行key操作时，会触发该方法进行检查key是否需要进行淘汰删除，那么其调用时机在何时呢？ 在db.c的#lookupKeyRead()与lookupKeyWrite()： robj *lookupKeyRead(redisDb *db, robj *key) { robj *val; expireIfNeeded(db,key); val = lookupKey(db,key); if (val == NULL) server.stat_keyspace_misses++; else server.stat_keyspace_hits++; return val; } robj *lookupKeyWrite(redisDb *db, robj *key) { expireIfNeeded(db,key); return lookupKey(db,key); } robj *lookupKeyReadOrReply(redisClient *c, robj *key, robj *reply) { robj *o = lookupKeyRead(c-&gt;db, key); if (!o) addReply(c,reply); return o; } robj *lookupKeyWriteOrReply(redisClient *c, robj *key, robj *reply) { robj *o = lookupKeyWrite(c-&gt;db, key); if (!o) addReply(c,reply); return o; } 上面的代码是调用expireIfNeeded()的上游function，通过名字可以看出，#lookupKeyRead()与lookupKeyWrite()是读取和写入key的方法（不得不说，redis的代码命名非常的优秀，值得我们学习），那么调用该方法的一定就是执行获取key的地方，这里我们以最简单的string的get命令为例： 在t_string.c的#getCommand()： /* string的get命令 */ void getCommand(redisClient *c) { getGenericCommand(c); } int getGenericCommand(redisClient *c) { robj *o; /* 通过调用lookupKeyReadOrReply函数查找指定key的值，如果key不存在，则向客户端返回空值并返回REDIS_OK；如果查找到了key的值，则将值保存到变量o中，继续后续的操作 */ if ((o = lookupKeyReadOrReply(c,c-&gt;argv[1],shared.nullbulk)) == NULL) return REDIS_OK; /* 判断获取到的值的类型是否为字符串类型 */ /* 如果值的类型不是字符串类型，向客户端返回错误响应，并返回REDIS_ERR表示获取失败 */ if (o-&gt;type != REDIS_STRING) { addReply(c,shared.wrongtypeerr); return REDIS_ERR; } else { /* 如果值的类型是字符串类型，向客户端返回获取到的字符串值，并返回REDIS_OK表示获取成功 */ addReplyBulk(c,o); return REDIS_OK; } } 上述就是string get命令的执行过程，我们可以清晰的看到，redis是如何实现惰性淘汰删除机制，其他的数据结构，例如Hash、List、Set、Zset也是如此，这里就不一样贴出源码进行举例说明了，感兴趣的读者可以翻阅redis源码。 这里我们用一张string get命令的时序图，总结一下get命令的执行流程： 定时扫描删除机制 上面部分我们了解了惰性淘汰删除机制，但是仅仅靠客户端访问来判断 key 是否过期才执行删除肯定不够，因为有的 key 过期了，但未来再也没人访问，那岂不是GG，这些数据要怎么删除呢？ Redis在后台，会启动一个定时任务，定期扫描数据库中的所有key，检查它们的过期时间是否已到期。但是这里需要注意，定时任务并不是一次运行就检查所有的库，所有的键，而是随机检查一定数量的键。 为什么是随机抽查，而不是全量从头到尾扫描一遍？ 很好理解，如果redis中的key特别多，如果进行全量扫描，那对redis的性能会存在巨大的影响，如果有一个亿的key，每次定时任务执行都进行全量扫描，CPU岂不是爆炸。 上图的流程图，简单的描述了定时任务的执行逻辑（实际上会复杂很多），还是老规矩，不多逼逼，上源码，Redis具体是如何实现的，我们来一起看一下源码实现。 定时任务的实现在redis.c的#activeExpireCycle()： void activeExpireCycle(int type) { ....此处省略部分前置逻辑 /* 循环redis全部的db */ for (j = 0; j &lt; dbs_per_call; j++) { ....此处省略部分前置逻辑 do { unsigned long num, slots; long long now, ttl_sum; int ttl_samples; /* 获取dict中设置了TTL的key集合中，计算集合的数量 */ if ((num = dictSize(db-&gt;expires)) == 0) { db-&gt;avg_ttl = 0; break; } ....此处省略部分前置逻辑 /* 如果过期的key数量，超过了20，那么扫描数量设置为20 */ if (num &gt; ACTIVE_EXPIRE_CYCLE_LOOKUPS_PER_LOOP) num = ACTIVE_EXPIRE_CYCLE_LOOKUPS_PER_LOOP; /* ACTIVE_EXPIRE_CYCLE_LOOKUPS_PER_LOOP = 20 */ /* 循环处理 */ while (num--) { dictEntry *de; long long ttl; /* 获取dict中设置了TTL的key集合中，随机获取一个key */ if ((de = dictGetRandomKey(db-&gt;expires)) == NULL) break; /* 计算TTL剩余时间 */ ttl = dictGetSignedIntegerVal(de)-now; /* 如果当前的key已经过期，则执行删除操作，并将过期key的数量加1 */ if (activeExpireCycleTryExpire(db,de,now)) expired++; if (ttl &lt; 0) ttl = 0; ttl_sum += ttl; ttl_samples++; } ....此处省略部分后置逻辑 /* 如果过期的key数量，超过阈值的25%，继续循环，否则退出扫描 */ /* 这也就意味着在任何时候，过期 key 的最大数量等于每秒最大写入操作量除以4 = 5*/ } while (expired &gt; ACTIVE_EXPIRE_CYCLE_LOOKUPS_PER_LOOP/4); } } 上面的代码就是定时任务扫描过期key的执行流程，笔者删除了部分代码，仅保留的核心执行部分，方便读者阅读，核心执行逻辑可以参见注释部分 如果用一句话概括说明定时任务的流程，那么可以总结为： 定时任务循环扫描每个redis数据库，从设置了TTL的key的集合中，随机挑选N个key进行检查，如果过期，干掉，否则跳过，直到过期key的数量小于25%，退出扫描 以上，就是Redis删除过期key的两种实现方式，由于笔者对C的理解很有限，因此仅仅截取了部分源码进行解读，也可能有很多解读不对的地方，望读者见谅。 事实上，仅仅通过惰性删除+定时任务扫描，仍会可能存在很多“漏网之鱼”，毕竟定时任务删除，并非全量扫描，那么如果Redis的使用容量达到了最大内存，Redis会如何操作？ 这就涉及到了Redis的key淘汰策略，本篇的内容就此为止，关于Redis的淘汰策略解读，我们下次再聊。]]></summary></entry><entry><title type="html">Redis6.0 Client-Side缓存是什么</title><link href="http://localhost:4000/redis/2024/09/25/Redis6.0-Client-Side%E7%BC%93%E5%AD%98%E6%98%AF%E4%BB%80%E4%B9%88.html" rel="alternate" type="text/html" title="Redis6.0 Client-Side缓存是什么" /><published>2024-09-25T00:00:00+08:00</published><updated>2024-09-25T00:00:00+08:00</updated><id>http://localhost:4000/redis/2024/09/25/Redis6.0%20Client-Side%E7%BC%93%E5%AD%98%E6%98%AF%E4%BB%80%E4%B9%88</id><content type="html" xml:base="http://localhost:4000/redis/2024/09/25/Redis6.0-Client-Side%E7%BC%93%E5%AD%98%E6%98%AF%E4%BB%80%E4%B9%88.html"><![CDATA[<p><img src="https://github.com/jeffreytse/jekyll-theme-yat/assets/9413601/2ed22d49-90b1-4f7e-8e8f-b77b21dee505" alt="banner" /></p>
+
+<h2 id="前言">前言</h2>
+
+<p>Redis在其6.0版本中加入了Client-side caching的支持，开启该功能后，Redis可以将指定的key-value缓存在客户端侧，这样当客户端发起请求时，如果客户端侧存在缓存，则无需请求Redis Server端。</p>
+
+<h2 id="why-client-side-caching">Why Client-side Caching？</h2>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>+-------------+                                +----------+
+|             | ------- GET user:1234 -------&gt; |          |
+| Application |                                | Database |
+|             | &lt;---- username = Alice ------- |          |
++-------------+                                +----------+
+</code></pre></div></div>
+
+<p>一些场景下，Redis的一些热点数据需要高频访问，但是并不会频繁的更新，这种数据存储在Redis中，会对Redis的读有一定的压力，因此，将这种数据存储在客户端侧进行缓存，当需要读取时，直接从客户端侧的内存中读取，可以大幅度减轻Redis的读压力，当数据发生变更时，Redis Server通知Client，更新Client Cache。</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>+-------------+                                +----------+
+|             |                                |          |
+| Application |       ( No chat needed )       | Database |
+|             |                                |          |
++-------------+                                +----------+
+| Local cache |
+|             |
+| user:1234 = |
+| username    |
+| Alice       |
++-------------+
+</code></pre></div></div>
+
+<h2 id="why-not-pubsub">Why Not Pub/Sub？</h2>
+
+<p>在早期的Redis版本中，一些业务场景，我们一定也会考虑到将一些不常变化的热点数据，存储在本地内存中，使用例如Caffeine Cache等Localcache，定时周期频率读取最新的值，更新Localcache，或者使用Redis Pub/Sub，当key值发生更新时，通知整个集群更新Localcache。</p>
+
+<p>使用Pub/Sub对于旧版本Redis来说，没有实现Client-side caching时，是一种解决方案，但是此种方案存在弊端，</p>
+
+<p>首先Pub/Sub不可靠，如果部分集群中的Client没有收到Pub的通知，Localcache可能没有更新；</p>
+
+<p>其次，对网络压力巨大，当Client Node非常多的时候，网络可能会出现阻塞，CPU压力也会增大，同时Client端需要自行实现Localcache的更新逻辑。</p>
+
+<h2 id="how-to-use-it">How to use it？</h2>
+
+<p>Redis Client-side Caching命令如下：</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>CLIENT TRACKING &lt;ON | OFF&gt; <span class="o">[</span>REDIRECT client-id] <span class="o">[</span>PREFIX prefix <span class="o">[</span>PREFIX prefix ...]] <span class="o">[</span>BCAST] <span class="o">[</span>OPTIN] <span class="o">[</span>OPTOUT] <span class="o">[</span>NOLOOP]
+</code></pre></div></div>
+
+<p>客户端默认不开启 track 模式，我们需要在获取执行指令之前执行开启命令：</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>CLIENT TRACKING ON
++OK
+GET foo
+<span class="s2">"bar"</span>
+</code></pre></div></div>
+
+<p>默认情况下，Client开启Tracking后，Redis Server端会对所有的Client端请求查询的key开启Tracking，当 key的值发现变化时会发送失效信息给客户端 (<code class="language-plaintext highlighter-rouge">invalidation message</code>)。</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>server -&gt; client: Invalidate foo
+</code></pre></div></div>
+
+<p>默认情况下，对所有的请求查询的key开启Tracking，这显然是不合适的，更多的场景下，我们只希望追踪部分热点且不经常变化的key，Redis支持对仅对特定的key开启<b>手动追踪</b>：</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>CLIENT TRACKING ON OPTIN // 开启特定key追踪选项
+
+CLIENT CACHING YES  // get请求前加入该命令
++OK
+GET foo
+<span class="s2">"bar"</span>
+</code></pre></div></div>
+
+<p>手动追踪模式下，需要用户在每次进行get命令之前，执行追踪的命令，这样的好处是非常的精确，但是也有点繁琐，Redis还提供了另一种追踪模式，即<b>广播模式</b></p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>CLIENT TRACKING ON BCAST PREFIX object: PREFIX user:
+</code></pre></div></div>
+
+<p>广播模式下，需要用户指定需要追踪的key的前缀，当key发生变化时，Redis Server端会发出广播通知全部订阅了该前缀key的客户端。</p>
+
+<p>需要注意的是，在这个模式下，如果用户没有指定<code class="language-plaintext highlighter-rouge">PREFIX</code>，那么服务端会给客户端广播所有 key 的失效情况，如果 key 被频繁修改，服务端会发送大量的失效广播消息，这就会消耗大量的网络带宽资源，<b>这是非常危险的一个行为，需要特别注意。</b></p>
+
+<h2 id="how-to-implement">How to implement?</h2>
+
+<p>上面的篇幅我们简单介绍了Redis的客户端侧缓存如何开启，本小节我们来看一下Redis是如何实现的，在展开这个问题之前，我们可以思考一下，如果我们是Redis的设计者，我们该如何实现该功能？</p>
+
+<p>很简单我们会想到，搞一个Array存一下嘛，对吧O(∩_∩)O，把需要追踪的key存一下，当key收到set之类的命令后，看一下Tracking Array中有没有，如果有，通知订阅的Client。</p>
+
+<p>事实上，对于手动追踪模式，Redis的确是这样实现的，Redis内部使用了<strong>Invalidation Table</strong>存储Tracking Key Data，也可以叫做<strong>Tracking Table</strong>，其内部使用LRU淘汰机制维护，当Table内的key数量达到最大值，会移除最老的记录，同时触发该记录已过期的通知给客户端。</p>
+
+<p>在<strong>Invalidation Table</strong>中，Redis存储了Tracking key的指针地址与客户端之间的映射关系，使用了一种基数树(radix tree)的数据结构，<strong>因为键对象的指针就是内存地址，也就是长整型数据</strong>。客户端缓存的相关操作就是对该数据的增删改查：</p>
+
+<p><img src="https://img-blog.csdnimg.cn/direct/da6ce7522abf46068e81dd1b47d4eda5.png#pic_center" alt="tracking table" /></p>
+
+<p>对于广播模式，实现的原理也是相似的，不过Redis并不是使用<strong>Invalidation Table</strong>存储，而是使用<strong>Prefixes Table</strong>存储key的前缀值与Client之间的关系：</p>
+
+<p><img src="https://img-blog.csdnimg.cn/direct/e0a79f08014c4278a8277c8806589754.png#pic_center" alt="Prefix Tracking Table" /></p>
+
+<h2 id="problem">Problem</h2>
+
+<p>以上，我们简单了解了Redis的Client-side caching的使用方式与实现机制，这是一个非常好的功能，可以帮助我们更加高效的使用Redis，但是其也有对应的问题。</p>
+
+<p>在Redis的官方文档中，Client-side caching功能并未提及Master/Slave 与 Cluster集群模式的特别支持，这意味着，Client端需要对key的Tracking做出特别的适配，而在Redis Cluster集群模式下，连接状态信息是分散在不同的节点上的，难以实现集中管理。</p>
+
+<p>Redis的客户端Jedis、lettuce与Redisson均不提供Client-side caching相关支持，lettuce的committer在Github中关于对Client-side caching问题做出了回复：</p>
+
+<blockquote>
+  <p>There are a few challenges to address:</p>
+
+  <ol>
+    <li>Re-apply <code class="language-plaintext highlighter-rouge">CLIENT TRACKING</code> settings upon reconnect: While that is primary a resiliency feature, in Master/Replica or Cluster mode that is a must since we don’t get hold easily of cluster connections. We also need to apply tracking settings when creating a new connection</li>
+    <li>Topology changes: Whenever the topology changes, we need to adapt to that. Meaning also that we need to carry over tracking settings. More over, how does the migration path look like when in Redis Cluster a slot assignment gets migrated to a new node? What about the server side, does it carry over also all touched keys? I assume not so reconfiguration can cause dropped notifications since the new server is no longer aware of the key subscriptions from the old server. While this could be done (with a lot of effort) on the client side, I think that is too complex.</li>
+    <li>Finally, I don’t have time to do that in the near future nor I see how I can do that alone in 2021.</li>
+  </ol>
+
+  <p>有一些挑战需要解决：</p>
+
+  <p>重新连接时重新应用客户端跟踪设置：虽然这主要是一个弹性功能，但在主/复制或群集模式下，这是必须的，因为我们不容易掌握群集连接。我们还需要在创建新连接时应用跟踪设置
+拓扑变化：每当拓扑结构发生变化时，我们都需要适应这种变化。这也意味着我们需要沿用跟踪设置。此外，当 Redis 集群中的插槽分配迁移到新节点时，迁移路径是怎样的？在服务器端，是否也会继承所有被触及的密钥？我认为不会，因此重新配置可能会导致通知丢失，因为新服务器不再知道旧服务器的密钥订阅。虽然这可以在客户端完成（需要付出很多努力），但我认为这太复杂了。
+最后，我近期没有时间去做这件事，我也不知道 2021 年我如何能单独完成这件事。</p>
+</blockquote>
+
+<p>对于我们普通开发者，希望在生产环境中使用Client-side caching，也许还需要观望后续Java Redis Client社区的支持情况。</p>]]></content><author><name>GitHub User</name></author><category term="Redis" /><category term="Redis" /><summary type="html"><![CDATA[前言 Redis在其6.0版本中加入了Client-side caching的支持，开启该功能后，Redis可以将指定的key-value缓存在客户端侧，这样当客户端发起请求时，如果客户端侧存在缓存，则无需请求Redis Server端。 Why Client-side Caching？ +-------------+ +----------+ | | ------- GET user:1234 -------&gt; | | | Application | | Database | | | &lt;---- username = Alice ------- | | +-------------+ +----------+ 一些场景下，Redis的一些热点数据需要高频访问，但是并不会频繁的更新，这种数据存储在Redis中，会对Redis的读有一定的压力，因此，将这种数据存储在客户端侧进行缓存，当需要读取时，直接从客户端侧的内存中读取，可以大幅度减轻Redis的读压力，当数据发生变更时，Redis Server通知Client，更新Client Cache。 +-------------+ +----------+ | | | | | Application | ( No chat needed ) | Database | | | | | +-------------+ +----------+ | Local cache | | | | user:1234 = | | username | | Alice | +-------------+ Why Not Pub/Sub？ 在早期的Redis版本中，一些业务场景，我们一定也会考虑到将一些不常变化的热点数据，存储在本地内存中，使用例如Caffeine Cache等Localcache，定时周期频率读取最新的值，更新Localcache，或者使用Redis Pub/Sub，当key值发生更新时，通知整个集群更新Localcache。 使用Pub/Sub对于旧版本Redis来说，没有实现Client-side caching时，是一种解决方案，但是此种方案存在弊端， 首先Pub/Sub不可靠，如果部分集群中的Client没有收到Pub的通知，Localcache可能没有更新； 其次，对网络压力巨大，当Client Node非常多的时候，网络可能会出现阻塞，CPU压力也会增大，同时Client端需要自行实现Localcache的更新逻辑。 How to use it？ Redis Client-side Caching命令如下： CLIENT TRACKING &lt;ON | OFF&gt; [REDIRECT client-id] [PREFIX prefix [PREFIX prefix ...]] [BCAST] [OPTIN] [OPTOUT] [NOLOOP] 客户端默认不开启 track 模式，我们需要在获取执行指令之前执行开启命令： CLIENT TRACKING ON +OK GET foo "bar" 默认情况下，Client开启Tracking后，Redis Server端会对所有的Client端请求查询的key开启Tracking，当 key的值发现变化时会发送失效信息给客户端 (invalidation message)。 server -&gt; client: Invalidate foo 默认情况下，对所有的请求查询的key开启Tracking，这显然是不合适的，更多的场景下，我们只希望追踪部分热点且不经常变化的key，Redis支持对仅对特定的key开启手动追踪： CLIENT TRACKING ON OPTIN // 开启特定key追踪选项 CLIENT CACHING YES // get请求前加入该命令 +OK GET foo "bar" 手动追踪模式下，需要用户在每次进行get命令之前，执行追踪的命令，这样的好处是非常的精确，但是也有点繁琐，Redis还提供了另一种追踪模式，即广播模式 CLIENT TRACKING ON BCAST PREFIX object: PREFIX user: 广播模式下，需要用户指定需要追踪的key的前缀，当key发生变化时，Redis Server端会发出广播通知全部订阅了该前缀key的客户端。 需要注意的是，在这个模式下，如果用户没有指定PREFIX，那么服务端会给客户端广播所有 key 的失效情况，如果 key 被频繁修改，服务端会发送大量的失效广播消息，这就会消耗大量的网络带宽资源，这是非常危险的一个行为，需要特别注意。 How to implement? 上面的篇幅我们简单介绍了Redis的客户端侧缓存如何开启，本小节我们来看一下Redis是如何实现的，在展开这个问题之前，我们可以思考一下，如果我们是Redis的设计者，我们该如何实现该功能？ 很简单我们会想到，搞一个Array存一下嘛，对吧O(∩_∩)O，把需要追踪的key存一下，当key收到set之类的命令后，看一下Tracking Array中有没有，如果有，通知订阅的Client。 事实上，对于手动追踪模式，Redis的确是这样实现的，Redis内部使用了Invalidation Table存储Tracking Key Data，也可以叫做Tracking Table，其内部使用LRU淘汰机制维护，当Table内的key数量达到最大值，会移除最老的记录，同时触发该记录已过期的通知给客户端。 在Invalidation Table中，Redis存储了Tracking key的指针地址与客户端之间的映射关系，使用了一种基数树(radix tree)的数据结构，因为键对象的指针就是内存地址，也就是长整型数据。客户端缓存的相关操作就是对该数据的增删改查： 对于广播模式，实现的原理也是相似的，不过Redis并不是使用Invalidation Table存储，而是使用Prefixes Table存储key的前缀值与Client之间的关系： Problem 以上，我们简单了解了Redis的Client-side caching的使用方式与实现机制，这是一个非常好的功能，可以帮助我们更加高效的使用Redis，但是其也有对应的问题。 在Redis的官方文档中，Client-side caching功能并未提及Master/Slave 与 Cluster集群模式的特别支持，这意味着，Client端需要对key的Tracking做出特别的适配，而在Redis Cluster集群模式下，连接状态信息是分散在不同的节点上的，难以实现集中管理。 Redis的客户端Jedis、lettuce与Redisson均不提供Client-side caching相关支持，lettuce的committer在Github中关于对Client-side caching问题做出了回复： There are a few challenges to address: Re-apply CLIENT TRACKING settings upon reconnect: While that is primary a resiliency feature, in Master/Replica or Cluster mode that is a must since we don’t get hold easily of cluster connections. We also need to apply tracking settings when creating a new connection Topology changes: Whenever the topology changes, we need to adapt to that. Meaning also that we need to carry over tracking settings. More over, how does the migration path look like when in Redis Cluster a slot assignment gets migrated to a new node? What about the server side, does it carry over also all touched keys? I assume not so reconfiguration can cause dropped notifications since the new server is no longer aware of the key subscriptions from the old server. While this could be done (with a lot of effort) on the client side, I think that is too complex. Finally, I don’t have time to do that in the near future nor I see how I can do that alone in 2021. 有一些挑战需要解决： 重新连接时重新应用客户端跟踪设置：虽然这主要是一个弹性功能，但在主/复制或群集模式下，这是必须的，因为我们不容易掌握群集连接。我们还需要在创建新连接时应用跟踪设置 拓扑变化：每当拓扑结构发生变化时，我们都需要适应这种变化。这也意味着我们需要沿用跟踪设置。此外，当 Redis 集群中的插槽分配迁移到新节点时，迁移路径是怎样的？在服务器端，是否也会继承所有被触及的密钥？我认为不会，因此重新配置可能会导致通知丢失，因为新服务器不再知道旧服务器的密钥订阅。虽然这可以在客户端完成（需要付出很多努力），但我认为这太复杂了。 最后，我近期没有时间去做这件事，我也不知道 2021 年我如何能单独完成这件事。 对于我们普通开发者，希望在生产环境中使用Client-side caching，也许还需要观望后续Java Redis Client社区的支持情况。]]></summary></entry></feed>

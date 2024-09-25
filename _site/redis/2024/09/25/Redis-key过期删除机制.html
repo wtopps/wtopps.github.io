@@ -1,0 +1,1325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="google-translate-customization" content="108d9124921d80c3-80e20d618ff053c8-g4f02ec6f3dba68b7-c">
+<!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>Redis key过期删除机制 | wtopps</title>
+<meta name="generator" content="Jekyll v4.3.4">
+<meta property="og:title" content="Redis key过期删除机制">
+<meta name="author" content="GitHub User">
+<meta property="og:locale" content="en_US">
+<meta name="description" content='## 前言 当我们创建Redis key时，可以通过expire命令指定key的过期时间(TTL)，当超过指定的TTL时间后，key将会失效。 那么当key失效后，Redis会立刻将其删除么？如果不会，那么何时Redis才将其真正的删除呢？我们来一起一探究竟。 Redis key过期淘汰机制 Redis中的key过期淘汰机制是由两种方式实现： 惰性删除机制 定时扫描删除机制 两种模式都不会在key达到过期时间后，第一时间删除key，而是等待特定的时机触发淘汰机制，这个很好理解，如果每一个key到达过期时间后，redis都需要第一时间检测到，并将其删除，那么将会消耗大量的资源，去实时的扫描全部key值，这显然是不合理的。 下面我们来看一下两种方式的具体实现机制。 惰性删除机制 惰性删除很简单，就是当有客户端的请求查询该 key 的时候，检查下 key 是否过期，如果过期，则删除该 key。 在此种模式下，触发key淘汰的时机，是将删除过期数据的主动权交给了每次访问请求。 那么Redis具体是如何实现的，我们来一起看一下源码实现。 淘汰删除的具体实现，在db.c的#expireIfNeeded()： int expireIfNeeded(redisDb *db, robj *key) { /* 通过调用getExpire函数获取key的过期时间。*/ mstime_t when = getExpire(db,key); mstime_t now; /* 当过期时间小于0时，表示key没有设置过期时间，直接返回0 */ if (when &lt; 0) return 0; /* No expire for this key */ /* 如果Redis正在进行数据加载，直接返回0，不进行后续的过期检查。 */ if (server.loading) return 0; /* 获取当前时间，如果当前是在执行Lua脚本中，使用server.lua_time_start作为当前时间；否则，使用系统当前时间mstime作为当前时间 */ now = server.lua_caller ? server.lua_time_start : mstime(); /* 如果Redis是主从复制模式，并且当前节点是从节点，则直接返回当前时间是否大于过期时间，不进行后续的过期操作 */ if (server.masterhost != NULL) return now &gt; when; /* 如果当前时间小于等于过期时间，则直接返回0，表示key还没有过期 */ if (now &lt;= when) return 0; /* Delete the key */ /* 增加已过期key的数量统计 */ server.stat_expiredkeys++; /* 向从节点发送key过期的命令，保证从节点也能及时删除过期的key */ propagateExpire(db,key); /* 向Redis的事件通知机制发送key过期的事件通知 */ notifyKeyspaceEvent(REDIS_NOTIFY_EXPIRED, "expired",key,db-&gt;id); /* 删除已过期的key，并返回1表示删除成功 */ return dbDelete(db,key); } /* Delete a key, value, and associated expiration entry if any, from the DB */ int dbDelete(redisDb *db, robj *key) { /* Deleting an entry from the expires dict will not free the sds of * the key, because it is shared with the main dictionary. */ if (dictSize(db-&gt;expires) &gt; 0) dictDelete(db-&gt;expires,key-&gt;ptr); if (dictDelete(db-&gt;dict,key-&gt;ptr) == DICT_OK) { return 1; } else { return 0; } } 上面的源码即Redis执行key淘汰删除的核心过程，具体操作可以参见注释，通过方法名字expireIfNeeded()这是一个检查类型的方法，那么说明是在进行key操作时，会触发该方法进行检查key是否需要进行淘汰删除，那么其调用时机在何时呢？ 在db.c的#lookupKeyRead()与lookupKeyWrite()： robj *lookupKeyRead(redisDb *db, robj *key) { robj *val; expireIfNeeded(db,key); val = lookupKey(db,key); if (val == NULL) server.stat_keyspace_misses++; else server.stat_keyspace_hits++; return val; } robj *lookupKeyWrite(redisDb *db, robj *key) { expireIfNeeded(db,key); return lookupKey(db,key); } robj *lookupKeyReadOrReply(redisClient *c, robj *key, robj *reply) { robj *o = lookupKeyRead(c-&gt;db, key); if (!o) addReply(c,reply); return o; } robj *lookupKeyWriteOrReply(redisClient *c, robj *key, robj *reply) { robj *o = lookupKeyWrite(c-&gt;db, key); if (!o) addReply(c,reply); return o; } 上面的代码是调用expireIfNeeded()的上游function，通过名字可以看出，#lookupKeyRead()与lookupKeyWrite()是读取和写入key的方法（不得不说，redis的代码命名非常的优秀，值得我们学习），那么调用该方法的一定就是执行获取key的地方，这里我们以最简单的string的get命令为例： 在t_string.c的#getCommand()： /* string的get命令 */ void getCommand(redisClient *c) { getGenericCommand(c); } int getGenericCommand(redisClient *c) { robj *o; /* 通过调用lookupKeyReadOrReply函数查找指定key的值，如果key不存在，则向客户端返回空值并返回REDIS_OK；如果查找到了key的值，则将值保存到变量o中，继续后续的操作 */ if ((o = lookupKeyReadOrReply(c,c-&gt;argv[1],shared.nullbulk)) == NULL) return REDIS_OK; /* 判断获取到的值的类型是否为字符串类型 */ /* 如果值的类型不是字符串类型，向客户端返回错误响应，并返回REDIS_ERR表示获取失败 */ if (o-&gt;type != REDIS_STRING) { addReply(c,shared.wrongtypeerr); return REDIS_ERR; } else { /* 如果值的类型是字符串类型，向客户端返回获取到的字符串值，并返回REDIS_OK表示获取成功 */ addReplyBulk(c,o); return REDIS_OK; } } 上述就是string get命令的执行过程，我们可以清晰的看到，redis是如何实现惰性淘汰删除机制，其他的数据结构，例如Hash、List、Set、Zset也是如此，这里就不一样贴出源码进行举例说明了，感兴趣的读者可以翻阅redis源码。 这里我们用一张string get命令的时序图，总结一下get命令的执行流程： 定时扫描删除机制 上面部分我们了解了惰性淘汰删除机制，但是仅仅靠客户端访问来判断 key 是否过期才执行删除肯定不够，因为有的 key 过期了，但未来再也没人访问，那岂不是GG，这些数据要怎么删除呢？ Redis在后台，会启动一个定时任务，定期扫描数据库中的所有key，检查它们的过期时间是否已到期。但是这里需要注意，定时任务并不是一次运行就检查所有的库，所有的键，而是随机检查一定数量的键。 为什么是随机抽查，而不是全量从头到尾扫描一遍？ 很好理解，如果redis中的key特别多，如果进行全量扫描，那对redis的性能会存在巨大的影响，如果有一个亿的key，每次定时任务执行都进行全量扫描，CPU岂不是爆炸。 上图的流程图，简单的描述了定时任务的执行逻辑（实际上会复杂很多），还是老规矩，不多逼逼，上源码，Redis具体是如何实现的，我们来一起看一下源码实现。 定时任务的实现在redis.c的#activeExpireCycle()： void activeExpireCycle(int type) { ....此处省略部分前置逻辑 /* 循环redis全部的db */ for (j = 0; j &lt; dbs_per_call; j++) { ....此处省略部分前置逻辑 do { unsigned long num, slots; long long now, ttl_sum; int ttl_samples; /* 获取dict中设置了TTL的key集合中，计算集合的数量 */ if ((num = dictSize(db-&gt;expires)) == 0) { db-&gt;avg_ttl = 0; break; } ....此处省略部分前置逻辑 /* 如果过期的key数量，超过了20，那么扫描数量设置为20 */ if (num &gt; ACTIVE_EXPIRE_CYCLE_LOOKUPS_PER_LOOP) num = ACTIVE_EXPIRE_CYCLE_LOOKUPS_PER_LOOP; /* ACTIVE_EXPIRE_CYCLE_LOOKUPS_PER_LOOP = 20 */ /* 循环处理 */ while (num--) { dictEntry *de; long long ttl; /* 获取dict中设置了TTL的key集合中，随机获取一个key */ if ((de = dictGetRandomKey(db-&gt;expires)) == NULL) break; /* 计算TTL剩余时间 */ ttl = dictGetSignedIntegerVal(de)-now; /* 如果当前的key已经过期，则执行删除操作，并将过期key的数量加1 */ if (activeExpireCycleTryExpire(db,de,now)) expired++; if (ttl &lt; 0) ttl = 0; ttl_sum += ttl; ttl_samples++; } ....此处省略部分后置逻辑 /* 如果过期的key数量，超过阈值的25%，继续循环，否则退出扫描 */ /* 这也就意味着在任何时候，过期 key 的最大数量等于每秒最大写入操作量除以4 = 5*/ } while (expired &gt; ACTIVE_EXPIRE_CYCLE_LOOKUPS_PER_LOOP/4); } } 上面的代码就是定时任务扫描过期key的执行流程，笔者删除了部分代码，仅保留的核心执行部分，方便读者阅读，核心执行逻辑可以参见注释部分 如果用一句话概括说明定时任务的流程，那么可以总结为： 定时任务循环扫描每个redis数据库，从设置了TTL的key的集合中，随机挑选N个key进行检查，如果过期，干掉，否则跳过，直到过期key的数量小于25%，退出扫描 以上，就是Redis删除过期key的两种实现方式，由于笔者对C的理解很有限，因此仅仅截取了部分源码进行解读，也可能有很多解读不对的地方，望读者见谅。 事实上，仅仅通过惰性删除+定时任务扫描，仍会可能存在很多“漏网之鱼”，毕竟定时任务删除，并非全量扫描，那么如果Redis的使用容量达到了最大内存，Redis会如何操作？ 这就涉及到了Redis的key淘汰策略，本篇的内容就此为止，关于Redis的淘汰策略解读，我们下次再聊。'>
+<meta property="og:description" content='## 前言 当我们创建Redis key时，可以通过expire命令指定key的过期时间(TTL)，当超过指定的TTL时间后，key将会失效。 那么当key失效后，Redis会立刻将其删除么？如果不会，那么何时Redis才将其真正的删除呢？我们来一起一探究竟。 Redis key过期淘汰机制 Redis中的key过期淘汰机制是由两种方式实现： 惰性删除机制 定时扫描删除机制 两种模式都不会在key达到过期时间后，第一时间删除key，而是等待特定的时机触发淘汰机制，这个很好理解，如果每一个key到达过期时间后，redis都需要第一时间检测到，并将其删除，那么将会消耗大量的资源，去实时的扫描全部key值，这显然是不合理的。 下面我们来看一下两种方式的具体实现机制。 惰性删除机制 惰性删除很简单，就是当有客户端的请求查询该 key 的时候，检查下 key 是否过期，如果过期，则删除该 key。 在此种模式下，触发key淘汰的时机，是将删除过期数据的主动权交给了每次访问请求。 那么Redis具体是如何实现的，我们来一起看一下源码实现。 淘汰删除的具体实现，在db.c的#expireIfNeeded()： int expireIfNeeded(redisDb *db, robj *key) { /* 通过调用getExpire函数获取key的过期时间。*/ mstime_t when = getExpire(db,key); mstime_t now; /* 当过期时间小于0时，表示key没有设置过期时间，直接返回0 */ if (when &lt; 0) return 0; /* No expire for this key */ /* 如果Redis正在进行数据加载，直接返回0，不进行后续的过期检查。 */ if (server.loading) return 0; /* 获取当前时间，如果当前是在执行Lua脚本中，使用server.lua_time_start作为当前时间；否则，使用系统当前时间mstime作为当前时间 */ now = server.lua_caller ? server.lua_time_start : mstime(); /* 如果Redis是主从复制模式，并且当前节点是从节点，则直接返回当前时间是否大于过期时间，不进行后续的过期操作 */ if (server.masterhost != NULL) return now &gt; when; /* 如果当前时间小于等于过期时间，则直接返回0，表示key还没有过期 */ if (now &lt;= when) return 0; /* Delete the key */ /* 增加已过期key的数量统计 */ server.stat_expiredkeys++; /* 向从节点发送key过期的命令，保证从节点也能及时删除过期的key */ propagateExpire(db,key); /* 向Redis的事件通知机制发送key过期的事件通知 */ notifyKeyspaceEvent(REDIS_NOTIFY_EXPIRED, "expired",key,db-&gt;id); /* 删除已过期的key，并返回1表示删除成功 */ return dbDelete(db,key); } /* Delete a key, value, and associated expiration entry if any, from the DB */ int dbDelete(redisDb *db, robj *key) { /* Deleting an entry from the expires dict will not free the sds of * the key, because it is shared with the main dictionary. */ if (dictSize(db-&gt;expires) &gt; 0) dictDelete(db-&gt;expires,key-&gt;ptr); if (dictDelete(db-&gt;dict,key-&gt;ptr) == DICT_OK) { return 1; } else { return 0; } } 上面的源码即Redis执行key淘汰删除的核心过程，具体操作可以参见注释，通过方法名字expireIfNeeded()这是一个检查类型的方法，那么说明是在进行key操作时，会触发该方法进行检查key是否需要进行淘汰删除，那么其调用时机在何时呢？ 在db.c的#lookupKeyRead()与lookupKeyWrite()： robj *lookupKeyRead(redisDb *db, robj *key) { robj *val; expireIfNeeded(db,key); val = lookupKey(db,key); if (val == NULL) server.stat_keyspace_misses++; else server.stat_keyspace_hits++; return val; } robj *lookupKeyWrite(redisDb *db, robj *key) { expireIfNeeded(db,key); return lookupKey(db,key); } robj *lookupKeyReadOrReply(redisClient *c, robj *key, robj *reply) { robj *o = lookupKeyRead(c-&gt;db, key); if (!o) addReply(c,reply); return o; } robj *lookupKeyWriteOrReply(redisClient *c, robj *key, robj *reply) { robj *o = lookupKeyWrite(c-&gt;db, key); if (!o) addReply(c,reply); return o; } 上面的代码是调用expireIfNeeded()的上游function，通过名字可以看出，#lookupKeyRead()与lookupKeyWrite()是读取和写入key的方法（不得不说，redis的代码命名非常的优秀，值得我们学习），那么调用该方法的一定就是执行获取key的地方，这里我们以最简单的string的get命令为例： 在t_string.c的#getCommand()： /* string的get命令 */ void getCommand(redisClient *c) { getGenericCommand(c); } int getGenericCommand(redisClient *c) { robj *o; /* 通过调用lookupKeyReadOrReply函数查找指定key的值，如果key不存在，则向客户端返回空值并返回REDIS_OK；如果查找到了key的值，则将值保存到变量o中，继续后续的操作 */ if ((o = lookupKeyReadOrReply(c,c-&gt;argv[1],shared.nullbulk)) == NULL) return REDIS_OK; /* 判断获取到的值的类型是否为字符串类型 */ /* 如果值的类型不是字符串类型，向客户端返回错误响应，并返回REDIS_ERR表示获取失败 */ if (o-&gt;type != REDIS_STRING) { addReply(c,shared.wrongtypeerr); return REDIS_ERR; } else { /* 如果值的类型是字符串类型，向客户端返回获取到的字符串值，并返回REDIS_OK表示获取成功 */ addReplyBulk(c,o); return REDIS_OK; } } 上述就是string get命令的执行过程，我们可以清晰的看到，redis是如何实现惰性淘汰删除机制，其他的数据结构，例如Hash、List、Set、Zset也是如此，这里就不一样贴出源码进行举例说明了，感兴趣的读者可以翻阅redis源码。 这里我们用一张string get命令的时序图，总结一下get命令的执行流程： 定时扫描删除机制 上面部分我们了解了惰性淘汰删除机制，但是仅仅靠客户端访问来判断 key 是否过期才执行删除肯定不够，因为有的 key 过期了，但未来再也没人访问，那岂不是GG，这些数据要怎么删除呢？ Redis在后台，会启动一个定时任务，定期扫描数据库中的所有key，检查它们的过期时间是否已到期。但是这里需要注意，定时任务并不是一次运行就检查所有的库，所有的键，而是随机检查一定数量的键。 为什么是随机抽查，而不是全量从头到尾扫描一遍？ 很好理解，如果redis中的key特别多，如果进行全量扫描，那对redis的性能会存在巨大的影响，如果有一个亿的key，每次定时任务执行都进行全量扫描，CPU岂不是爆炸。 上图的流程图，简单的描述了定时任务的执行逻辑（实际上会复杂很多），还是老规矩，不多逼逼，上源码，Redis具体是如何实现的，我们来一起看一下源码实现。 定时任务的实现在redis.c的#activeExpireCycle()： void activeExpireCycle(int type) { ....此处省略部分前置逻辑 /* 循环redis全部的db */ for (j = 0; j &lt; dbs_per_call; j++) { ....此处省略部分前置逻辑 do { unsigned long num, slots; long long now, ttl_sum; int ttl_samples; /* 获取dict中设置了TTL的key集合中，计算集合的数量 */ if ((num = dictSize(db-&gt;expires)) == 0) { db-&gt;avg_ttl = 0; break; } ....此处省略部分前置逻辑 /* 如果过期的key数量，超过了20，那么扫描数量设置为20 */ if (num &gt; ACTIVE_EXPIRE_CYCLE_LOOKUPS_PER_LOOP) num = ACTIVE_EXPIRE_CYCLE_LOOKUPS_PER_LOOP; /* ACTIVE_EXPIRE_CYCLE_LOOKUPS_PER_LOOP = 20 */ /* 循环处理 */ while (num--) { dictEntry *de; long long ttl; /* 获取dict中设置了TTL的key集合中，随机获取一个key */ if ((de = dictGetRandomKey(db-&gt;expires)) == NULL) break; /* 计算TTL剩余时间 */ ttl = dictGetSignedIntegerVal(de)-now; /* 如果当前的key已经过期，则执行删除操作，并将过期key的数量加1 */ if (activeExpireCycleTryExpire(db,de,now)) expired++; if (ttl &lt; 0) ttl = 0; ttl_sum += ttl; ttl_samples++; } ....此处省略部分后置逻辑 /* 如果过期的key数量，超过阈值的25%，继续循环，否则退出扫描 */ /* 这也就意味着在任何时候，过期 key 的最大数量等于每秒最大写入操作量除以4 = 5*/ } while (expired &gt; ACTIVE_EXPIRE_CYCLE_LOOKUPS_PER_LOOP/4); } } 上面的代码就是定时任务扫描过期key的执行流程，笔者删除了部分代码，仅保留的核心执行部分，方便读者阅读，核心执行逻辑可以参见注释部分 如果用一句话概括说明定时任务的流程，那么可以总结为： 定时任务循环扫描每个redis数据库，从设置了TTL的key的集合中，随机挑选N个key进行检查，如果过期，干掉，否则跳过，直到过期key的数量小于25%，退出扫描 以上，就是Redis删除过期key的两种实现方式，由于笔者对C的理解很有限，因此仅仅截取了部分源码进行解读，也可能有很多解读不对的地方，望读者见谅。 事实上，仅仅通过惰性删除+定时任务扫描，仍会可能存在很多“漏网之鱼”，毕竟定时任务删除，并非全量扫描，那么如果Redis的使用容量达到了最大内存，Redis会如何操作？ 这就涉及到了Redis的key淘汰策略，本篇的内容就此为止，关于Redis的淘汰策略解读，我们下次再聊。'>
+<link rel="canonical" href="http://localhost:4000/redis/2024/09/25/Redis-key%E8%BF%87%E6%9C%9F%E5%88%A0%E9%99%A4%E6%9C%BA%E5%88%B6.html">
+<meta property="og:url" content="http://localhost:4000/redis/2024/09/25/Redis-key%E8%BF%87%E6%9C%9F%E5%88%A0%E9%99%A4%E6%9C%BA%E5%88%B6.html">
+<meta property="og:site_name" content="wtopps">
+<meta property="og:type" content="article">
+<meta property="article:published_time" content="2024-09-25T00:00:00+08:00">
+<meta name="twitter:card" content="summary">
+<meta property="twitter:title" content="Redis key过期删除机制">
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"GitHub User"},"dateModified":"2024-09-25T00:00:00+08:00","datePublished":"2024-09-25T00:00:00+08:00","description":"## 前言 当我们创建Redis key时，可以通过expire命令指定key的过期时间(TTL)，当超过指定的TTL时间后，key将会失效。 那么当key失效后，Redis会立刻将其删除么？如果不会，那么何时Redis才将其真正的删除呢？我们来一起一探究竟。 Redis key过期淘汰机制 Redis中的key过期淘汰机制是由两种方式实现： 惰性删除机制 定时扫描删除机制 两种模式都不会在key达到过期时间后，第一时间删除key，而是等待特定的时机触发淘汰机制，这个很好理解，如果每一个key到达过期时间后，redis都需要第一时间检测到，并将其删除，那么将会消耗大量的资源，去实时的扫描全部key值，这显然是不合理的。 下面我们来看一下两种方式的具体实现机制。 惰性删除机制 惰性删除很简单，就是当有客户端的请求查询该 key 的时候，检查下 key 是否过期，如果过期，则删除该 key。 在此种模式下，触发key淘汰的时机，是将删除过期数据的主动权交给了每次访问请求。 那么Redis具体是如何实现的，我们来一起看一下源码实现。 淘汰删除的具体实现，在db.c的#expireIfNeeded()： int expireIfNeeded(redisDb *db, robj *key) { /* 通过调用getExpire函数获取key的过期时间。*/ mstime_t when = getExpire(db,key); mstime_t now; /* 当过期时间小于0时，表示key没有设置过期时间，直接返回0 */ if (when &lt; 0) return 0; /* No expire for this key */ /* 如果Redis正在进行数据加载，直接返回0，不进行后续的过期检查。 */ if (server.loading) return 0; /* 获取当前时间，如果当前是在执行Lua脚本中，使用server.lua_time_start作为当前时间；否则，使用系统当前时间mstime作为当前时间 */ now = server.lua_caller ? server.lua_time_start : mstime(); /* 如果Redis是主从复制模式，并且当前节点是从节点，则直接返回当前时间是否大于过期时间，不进行后续的过期操作 */ if (server.masterhost != NULL) return now &gt; when; /* 如果当前时间小于等于过期时间，则直接返回0，表示key还没有过期 */ if (now &lt;= when) return 0; /* Delete the key */ /* 增加已过期key的数量统计 */ server.stat_expiredkeys++; /* 向从节点发送key过期的命令，保证从节点也能及时删除过期的key */ propagateExpire(db,key); /* 向Redis的事件通知机制发送key过期的事件通知 */ notifyKeyspaceEvent(REDIS_NOTIFY_EXPIRED, &quot;expired&quot;,key,db-&gt;id); /* 删除已过期的key，并返回1表示删除成功 */ return dbDelete(db,key); } /* Delete a key, value, and associated expiration entry if any, from the DB */ int dbDelete(redisDb *db, robj *key) { /* Deleting an entry from the expires dict will not free the sds of * the key, because it is shared with the main dictionary. */ if (dictSize(db-&gt;expires) &gt; 0) dictDelete(db-&gt;expires,key-&gt;ptr); if (dictDelete(db-&gt;dict,key-&gt;ptr) == DICT_OK) { return 1; } else { return 0; } } 上面的源码即Redis执行key淘汰删除的核心过程，具体操作可以参见注释，通过方法名字expireIfNeeded()这是一个检查类型的方法，那么说明是在进行key操作时，会触发该方法进行检查key是否需要进行淘汰删除，那么其调用时机在何时呢？ 在db.c的#lookupKeyRead()与lookupKeyWrite()： robj *lookupKeyRead(redisDb *db, robj *key) { robj *val; expireIfNeeded(db,key); val = lookupKey(db,key); if (val == NULL) server.stat_keyspace_misses++; else server.stat_keyspace_hits++; return val; } robj *lookupKeyWrite(redisDb *db, robj *key) { expireIfNeeded(db,key); return lookupKey(db,key); } robj *lookupKeyReadOrReply(redisClient *c, robj *key, robj *reply) { robj *o = lookupKeyRead(c-&gt;db, key); if (!o) addReply(c,reply); return o; } robj *lookupKeyWriteOrReply(redisClient *c, robj *key, robj *reply) { robj *o = lookupKeyWrite(c-&gt;db, key); if (!o) addReply(c,reply); return o; } 上面的代码是调用expireIfNeeded()的上游function，通过名字可以看出，#lookupKeyRead()与lookupKeyWrite()是读取和写入key的方法（不得不说，redis的代码命名非常的优秀，值得我们学习），那么调用该方法的一定就是执行获取key的地方，这里我们以最简单的string的get命令为例： 在t_string.c的#getCommand()： /* string的get命令 */ void getCommand(redisClient *c) { getGenericCommand(c); } int getGenericCommand(redisClient *c) { robj *o; /* 通过调用lookupKeyReadOrReply函数查找指定key的值，如果key不存在，则向客户端返回空值并返回REDIS_OK；如果查找到了key的值，则将值保存到变量o中，继续后续的操作 */ if ((o = lookupKeyReadOrReply(c,c-&gt;argv[1],shared.nullbulk)) == NULL) return REDIS_OK; /* 判断获取到的值的类型是否为字符串类型 */ /* 如果值的类型不是字符串类型，向客户端返回错误响应，并返回REDIS_ERR表示获取失败 */ if (o-&gt;type != REDIS_STRING) { addReply(c,shared.wrongtypeerr); return REDIS_ERR; } else { /* 如果值的类型是字符串类型，向客户端返回获取到的字符串值，并返回REDIS_OK表示获取成功 */ addReplyBulk(c,o); return REDIS_OK; } } 上述就是string get命令的执行过程，我们可以清晰的看到，redis是如何实现惰性淘汰删除机制，其他的数据结构，例如Hash、List、Set、Zset也是如此，这里就不一样贴出源码进行举例说明了，感兴趣的读者可以翻阅redis源码。 这里我们用一张string get命令的时序图，总结一下get命令的执行流程： 定时扫描删除机制 上面部分我们了解了惰性淘汰删除机制，但是仅仅靠客户端访问来判断 key 是否过期才执行删除肯定不够，因为有的 key 过期了，但未来再也没人访问，那岂不是GG，这些数据要怎么删除呢？ Redis在后台，会启动一个定时任务，定期扫描数据库中的所有key，检查它们的过期时间是否已到期。但是这里需要注意，定时任务并不是一次运行就检查所有的库，所有的键，而是随机检查一定数量的键。 为什么是随机抽查，而不是全量从头到尾扫描一遍？ 很好理解，如果redis中的key特别多，如果进行全量扫描，那对redis的性能会存在巨大的影响，如果有一个亿的key，每次定时任务执行都进行全量扫描，CPU岂不是爆炸。 上图的流程图，简单的描述了定时任务的执行逻辑（实际上会复杂很多），还是老规矩，不多逼逼，上源码，Redis具体是如何实现的，我们来一起看一下源码实现。 定时任务的实现在redis.c的#activeExpireCycle()： void activeExpireCycle(int type) { ....此处省略部分前置逻辑 /* 循环redis全部的db */ for (j = 0; j &lt; dbs_per_call; j++) { ....此处省略部分前置逻辑 do { unsigned long num, slots; long long now, ttl_sum; int ttl_samples; /* 获取dict中设置了TTL的key集合中，计算集合的数量 */ if ((num = dictSize(db-&gt;expires)) == 0) { db-&gt;avg_ttl = 0; break; } ....此处省略部分前置逻辑 /* 如果过期的key数量，超过了20，那么扫描数量设置为20 */ if (num &gt; ACTIVE_EXPIRE_CYCLE_LOOKUPS_PER_LOOP) num = ACTIVE_EXPIRE_CYCLE_LOOKUPS_PER_LOOP; /* ACTIVE_EXPIRE_CYCLE_LOOKUPS_PER_LOOP = 20 */ /* 循环处理 */ while (num--) { dictEntry *de; long long ttl; /* 获取dict中设置了TTL的key集合中，随机获取一个key */ if ((de = dictGetRandomKey(db-&gt;expires)) == NULL) break; /* 计算TTL剩余时间 */ ttl = dictGetSignedIntegerVal(de)-now; /* 如果当前的key已经过期，则执行删除操作，并将过期key的数量加1 */ if (activeExpireCycleTryExpire(db,de,now)) expired++; if (ttl &lt; 0) ttl = 0; ttl_sum += ttl; ttl_samples++; } ....此处省略部分后置逻辑 /* 如果过期的key数量，超过阈值的25%，继续循环，否则退出扫描 */ /* 这也就意味着在任何时候，过期 key 的最大数量等于每秒最大写入操作量除以4 = 5*/ } while (expired &gt; ACTIVE_EXPIRE_CYCLE_LOOKUPS_PER_LOOP/4); } } 上面的代码就是定时任务扫描过期key的执行流程，笔者删除了部分代码，仅保留的核心执行部分，方便读者阅读，核心执行逻辑可以参见注释部分 如果用一句话概括说明定时任务的流程，那么可以总结为： 定时任务循环扫描每个redis数据库，从设置了TTL的key的集合中，随机挑选N个key进行检查，如果过期，干掉，否则跳过，直到过期key的数量小于25%，退出扫描 以上，就是Redis删除过期key的两种实现方式，由于笔者对C的理解很有限，因此仅仅截取了部分源码进行解读，也可能有很多解读不对的地方，望读者见谅。 事实上，仅仅通过惰性删除+定时任务扫描，仍会可能存在很多“漏网之鱼”，毕竟定时任务删除，并非全量扫描，那么如果Redis的使用容量达到了最大内存，Redis会如何操作？ 这就涉及到了Redis的key淘汰策略，本篇的内容就此为止，关于Redis的淘汰策略解读，我们下次再聊。","headline":"Redis key过期删除机制","mainEntityOfPage":{"@type":"WebPage","@id":"http://localhost:4000/redis/2024/09/25/Redis-key%E8%BF%87%E6%9C%9F%E5%88%A0%E9%99%A4%E6%9C%BA%E5%88%B6.html"},"url":"http://localhost:4000/redis/2024/09/25/Redis-key%E8%BF%87%E6%9C%9F%E5%88%A0%E9%99%A4%E6%9C%BA%E5%88%B6.html"}</script>
+<!-- End Jekyll SEO tag -->
+<link rel="icon" href="">
+  <link rel="canonical" href="http://localhost:4000">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/typeface-noto-sans@0.0.72/index.min.css">
+  <link rel="stylesheet" href="/assets/css/main.css">
+  <script src="/assets/js/main.js"></script><link type="application/atom+xml" rel="alternate" href="http://localhost:4000/feed.xml" title="wtopps">
+<link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/styles/default.min.css">
+<script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/highlight.min.js"></script>
+<!-- and it's easy to individually load additional languages -->
+<script charset="UTF-8" src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/languages/go.min.js" async></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<script>
+// Init highlight js
+document.addEventListener('DOMContentLoaded', function(event) {
+  var els = document.querySelectorAll('pre code')
+
+  function addLangData(block) {
+    var outer = block.parentElement.parentElement.parentElement;
+    var lang = block.getAttribute('data-lang');
+    for (var i = 0; i < outer.classList.length; i++) {
+      var cls = outer.classList[i];
+      if (cls.startsWith('language-')) {
+        lang = cls;
+        break;
+      }
+    }
+    if (!lang) {
+      cls = block.getAttribute('class');
+      lang = cls ? cls.replace('hljs ', '') : '';
+    }
+    if (lang.startsWith('language-')) {
+      lang = lang.substr(9);
+    }
+    block.setAttribute('class', 'hljs ' + lang);
+    block.parentNode.setAttribute('data-lang', lang);
+  }
+
+  function addBadge(block) {
+    var enabled = ('true' || 'true').toLowerCase();
+    if (enabled == 'true') {
+      var pre = block.parentElement;
+      pre.classList.add('badge');
+    }
+  }
+
+  function handle(block) {
+    addLangData(block);
+    addBadge(block)
+    hljs.highlightBlock(block);
+  }
+
+  for (var i = 0; i < els.length; i++) {
+    var el = els[i];
+    handle(el);
+  }
+});
+</script>
+
+<style>
+  /* code language badge */
+  pre.badge::before {
+    content: attr(data-lang);
+    color: #fff;
+    background-color: #ff4e00;
+    padding: 0 .5em;
+    border-radius: 0 2px;
+    text-transform: uppercase;
+    text-align: center;
+    min-width: 32px;
+    display: inline-block;
+    position: absolute;
+    right: 0;
+  }
+
+  /* fix wrong badge display for firefox browser */
+  code > table pre::before {
+    display: none;
+  }
+</style>
+<script src="//cdnjs.cloudflare.com/ajax/libs/photoswipe/5.3.7/umd/photoswipe-lightbox.umd.min.js" async></script>
+<script src="//cdnjs.cloudflare.com/ajax/libs/photoswipe/5.3.7/umd/photoswipe.umd.min.js" async></script>
+<link href="//cdnjs.cloudflare.com/ajax/libs/photoswipe/5.3.7/photoswipe.min.css" rel="stylesheet">
+<style>
+  .pswp .pswp__container .pswp__img {
+    background-color: white;
+  }
+</style>
+
+<script>
+  function initPhotoSwipe() {
+    let customOptions = {};
+
+    try {
+      const data = ``.replaceAll("=>", ":");
+      customOptions = JSON.parse(data);
+    } catch (e) {
+      console.info("Invalid custom photo previewer options! " + e.message);
+    }
+
+    // Define object and gallery options
+    const options = Object.assign(
+      {
+        gallery: "section.main",
+        children: "a.photo-swipe",
+        photo_scale: 2,
+        // dynamic import is not supported in UMD version
+        pswpModule: PhotoSwipe,
+      },
+      customOptions
+    );
+
+    const galleryEl = document.querySelector(options.gallery);
+    if (!galleryEl) {
+      return;
+    }
+
+    const imgEls = [];
+    const els = galleryEl.querySelectorAll("img:not(.emoji)");
+    els.forEach((el) => {
+      if (el.src.trim() == "") {
+        return;
+      }
+      if (!imgEls.includes(el)) {
+        imgEls.push(el);
+      }
+    });
+
+    if (imgEls.length === 0) {
+      return;
+    }
+
+    imgEls.forEach((imgEl) => {
+      imgEl.outerHTML = `
+      <a class="photo-swipe"
+        href="${imgEl.src}"
+        data-pswp-width="${
+          Math.max(imgEl.naturalWidth, imgEl.width) * options.photo_scale
+        }"
+        data-pswp-height="${
+          Math.max(imgEl.naturalHeight, imgEl.height) * options.photo_scale
+        }"
+        data-pswp-caption="${imgEl.getAttribute("caption") || imgEl.alt}"
+        target="_blank">
+        ${imgEl.outerHTML}
+      </a>`;
+    });
+
+    // Initialize PhotoSwipe 5
+    var lightbox = new PhotoSwipeLightbox(options);
+
+    lightbox.init();
+  }
+
+  window.addEventListener("load", initPhotoSwipe);
+</script>
+</head>
+<body>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<header class="site-header " role="banner">
+
+  <div class="wrapper">
+    <div class="site-header-inner">
+<span class="site-brand"><a class="site-brand-inner" rel="author" href="/">
+  <img class="site-favicon" title="wtopps" src="" onerror="this.style.display='none'">
+  wtopps
+</a>
+</span><nav class="site-nav">
+          <input type="checkbox" id="nav-trigger" class="nav-trigger">
+          <label for="nav-trigger">
+            <span class="menu-icon">
+              <svg viewbox="0 0 18 15" width="18px" height="15px">
+                <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"></path>
+              </svg>
+            </span>
+          </label>
+
+          <div class="trigger">
+<a class="page-link" href="/about.html">ABOUT</a><a class="page-link" href="/archives.html">ARCHIVES</a><a class="page-link" href="/categories.html">CATEGORIES</a><a class="page-link" href="/">HOME</a><a class="page-link" href="/tags.html">TAGS</a>
+
+
+
+
+
+
+
+
+
+<div class="page-link" style="display: inline;">
+
+
+
+<div id="google_translate_element" style="display: none;">
+</div>
+
+<div class="ct-language">
+  <ul class="list-unstyled ct-language-dropdown">
+    
+      <li>
+        <a href="#" class="lang-select" data-lang="en">
+          
+          <img src="https://cdn.countryflags.com/thumbs/united-states-of-america/flag-400.png" title="English">
+          
+        </a>
+      </li>
+    
+      <li>
+        <a href="#" class="lang-select" data-lang="fr">
+          
+          <img src="https://cdn.countryflags.com/thumbs/france/flag-400.png" title="French">
+          
+        </a>
+      </li>
+    
+      <li>
+        <a href="#" class="lang-select" data-lang="zh-CN">
+          
+          <img src="https://cdn.countryflags.com/thumbs/china/flag-400.png" title="Chinese(Simple)">
+          
+        </a>
+      </li>
+    
+      <li>
+        <a href="#" class="lang-select" data-lang="ja">
+          
+          <img src="https://cdn.countryflags.com/thumbs/japan/flag-400.png" title="Japanese">
+          
+        </a>
+      </li>
+    
+      <li>
+        <a href="#" class="lang-select" data-lang="ko">
+          
+          <img src="https://cdn.countryflags.com/thumbs/south-korea/flag-400.png" title="Korean">
+          
+        </a>
+      </li>
+    
+      <li>
+        <a href="#" class="lang-select" data-lang="ru">
+          
+          <img src="https://cdn.countryflags.com/thumbs/russia/flag-400.png" title="Russian">
+          
+        </a>
+      </li>
+    
+  </ul>
+</div>
+
+<script type="text/javascript">
+function googleTranslateElementInit() {
+  new google.translate.TranslateElement({
+    pageLanguage: 'en',
+    autoDisplay: false,
+    layout: google.translate.TranslateElement.InlineLayout.VERTICAL
+  }, 'google_translate_element');
+
+  // Links to cross-origin destinations are unsafe
+  var gll = document.getElementsByClassName('goog-logo-link')[0];
+  if (gll) {
+    gll.setAttribute('rel', 'noopener');
+  }
+
+  function restoreLang() {
+    var iframe = document.getElementsByClassName('goog-te-banner-frame')[0];
+    if (!iframe) return;
+
+    var innerDoc = iframe.contentDocument || iframe.contentWindow.document;
+    var restore_el = innerDoc.getElementsByTagName("button");
+
+    for (var i = 0; i < restore_el.length; i++) {
+      if (restore_el[i].id.indexOf("restore") >= 0) {
+        restore_el[i].click();
+        var close_el = innerDoc.getElementsByClassName("goog-close-link");
+        close_el[0].click();
+        return;
+      }
+    }
+  }
+
+  function triggerHtmlEvent(element, eventName) {
+    var event;
+    if (document.createEvent) {
+      event = document.createEvent('HTMLEvents');
+      event.initEvent(eventName, true, true);
+      element.dispatchEvent(event);
+    } else {
+      event = document.createEventObject();
+      event.eventType = eventName;
+      element.fireEvent('on' + event.eventType, event);
+    }
+  }
+
+  var googleCombo = document.querySelector("select.goog-te-combo");
+  var langSelect = document.querySelector('.ct-language');
+  langSelect.addEventListener('click', function(event) {
+    if (!event.target) {
+      return;
+    }
+
+    var selected = document.querySelector('.ct-language .ct-language-selected');
+    if (selected) {
+      selected.classList.remove('ct-language-selected');
+    }
+
+    var target = event.target;
+    while (target && target !== langSelect ) {
+      if (target.matches('.lang-select')) {
+        break;
+      }
+      target = target.parentElement;
+    }
+
+    if (target && target.matches('.lang-select')) {
+      var lang = target.getAttribute('data-lang');
+      if (googleCombo.value == lang) {
+        restoreLang();
+      } else {
+        target.parentElement.classList.add('ct-language-selected');
+        googleCombo.value = lang;
+        triggerHtmlEvent(googleCombo, 'change');
+      }
+    }
+
+    event.preventDefault();
+  });
+}
+</script>
+
+<script type="text/javascript" src="https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit" async></script>
+</div>
+</div>
+        </nav>
+</div>
+  </div>
+</header>
+
+<script>
+  function initHeader() {
+    var lastScrollY = getScrollPos().y;
+    var documentElement = document.documentElement;
+
+    function storeScrollData() {
+      var y = getScrollPos().y;var scrollStatus = "";
+
+      if (y <= 0) {
+        scrollStatus = "top";
+      } else if ((window.innerHeight + y) >= document.body.offsetHeight) {
+        scrollStatus = "bottom";
+      } else {
+        var isScrollDown = (y - lastScrollY > 0) ? true : false;
+        scrollStatus = isScrollDown ? "down" : "up";
+      }
+
+      lastScrollY = y;
+      documentElement.setAttribute("data-scroll-status", scrollStatus);
+    }
+
+    window.addEventListener('scroll', function(e) {
+      storeScrollData();
+    });
+
+    storeScrollData();
+  }
+  document.addEventListener('DOMContentLoaded', initHeader);
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<script>
+  function hashLocate(hashValue) {
+    hashValue = hashValue.replace(/^.*#h-/, '');
+    hashValue = decodeURIComponent(hashValue);
+    var element = document.getElementById(hashValue);
+
+    if (!element) {
+      return;
+    }
+
+    var header = document.querySelector('header.site-header');
+    var headerRect = header.getBoundingClientRect();
+    var headerTop = Math.floor(headerRect.top);
+    var headerHeight = Math.floor(headerRect.height);
+    var scrollPos = getScrollPos();
+    var offsetY = element.offsetTop - (headerTop + headerHeight + 20);
+
+    if (offsetY == scrollPos.y) {
+      return;
+    }
+
+    if (headerTop == 0  && offsetY > scrollPos.y) {
+      offsetY += headerHeight + 2;
+    } else if (headerTop < 0  && offsetY < scrollPos.y) {
+      offsetY -= headerHeight - 2;
+    }
+
+    smoothScrollTo(offsetY);
+  }
+
+  // The first event occurred
+  window.addEventListener('load', function(event) {
+    if (window.location.hash) {
+      hashLocate(window.location.hash);
+    }
+  });
+
+  // The first event occurred
+  window.addEventListener('click', function(event) {
+    if (event.target.tagName.toLowerCase() == 'a') {
+      hashLocate(event.target.getAttribute('href'));
+    }
+  });
+</script>
+<div class="theme-toggle">
+  <input type="checkbox" id="theme-switch">
+  <label for="theme-switch">
+    <div class="toggle"></div>
+    <div class="names">
+      <p class="light">Light</p>
+      <p class="dark">Dark</p>
+    </div>
+  </label>
+</div>
+
+
+
+
+<script>
+  (function() {
+    var sw = document.getElementById('theme-switch');
+    var html = document.getElementsByTagName('html')[0];
+    var nightModeOption = ('auto' || 'auto').toLowerCase();
+    var storage = nightModeOption === 'manual'
+        ? localStorage
+        : sessionStorage;
+    var themeData = loadThemeData();
+
+    function saveThemeData(data) {
+      storage.setItem('theme', JSON.stringify(data));
+    }
+
+    function loadThemeData() {
+      var data = storage.getItem('theme');
+      try {
+        data = JSON.parse(data ? data : '');
+      } catch(e) {
+        data = { nightShift: undefined, autoToggleAt: 0 };
+        saveThemeData(data);
+      }
+      return data;
+    }
+
+    function handleThemeToggle(nightShift) {
+      themeData.nightShift = nightShift;
+      saveThemeData(themeData);
+      html.dataset.theme = nightShift ? 'dark' : 'light';
+      setTimeout(function() {
+        sw.checked = nightShift ? true : false;
+      }, 50);
+    }
+
+    function autoThemeToggle() {
+      // Next time point of theme toggle
+      var now = new Date();
+      var toggleAt = new Date();
+      var hours = now.getHours();
+      var nightShift = hours >= 19 || hours <=7;
+
+      if (nightShift) {
+        if (hours > 7) {
+          toggleAt.setDate(toggleAt.getDate() + 1);
+        }
+        toggleAt.setHours(7);
+      } else {
+        toggleAt.setHours(19);
+      }
+
+      toggleAt.setMinutes(0);
+      toggleAt.setSeconds(0);
+      toggleAt.setMilliseconds(0)
+
+      var delay = toggleAt.getTime() - now.getTime();
+
+      // auto toggle theme mode
+      setTimeout(function() {
+        handleThemeToggle(!nightShift);
+      }, delay);
+
+      return {
+        nightShift: nightShift,
+        toggleAt: toggleAt.getTime()
+      };
+    }
+
+    // Listen the theme toggle event
+    sw.addEventListener('change', function(event) {
+      handleThemeToggle(event.target.checked);
+    });
+
+    if (nightModeOption == 'auto') {
+      var data = autoThemeToggle();
+
+      // Toggle theme by local setting
+      if (data.toggleAt > themeData.autoToggleAt) {
+        themeData.autoToggleAt = data.toggleAt;
+        handleThemeToggle(data.nightShift);
+      } else {
+        handleThemeToggle(themeData.nightShift);
+      }
+    } else if (nightModeOption == 'manual') {
+      handleThemeToggle(themeData.nightShift);
+    } else {
+      var nightShift = themeData.nightShift;
+      if (nightShift === undefined) {
+        nightShift = nightModeOption === 'on';
+      }
+      handleThemeToggle(nightShift);
+    }
+  })();
+</script>
+<div id="click-to-top" class="click-to-top">
+  <i class="fa fa-arrow-up"></i>
+</div>
+<script>
+  (function () {
+    const clickToTop = document.getElementById('click-to-top');
+    window.addEventListener('scroll', () => {
+      if (window.scrollY > 100) {
+        clickToTop.classList.add('show')
+      }else {
+        clickToTop.classList.remove('show')
+      }
+    });
+    clickToTop.addEventListener('click', () => {
+      window.smoothScrollTo(0);
+    });
+  })();
+</script>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <div class="framework">
+  <section class="main">
+
+     <div class="post">
+  <section>
+
+
+
+
+
+
+
+
+
+<header class="post-header">
+  <h1 class="post-title p-name" itemprop="name headline">Redis key过期删除机制</h1>
+  <h2 class="post-subtitle">Redis key过期删除机制</h2>
+
+  <div class="post-meta">
+    <time class="dt-published" datetime="2024-09-25T00:00:00+08:00" itemprop="datePublished"><i class="fa fa-calendar"></i> Sep 25, 2024
+    </time>
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <span class="post-reading-time left-vsplit"><i class="fa fa-clock-o"></i> About 7 mins</span>
+  </div>
+<div class="post-tags"><a class="post-tag" href="/tags.html#Redis">#Redis</a></div></header>
+<article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+
+    <div class="post-content e-content" itemprop="articleBody">
+
+      <p><img src="https://github.com/jeffreytse/jekyll-theme-yat/assets/9413601/2ed22d49-90b1-4f7e-8e8f-b77b21dee505" alt="banner"></p>
+
+<p>##</p>
+
+<h2 id="前言">前言</h2>
+
+<p>当我们创建Redis key时，可以通过<code class="language-plaintext highlighter-rouge">expire</code>命令指定key的过期时间(TTL)，当超过指定的TTL时间后，key将会失效。</p>
+
+<p>那么当key失效后，Redis会立刻将其删除么？如果不会，那么何时Redis才将其真正的删除呢？我们来一起一探究竟。</p>
+
+<h2 id="redis-key过期淘汰机制">Redis key过期淘汰机制</h2>
+
+<p>Redis中的key过期淘汰机制是由两种方式实现：</p>
+
+<ul>
+  <li>惰性删除机制</li>
+  <li>定时扫描删除机制</li>
+</ul>
+
+<p>两种模式都不会在key达到过期时间后，第一时间删除key，而是等待特定的时机触发淘汰机制，这个很好理解，如果每一个key到达过期时间后，redis都需要第一时间检测到，并将其删除，那么将会消耗大量的资源，去实时的扫描全部key值，这显然是不合理的。</p>
+
+<p>下面我们来看一下两种方式的具体实现机制。</p>
+
+<h2 id="惰性删除机制">惰性删除机制</h2>
+
+<p>惰性删除很简单，就是当有客户端的请求查询该 key 的时候，检查下 key 是否过期，如果过期，则删除该 key。</p>
+
+<p>在此种模式下，触发key淘汰的时机，是将删除过期数据的主动权交给了每次访问请求。</p>
+
+<p>那么Redis具体是如何实现的，我们来一起看一下源码实现。</p>
+
+<p>淘汰删除的具体实现，在<code class="language-plaintext highlighter-rouge">db.c</code>的<code class="language-plaintext highlighter-rouge">#expireIfNeeded()</code>：</p>
+
+<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kt">int</span> <span class="nf">expireIfNeeded</span><span class="p">(</span><span class="n">redisDb</span> <span class="o">*</span><span class="n">db</span><span class="p">,</span> <span class="n">robj</span> <span class="o">*</span><span class="n">key</span><span class="p">)</span> <span class="p">{</span>
+    <span class="cm">/* 通过调用getExpire函数获取key的过期时间。*/</span>
+    <span class="n">mstime_t</span> <span class="n">when</span> <span class="o">=</span> <span class="n">getExpire</span><span class="p">(</span><span class="n">db</span><span class="p">,</span><span class="n">key</span><span class="p">);</span>
+    <span class="n">mstime_t</span> <span class="n">now</span><span class="p">;</span>
+	
+    <span class="cm">/* 当过期时间小于0时，表示key没有设置过期时间，直接返回0 */</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">when</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">)</span> <span class="k">return</span> <span class="mi">0</span><span class="p">;</span> <span class="cm">/* No expire for this key */</span>
+
+    <span class="cm">/* 如果Redis正在进行数据加载，直接返回0，不进行后续的过期检查。 */</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">server</span><span class="p">.</span><span class="n">loading</span><span class="p">)</span> <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+
+    <span class="cm">/* 获取当前时间，如果当前是在执行Lua脚本中，使用server.lua_time_start作为当前时间；否则，使用系统当前时间mstime作为当前时间 */</span>
+    <span class="n">now</span> <span class="o">=</span> <span class="n">server</span><span class="p">.</span><span class="n">lua_caller</span> <span class="o">?</span> <span class="n">server</span><span class="p">.</span><span class="n">lua_time_start</span> <span class="o">:</span> <span class="n">mstime</span><span class="p">();</span>
+
+    <span class="cm">/* 如果Redis是主从复制模式，并且当前节点是从节点，则直接返回当前时间是否大于过期时间，不进行后续的过期操作 */</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">server</span><span class="p">.</span><span class="n">masterhost</span> <span class="o">!=</span> <span class="nb">NULL</span><span class="p">)</span> <span class="k">return</span> <span class="n">now</span> <span class="o">&gt;</span> <span class="n">when</span><span class="p">;</span>
+
+    <span class="cm">/* 如果当前时间小于等于过期时间，则直接返回0，表示key还没有过期 */</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">now</span> <span class="o">&lt;=</span> <span class="n">when</span><span class="p">)</span> <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+
+    <span class="cm">/* Delete the key */</span>
+    <span class="cm">/* 增加已过期key的数量统计 */</span>
+    <span class="n">server</span><span class="p">.</span><span class="n">stat_expiredkeys</span><span class="o">++</span><span class="p">;</span>
+    <span class="cm">/* 向从节点发送key过期的命令，保证从节点也能及时删除过期的key */</span>
+    <span class="n">propagateExpire</span><span class="p">(</span><span class="n">db</span><span class="p">,</span><span class="n">key</span><span class="p">);</span>
+    <span class="cm">/* 向Redis的事件通知机制发送key过期的事件通知 */</span>
+    <span class="n">notifyKeyspaceEvent</span><span class="p">(</span><span class="n">REDIS_NOTIFY_EXPIRED</span><span class="p">,</span>
+        <span class="s">"expired"</span><span class="p">,</span><span class="n">key</span><span class="p">,</span><span class="n">db</span><span class="o">-&gt;</span><span class="n">id</span><span class="p">);</span>
+    <span class="cm">/* 删除已过期的key，并返回1表示删除成功 */</span>
+    <span class="k">return</span> <span class="n">dbDelete</span><span class="p">(</span><span class="n">db</span><span class="p">,</span><span class="n">key</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="cm">/* Delete a key, value, and associated expiration entry if any, from the DB */</span>
+<span class="kt">int</span> <span class="nf">dbDelete</span><span class="p">(</span><span class="n">redisDb</span> <span class="o">*</span><span class="n">db</span><span class="p">,</span> <span class="n">robj</span> <span class="o">*</span><span class="n">key</span><span class="p">)</span> <span class="p">{</span>
+    <span class="cm">/* Deleting an entry from the expires dict will not free the sds of
+     * the key, because it is shared with the main dictionary. */</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">dictSize</span><span class="p">(</span><span class="n">db</span><span class="o">-&gt;</span><span class="n">expires</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="n">dictDelete</span><span class="p">(</span><span class="n">db</span><span class="o">-&gt;</span><span class="n">expires</span><span class="p">,</span><span class="n">key</span><span class="o">-&gt;</span><span class="n">ptr</span><span class="p">);</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">dictDelete</span><span class="p">(</span><span class="n">db</span><span class="o">-&gt;</span><span class="n">dict</span><span class="p">,</span><span class="n">key</span><span class="o">-&gt;</span><span class="n">ptr</span><span class="p">)</span> <span class="o">==</span> <span class="n">DICT_OK</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">return</span> <span class="mi">1</span><span class="p">;</span>
+    <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+        <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>上面的源码即Redis执行key淘汰删除的核心过程，具体操作可以参见注释，通过方法名字<code class="language-plaintext highlighter-rouge">expireIfNeeded()</code>这是一个检查类型的方法，那么说明是在进行key操作时，会触发该方法进行检查key是否需要进行淘汰删除，那么其调用时机在何时呢？</p>
+
+<p>在<code class="language-plaintext highlighter-rouge">db.c</code>的<code class="language-plaintext highlighter-rouge">#lookupKeyRead()与lookupKeyWrite()</code>：</p>
+
+<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">robj</span> <span class="o">*</span><span class="nf">lookupKeyRead</span><span class="p">(</span><span class="n">redisDb</span> <span class="o">*</span><span class="n">db</span><span class="p">,</span> <span class="n">robj</span> <span class="o">*</span><span class="n">key</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">robj</span> <span class="o">*</span><span class="n">val</span><span class="p">;</span>
+
+    <span class="n">expireIfNeeded</span><span class="p">(</span><span class="n">db</span><span class="p">,</span><span class="n">key</span><span class="p">);</span>
+    <span class="n">val</span> <span class="o">=</span> <span class="n">lookupKey</span><span class="p">(</span><span class="n">db</span><span class="p">,</span><span class="n">key</span><span class="p">);</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">val</span> <span class="o">==</span> <span class="nb">NULL</span><span class="p">)</span>
+        <span class="n">server</span><span class="p">.</span><span class="n">stat_keyspace_misses</span><span class="o">++</span><span class="p">;</span>
+    <span class="k">else</span>
+        <span class="n">server</span><span class="p">.</span><span class="n">stat_keyspace_hits</span><span class="o">++</span><span class="p">;</span>
+    <span class="k">return</span> <span class="n">val</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="n">robj</span> <span class="o">*</span><span class="nf">lookupKeyWrite</span><span class="p">(</span><span class="n">redisDb</span> <span class="o">*</span><span class="n">db</span><span class="p">,</span> <span class="n">robj</span> <span class="o">*</span><span class="n">key</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">expireIfNeeded</span><span class="p">(</span><span class="n">db</span><span class="p">,</span><span class="n">key</span><span class="p">);</span>
+    <span class="k">return</span> <span class="n">lookupKey</span><span class="p">(</span><span class="n">db</span><span class="p">,</span><span class="n">key</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="n">robj</span> <span class="o">*</span><span class="nf">lookupKeyReadOrReply</span><span class="p">(</span><span class="n">redisClient</span> <span class="o">*</span><span class="n">c</span><span class="p">,</span> <span class="n">robj</span> <span class="o">*</span><span class="n">key</span><span class="p">,</span> <span class="n">robj</span> <span class="o">*</span><span class="n">reply</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">robj</span> <span class="o">*</span><span class="n">o</span> <span class="o">=</span> <span class="n">lookupKeyRead</span><span class="p">(</span><span class="n">c</span><span class="o">-&gt;</span><span class="n">db</span><span class="p">,</span> <span class="n">key</span><span class="p">);</span>
+    <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">o</span><span class="p">)</span> <span class="n">addReply</span><span class="p">(</span><span class="n">c</span><span class="p">,</span><span class="n">reply</span><span class="p">);</span>
+    <span class="k">return</span> <span class="n">o</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="n">robj</span> <span class="o">*</span><span class="nf">lookupKeyWriteOrReply</span><span class="p">(</span><span class="n">redisClient</span> <span class="o">*</span><span class="n">c</span><span class="p">,</span> <span class="n">robj</span> <span class="o">*</span><span class="n">key</span><span class="p">,</span> <span class="n">robj</span> <span class="o">*</span><span class="n">reply</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">robj</span> <span class="o">*</span><span class="n">o</span> <span class="o">=</span> <span class="n">lookupKeyWrite</span><span class="p">(</span><span class="n">c</span><span class="o">-&gt;</span><span class="n">db</span><span class="p">,</span> <span class="n">key</span><span class="p">);</span>
+    <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">o</span><span class="p">)</span> <span class="n">addReply</span><span class="p">(</span><span class="n">c</span><span class="p">,</span><span class="n">reply</span><span class="p">);</span>
+    <span class="k">return</span> <span class="n">o</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>上面的代码是调用<code class="language-plaintext highlighter-rouge">expireIfNeeded()</code>的上游function，通过名字可以看出，<code class="language-plaintext highlighter-rouge">#lookupKeyRead()与lookupKeyWrite()</code>是读取和写入key的方法（不得不说，redis的代码命名非常的优秀，值得我们学习），那么调用该方法的一定就是执行获取key的地方，这里我们以最简单的<code class="language-plaintext highlighter-rouge">string</code>的<code class="language-plaintext highlighter-rouge">get</code>命令为例：</p>
+
+<p>在<code class="language-plaintext highlighter-rouge">t_string.c</code>的<code class="language-plaintext highlighter-rouge">#getCommand()</code>：</p>
+
+<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="cm">/* string的get命令 */</span>
+<span class="kt">void</span> <span class="nf">getCommand</span><span class="p">(</span><span class="n">redisClient</span> <span class="o">*</span><span class="n">c</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">getGenericCommand</span><span class="p">(</span><span class="n">c</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="kt">int</span> <span class="nf">getGenericCommand</span><span class="p">(</span><span class="n">redisClient</span> <span class="o">*</span><span class="n">c</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">robj</span> <span class="o">*</span><span class="n">o</span><span class="p">;</span>
+	<span class="cm">/* 通过调用lookupKeyReadOrReply函数查找指定key的值，如果key不存在，则向客户端返回空值并返回REDIS_OK；如果查找到了key的值，则将值保存到变量o中，继续后续的操作 */</span>
+    <span class="k">if</span> <span class="p">((</span><span class="n">o</span> <span class="o">=</span> <span class="n">lookupKeyReadOrReply</span><span class="p">(</span><span class="n">c</span><span class="p">,</span><span class="n">c</span><span class="o">-&gt;</span><span class="n">argv</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span><span class="n">shared</span><span class="p">.</span><span class="n">nullbulk</span><span class="p">))</span> <span class="o">==</span> <span class="nb">NULL</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">REDIS_OK</span><span class="p">;</span>
+	
+    <span class="cm">/* 判断获取到的值的类型是否为字符串类型 */</span>
+    <span class="cm">/* 如果值的类型不是字符串类型，向客户端返回错误响应，并返回REDIS_ERR表示获取失败 */</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">o</span><span class="o">-&gt;</span><span class="n">type</span> <span class="o">!=</span> <span class="n">REDIS_STRING</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">addReply</span><span class="p">(</span><span class="n">c</span><span class="p">,</span><span class="n">shared</span><span class="p">.</span><span class="n">wrongtypeerr</span><span class="p">);</span>
+        <span class="k">return</span> <span class="n">REDIS_ERR</span><span class="p">;</span>
+    <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+        <span class="cm">/* 如果值的类型是字符串类型，向客户端返回获取到的字符串值，并返回REDIS_OK表示获取成功 */</span>
+        <span class="n">addReplyBulk</span><span class="p">(</span><span class="n">c</span><span class="p">,</span><span class="n">o</span><span class="p">);</span>
+        <span class="k">return</span> <span class="n">REDIS_OK</span><span class="p">;</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>上述就是<code class="language-plaintext highlighter-rouge">string get</code>命令的执行过程，我们可以清晰的看到，redis是如何实现惰性淘汰删除机制，其他的数据结构，例如<code class="language-plaintext highlighter-rouge">Hash</code>、<code class="language-plaintext highlighter-rouge">List</code>、<code class="language-plaintext highlighter-rouge">Set</code>、<code class="language-plaintext highlighter-rouge">Zset</code>也是如此，这里就不一样贴出源码进行举例说明了，感兴趣的读者可以翻阅redis源码。</p>
+
+<p>这里我们用一张<code class="language-plaintext highlighter-rouge">string get</code>命令的时序图，总结一下<code class="language-plaintext highlighter-rouge">get</code>命令的执行流程：</p>
+
+<p><img src="https://img2018.cnblogs.com/i-beta/830731/202001/830731-20200122172051350-1377334291.png" alt="img"></p>
+
+<h2 id="定时扫描删除机制">定时扫描删除机制</h2>
+
+<p>上面部分我们了解了惰性淘汰删除机制，但是仅仅靠客户端访问来判断 key 是否过期才执行删除肯定不够，因为有的 key 过期了，但未来再也没人访问，那岂不是GG，这些数据要怎么删除呢？</p>
+
+<p>Redis在后台，会启动一个定时任务，定期扫描数据库中的所有key，检查它们的过期时间是否已到期。但是这里需要注意，定时任务并不是一次运行就检查所有的库，所有的键，而是随机检查一定数量的键。</p>
+
+<p>为什么是随机抽查，而不是全量从头到尾扫描一遍？</p>
+
+<p>很好理解，如果redis中的key特别多，如果进行全量扫描，那对redis的性能会存在巨大的影响，如果有一个亿的key，每次定时任务执行都进行全量扫描，CPU岂不是爆炸。</p>
+
+<p><img src="https://mmbiz.qpic.cn/mmbiz_png/EoJib2tNvVtcOv8BrjWQFzmr4jXnQmsuGnHnXDiavLKozEfh7qiaBmWD1TIkXLgpd1iaib5SwR12v6w60rjd1YkJnuw/640?wx_fmt=png&wxfrom=5&wx_lazy=1&wx_co=1" alt="图片"></p>
+
+<p>上图的流程图，简单的描述了定时任务的执行逻辑（实际上会复杂很多），还是老规矩，不多逼逼，上源码，Redis具体是如何实现的，我们来一起看一下源码实现。</p>
+
+<p>定时任务的实现在<code class="language-plaintext highlighter-rouge">redis.c</code>的<code class="language-plaintext highlighter-rouge">#activeExpireCycle()</code>：</p>
+
+<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kt">void</span> <span class="nf">activeExpireCycle</span><span class="p">(</span><span class="kt">int</span> <span class="n">type</span><span class="p">)</span> <span class="p">{</span>
+    <span class="p">....</span><span class="err">此处省略部分前置逻辑</span>
+	
+    <span class="cm">/* 循环redis全部的db */</span>
+    <span class="k">for</span> <span class="p">(</span><span class="n">j</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">j</span> <span class="o">&lt;</span> <span class="n">dbs_per_call</span><span class="p">;</span> <span class="n">j</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
+        <span class="p">....</span><span class="err">此处省略部分前置逻辑</span>
+
+        <span class="k">do</span> <span class="p">{</span>
+            <span class="kt">unsigned</span> <span class="kt">long</span> <span class="n">num</span><span class="p">,</span> <span class="n">slots</span><span class="p">;</span>
+            <span class="kt">long</span> <span class="kt">long</span> <span class="n">now</span><span class="p">,</span> <span class="n">ttl_sum</span><span class="p">;</span>
+            <span class="kt">int</span> <span class="n">ttl_samples</span><span class="p">;</span>
+			
+            <span class="cm">/* 获取dict中设置了TTL的key集合中，计算集合的数量 */</span>
+            <span class="k">if</span> <span class="p">((</span><span class="n">num</span> <span class="o">=</span> <span class="n">dictSize</span><span class="p">(</span><span class="n">db</span><span class="o">-&gt;</span><span class="n">expires</span><span class="p">))</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+                <span class="n">db</span><span class="o">-&gt;</span><span class="n">avg_ttl</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+                <span class="k">break</span><span class="p">;</span>
+            <span class="p">}</span>
+            
+            <span class="p">....</span><span class="err">此处省略部分前置逻辑</span>
+			
+            <span class="cm">/* 如果过期的key数量，超过了20，那么扫描数量设置为20 */</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">num</span> <span class="o">&gt;</span> <span class="n">ACTIVE_EXPIRE_CYCLE_LOOKUPS_PER_LOOP</span><span class="p">)</span>
+                <span class="n">num</span> <span class="o">=</span> <span class="n">ACTIVE_EXPIRE_CYCLE_LOOKUPS_PER_LOOP</span><span class="p">;</span> <span class="cm">/* ACTIVE_EXPIRE_CYCLE_LOOKUPS_PER_LOOP = 20 */</span>
+			
+            <span class="cm">/* 循环处理 */</span>
+            <span class="k">while</span> <span class="p">(</span><span class="n">num</span><span class="o">--</span><span class="p">)</span> <span class="p">{</span>
+                <span class="n">dictEntry</span> <span class="o">*</span><span class="n">de</span><span class="p">;</span>
+                <span class="kt">long</span> <span class="kt">long</span> <span class="n">ttl</span><span class="p">;</span>
+				
+                <span class="cm">/* 获取dict中设置了TTL的key集合中，随机获取一个key */</span>
+                <span class="k">if</span> <span class="p">((</span><span class="n">de</span> <span class="o">=</span> <span class="n">dictGetRandomKey</span><span class="p">(</span><span class="n">db</span><span class="o">-&gt;</span><span class="n">expires</span><span class="p">))</span> <span class="o">==</span> <span class="nb">NULL</span><span class="p">)</span> <span class="k">break</span><span class="p">;</span>
+                <span class="cm">/* 计算TTL剩余时间 */</span>
+                <span class="n">ttl</span> <span class="o">=</span> <span class="n">dictGetSignedIntegerVal</span><span class="p">(</span><span class="n">de</span><span class="p">)</span><span class="o">-</span><span class="n">now</span><span class="p">;</span>
+                <span class="cm">/* 如果当前的key已经过期，则执行删除操作，并将过期key的数量加1 */</span>
+                <span class="k">if</span> <span class="p">(</span><span class="n">activeExpireCycleTryExpire</span><span class="p">(</span><span class="n">db</span><span class="p">,</span><span class="n">de</span><span class="p">,</span><span class="n">now</span><span class="p">))</span> <span class="n">expired</span><span class="o">++</span><span class="p">;</span>
+                
+                <span class="k">if</span> <span class="p">(</span><span class="n">ttl</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">)</span> <span class="n">ttl</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+                <span class="n">ttl_sum</span> <span class="o">+=</span> <span class="n">ttl</span><span class="p">;</span>
+                <span class="n">ttl_samples</span><span class="o">++</span><span class="p">;</span>
+            <span class="p">}</span>
+
+            <span class="p">....</span><span class="err">此处省略部分后置逻辑</span>
+        <span class="cm">/* 如果过期的key数量，超过阈值的25%，继续循环，否则退出扫描 */</span>
+        <span class="cm">/* 这也就意味着在任何时候，过期 key 的最大数量等于每秒最大写入操作量除以4 = 5*/</span>        
+        <span class="p">}</span> <span class="k">while</span> <span class="p">(</span><span class="n">expired</span> <span class="o">&gt;</span> <span class="n">ACTIVE_EXPIRE_CYCLE_LOOKUPS_PER_LOOP</span><span class="o">/</span><span class="mi">4</span><span class="p">);</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>上面的代码就是定时任务扫描过期key的执行流程，笔者删除了部分代码，仅保留的核心执行部分，方便读者阅读，核心执行逻辑可以参见注释部分</p>
+
+<p>如果用一句话概括说明定时任务的流程，那么可以总结为：</p>
+
+<blockquote>
+  <p>定时任务循环扫描每个redis数据库，从设置了TTL的key的集合中，随机挑选N个key进行检查，如果过期，干掉，否则跳过，直到过期key的数量小于25%，退出扫描</p>
+</blockquote>
+
+<p>以上，就是Redis删除过期key的两种实现方式，由于笔者对C的理解很有限，因此仅仅截取了部分源码进行解读，也可能有很多解读不对的地方，望读者见谅。</p>
+
+<p>事实上，仅仅通过惰性删除+定时任务扫描，仍会可能存在很多“漏网之鱼”，毕竟定时任务删除，并非全量扫描，那么如果Redis的使用容量达到了最大内存，Redis会如何操作？</p>
+
+<p>这就涉及到了Redis的key淘汰策略，本篇的内容就此为止，关于Redis的淘汰策略解读，我们下次再聊。</p>
+
+
+
+    </div>
+
+</article>
+<div class="post-nav">
+<a class="previous" href="/mysql/2024/09/25/MySQL%E6%85%A2SQL%E6%8E%A2%E7%A9%B6.html" title="MySQL慢SQL探究">MySQL慢SQL探究</a><a class="next" href="/redis/2024/09/25/Redis6.0-Client-Side%E7%BC%93%E5%AD%98%E6%98%AF%E4%BB%80%E4%B9%88.html" title="Redis6.0 Client-Side缓存是什么">Redis6.0 Client-Side缓存是什么</a>
+</div>
+<div class="post-related">
+      <div>Related Articles</div>
+      <ul>
+        <li class="top-post">
+          <a class="post-link" href="/redis/2024/09/25/Redis-key%E8%BF%87%E6%9C%9F%E5%88%A0%E9%99%A4%E6%9C%BA%E5%88%B6.html" title="Redis key过期删除机制">
+            Redis key过期删除机制<span class="post-badges">
+  <span class="post-badge badge-top">TOP</span>
+  <span class="post-badge badge-new">NEW</span>
+</span>
+</a>
+        </li>
+<li class="top-post">
+          <a class="post-link" href="/redis/2024/09/25/Redis6.0-Client-Side%E7%BC%93%E5%AD%98%E6%98%AF%E4%BB%80%E4%B9%88.html" title="Redis6.0 Client-Side缓存是什么">
+            Redis6.0 Client-Side缓存是什么<span class="post-badges">
+  <span class="post-badge badge-top">TOP</span>
+  <span class="post-badge badge-new">NEW</span>
+</span>
+</a>
+        </li>
+<li class="top-post">
+          <a class="post-link" href="/mysql/2024/09/25/MySQL%E6%85%A2SQL%E6%8E%A2%E7%A9%B6.html" title="MySQL慢SQL探究">
+            MySQL慢SQL探究<span class="post-badges">
+  <span class="post-badge badge-top">TOP</span>
+  <span class="post-badge badge-new">NEW</span>
+</span>
+</a>
+        </li>
+<li class="top-post">
+          <a class="post-link" href="/mysql/2024/09/25/MySQL%E4%B8%BA%E4%BB%80%E4%B9%88%E6%9C%89%E4%BA%86redolog%E8%BF%98%E9%9C%80%E8%A6%81double-write-buffer.html" title="MySQL为什么有了redolog还需要double write buffer">
+            MySQL为什么有了redolog还需要double write buffer<span class="post-badges">
+  <span class="post-badge badge-top">TOP</span>
+  <span class="post-badge badge-new">NEW</span>
+</span>
+</a>
+        </li>
+</ul>
+    </div>
+<div class="post-comments"></div></section>
+</div>
+
+
+  </section>
+  <section class="sidebar" style="margin-left: 15px;">
+    <!-- Get sidebar items --><style type="text/css" media="screen">
+.post-menu ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+</style>
+
+<div class="post-menu">
+  <div class="post-menu-title">TOC</div>
+  <div class="post-menu-content"></div>
+</div>
+
+<script>
+  function generateContent() {
+    var menu = document.querySelector(".post-menu");
+    var menuContent =  menu.querySelector(".post-menu-content");
+    var headings = document.querySelector(".post-content").querySelectorAll("h2, h3, h4, h5, h6");
+
+    // Hide menu when no headings
+    if (headings.length === 0) {
+      return menu.style.display = "none";
+    }
+
+    // Generate post menu
+    var menuHTML = '';
+    for (var i = 0; i < headings.length; i++) {
+      var h = headings[i];
+      menuHTML += (
+        '<li class="h-' + h.tagName.toLowerCase() + '">'
+        + '<a href="#h-' + h.getAttribute('id') + '">' + h.textContent + '</a></li>');
+    }
+
+    menuContent.innerHTML = '<ul>' + menuHTML + '</ul>';
+
+    // The header element
+    var header = document.querySelector('header.site-header');
+
+    function doMenuCollapse(index, over_items) {
+      var items = menuContent.firstChild.children;
+
+      if (over_items == undefined) {
+        over_items = 20;
+      }
+
+      if (items.length < over_items) {
+        return;
+      }
+
+      var activeItem = items[index];
+      var beginItem = activeItem
+      var endItem = activeItem
+      var beginIndex = index;
+      var endIndex = index + 1;
+      while (beginIndex >= 0
+        && !items[beginIndex].classList.contains('h-h2')) {
+        beginIndex -= 1;
+      }
+      while (endIndex < items.length
+        && !items[endIndex].classList.contains('h-h2')) {
+        endIndex += 1;
+      }
+      for (var i = 0; i < beginIndex; i++) {
+        item = items[i]
+        if (!item.classList.contains('h-h2')) {
+          item.style.display = 'none';
+        }
+      }
+      for (var i = beginIndex + 1; i < endIndex; i++) {
+        item = items[i]
+        // if (!item.classList.contains('h-h2')) {
+          item.style.display = '';
+        // }
+      }
+      for (var i = endIndex; i < items.length; i++) {
+        item = items[i]
+        if (!item.classList.contains('h-h2')) {
+          item.style.display = 'none';
+        }
+      }
+    }
+
+    // Init menu collapsed
+    doMenuCollapse(-1);
+
+    // Active the menu item
+    window.addEventListener('scroll', function (event) {
+      var lastActive = menuContent.querySelector('.active');
+      var changed = true;
+      var activeIndex = -1;
+      for (var i = headings.length - 1; i >= 0; i--) {
+        var h = headings[i];
+        var headingRect = h.getBoundingClientRect();
+        var headerRect = header.getBoundingClientRect();
+        var headerTop = Math.floor(headerRect.top);
+        var headerHeight = Math.floor(headerRect.height);
+        var headerHeight = headerTop + headerHeight + 20;
+        if (headingRect.top <= headerHeight) {
+          var id = 'h-' + h.getAttribute('id');
+          var a = menuContent.querySelector('a[href="#' + id  + '"]');
+          var curActive = a.parentNode;
+          if (curActive) {
+            curActive.classList.add('active');
+            activeIndex = i;
+          }
+          if (lastActive == curActive) {
+            changed = false;
+          }
+          break;
+        }
+      }
+      if (changed) {
+        if (lastActive) {
+          lastActive.classList.remove('active');
+        }
+        doMenuCollapse(activeIndex);
+      }
+      event.preventDefault();
+    });
+  }
+  generateContent();
+</script>
+</section>
+</div>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/"></data>
+
+  <div class="wrapper">
+    <div class="site-footer-inner">
+<div>Unpublished Work <span class="copyleft">©</span> 2017-2024 GitHub User</div>
+      <div>Powered by <a title="Jekyll is a simple, blog-aware, static site
+      generator." href="https://jekyllrb.com/">Jekyll</a> &amp; <a title="Yat, yet
+      another theme." href="https://github.com/jeffreytse/jekyll-theme-yat">Yat Theme</a>.</div>
+      <div class="footer-col rss-subscribe">Subscribe <a href="/feed.xml">via RSS</a>
+</div>
+    </div>
+  </div>
+</footer>
+</body>
+</html>

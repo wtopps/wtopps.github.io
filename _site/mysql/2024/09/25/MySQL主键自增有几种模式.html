@@ -1,0 +1,1211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="google-translate-customization" content="108d9124921d80c3-80e20d618ff053c8-g4f02ec6f3dba68b7-c">
+<!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>MySQL主键自增有几种模式？ | wtopps</title>
+<meta name="generator" content="Jekyll v4.3.4">
+<meta property="og:title" content="MySQL主键自增有几种模式？">
+<meta name="author" content="GitHub User">
+<meta property="og:locale" content="en_US">
+<meta name="description" content="前言 在大多数的业务场景下，我们的数据表的一般会默认使用主键自增长(AUTO_INCREMENT)模式，在执行insert语句时，MySQL会自动为数据行生成主键ID，保证其单调递增和不重复的。一般情况下，我们很少会关注AUTO_INCREMENT的策略模型，事实上，InnoDB提供了一个可配置的自增长模型机制，可以显著提高向带有AUTO_INCREMENT列的表添加记录的SQL语句的可扩展性和性能。 本篇，我们就来简要了解一下MySQL InnoDB的主键自增长策略模式。 INSERT种类 MySQL将INSERT操作分为三类： 1、Simple inserts 插入的记录行数是可以事先确定的。包括最常见的单条INSERT、REPLACE，但不包括INSERT ... ON DUPLICATE KEY UPDATE 2、Bulk inserts 插入的记录行数是无法事先确定的。包括 INSERT ... SELECT, REPLACE ... SELECT, LOAD DATA，不包括普通的INSERT操作 3、Mixed-mode inserts 该种类型也属于Simple inserts类型，插入的记录行数是可以事先确定的，但与Simple inserts不同的是，INSERT语句中有部分记录自行指定了自增长字段的值，例如： INSERT INTO t1 (c1,c2) VALUES (1,'a'), (NULL,'b'), (5,'c'), (NULL,'d'); 该模式也包括了INSERT ... ON DUPLICATE KEY UPDATE 自增长锁模型（AUTO_INCREMENT Lock Modes） InnoDB引擎提供了三种锁模型来支持AUTO_INCREMENT ，可以通过innodb_autoinc_lock_mode参数来进行指定，取值范围为(0，1，2)，分别对应”传统模式”、”连续模式”、”交错模式”，下面我们来依次看一下三种锁模式。 传统锁模式(Traditional lock mode) innodb_autoinc_lock_mode = 0 该种模式下，它会对所有的Insert模式操作都去获取一个特殊的表级别的自增长锁(AUTO-INC)，这种锁会持续到语句结束，以确保执行的Insert语句以可预测且可重复的顺序分配自动递增值。 这种模式更多是为了兼容老版本的MySQL运行。实际生产环境中不推荐使用。 由于对于所有的Insert执行时，都会尝试去获取表级别的自增锁，可以预见该种模式的并发性会非常的差，当同时存在多个事务同时执行Insert操作，只有其中一个事务可以获取到自增锁，而其他的事务必须等待其执行完毕释放锁后，才可以进行执行Insert操作。 我们来看一个例子： CREATE TABLE t1 ( c1 INT(11) NOT NULL AUTO_INCREMENT, c2 VARCHAR(10) DEFAULT NULL, PRIMARY KEY (c1) ) ENGINE=InnoDB; 我们有一张表t1，假定同时存在两个事务执行，并都使用自增长字段： Tx1: INSERT INTO t1 (c2) SELECT 1000 rows from another table ... Tx2: INSERT INTO t1 (c2) VALUES ('xxx'); 对于上面的场景，两个事务无法同时并行操作，如果Tx1先执行，则会获取t1的自增锁，直到该条语句执行结束，然后Tx2才可以重新获取锁进行执行插入，需要注意的是，表级自增锁的持有时间范围是语句级别，并非事务级别。 该种模式下，虽然对于Insert的并发度非常差，但可以保证自增字段的连续性，并且对于基于SQL BINLOG的主从同步，可以保证从库的自增字段与主库一致。 连续锁模式(Consecutive lock mode) innodb_autoinc_lock_mode = 1 在MySQL8.0之前，该种模式是InnoDB的默认自增模式。 该种模式下，对于普通Insert语句，申请到自增锁后就马上释放，并非语句执行结束。但是对于bulk insert这样的批量插入数据语句，仍然会申请表级别的自增锁，会持有锁直到语句结束后才被释放。 需要注意的是，虽然单条Insert语句会避免使用表级自增锁，但是当其他的事务正在持有表级自增锁，那么在当前事务内，Insert操作时也会被阻塞，等待其他事务释放锁资源。 相较于传统锁模式，连续锁模式在语义上没有大的区别，但对于普通单条的Insert并发度有一定的提升。 交叉锁模式(Interleaved lock mode) innodb_autoinc_lock_mode = 2 在MySQL8.0中，该种模式是InnoDB的默认自增模式。 该种模式下，对于Insert语句的执行不会使用表级别的自增锁，这意味着多个事务的多个Insert可以并发执行，是所有模型中执行效率最高的模式。 但在该模式下，存在两个问题： ​ 1、在这种模式下，如果binlog格式为statement (SBR)，可能会引起数据不一致。也就是说，在主库的自增字段的值，同步到从库时，可能会不一致。 ​ 2、对于bulk inserts语句来说，它得到的自增值可能不是连续的。但是对于普通的Insert语句，则不会出现这个问题。 总结 OK，我们了解了MySQL InnoDB中自增长字段的三种执行模式，我们简单进行一下总结： Traditional lock mode传统锁模式： 此种模式可以说是最保守的执行模式，可以完全保证自增长键的连续性，但由于是通过表级锁进行的实现，性能较差，主要是为了兼容老版本，在目前的生产环境中不可能采用 Consecutive lock mode连续锁模式： 传统锁模式的进阶版本，MySQL5.7及其之前的默认模式，该种模式对于普通的Insert语句进行了优化，相较于传统锁模式大大的提升了并发度，但对于bulk inserts等批量操作，仍会进行等待锁资源，如果可以保证不会使用bulk inserts等操作的话，该种模式是没有问题的，对于主从复制也较为友好，对于任何种类的binlog同步类型，都可以保证主从一致性 Interleaved lock mode交叉锁模式： MySQL8.0之后版本的默认模式，目前看起来的最优解模式，该种模式完全不使用表级锁，可以真正的实现多事务Insert并发执行，缺点是对于bulk inserts语句执行时可能会出现自增长值不连续的情况，同时对于主从复制的statement binlog，无法保证主从的一致性。 本篇关于MySQL自增长键的介绍就到这里，关于更多的细节，可以查阅官方文档的解释： https://dev.mysql.com/doc/refman/8.0/en/innodb-auto-increment-handling.html">
+<meta property="og:description" content="前言 在大多数的业务场景下，我们的数据表的一般会默认使用主键自增长(AUTO_INCREMENT)模式，在执行insert语句时，MySQL会自动为数据行生成主键ID，保证其单调递增和不重复的。一般情况下，我们很少会关注AUTO_INCREMENT的策略模型，事实上，InnoDB提供了一个可配置的自增长模型机制，可以显著提高向带有AUTO_INCREMENT列的表添加记录的SQL语句的可扩展性和性能。 本篇，我们就来简要了解一下MySQL InnoDB的主键自增长策略模式。 INSERT种类 MySQL将INSERT操作分为三类： 1、Simple inserts 插入的记录行数是可以事先确定的。包括最常见的单条INSERT、REPLACE，但不包括INSERT ... ON DUPLICATE KEY UPDATE 2、Bulk inserts 插入的记录行数是无法事先确定的。包括 INSERT ... SELECT, REPLACE ... SELECT, LOAD DATA，不包括普通的INSERT操作 3、Mixed-mode inserts 该种类型也属于Simple inserts类型，插入的记录行数是可以事先确定的，但与Simple inserts不同的是，INSERT语句中有部分记录自行指定了自增长字段的值，例如： INSERT INTO t1 (c1,c2) VALUES (1,'a'), (NULL,'b'), (5,'c'), (NULL,'d'); 该模式也包括了INSERT ... ON DUPLICATE KEY UPDATE 自增长锁模型（AUTO_INCREMENT Lock Modes） InnoDB引擎提供了三种锁模型来支持AUTO_INCREMENT ，可以通过innodb_autoinc_lock_mode参数来进行指定，取值范围为(0，1，2)，分别对应”传统模式”、”连续模式”、”交错模式”，下面我们来依次看一下三种锁模式。 传统锁模式(Traditional lock mode) innodb_autoinc_lock_mode = 0 该种模式下，它会对所有的Insert模式操作都去获取一个特殊的表级别的自增长锁(AUTO-INC)，这种锁会持续到语句结束，以确保执行的Insert语句以可预测且可重复的顺序分配自动递增值。 这种模式更多是为了兼容老版本的MySQL运行。实际生产环境中不推荐使用。 由于对于所有的Insert执行时，都会尝试去获取表级别的自增锁，可以预见该种模式的并发性会非常的差，当同时存在多个事务同时执行Insert操作，只有其中一个事务可以获取到自增锁，而其他的事务必须等待其执行完毕释放锁后，才可以进行执行Insert操作。 我们来看一个例子： CREATE TABLE t1 ( c1 INT(11) NOT NULL AUTO_INCREMENT, c2 VARCHAR(10) DEFAULT NULL, PRIMARY KEY (c1) ) ENGINE=InnoDB; 我们有一张表t1，假定同时存在两个事务执行，并都使用自增长字段： Tx1: INSERT INTO t1 (c2) SELECT 1000 rows from another table ... Tx2: INSERT INTO t1 (c2) VALUES ('xxx'); 对于上面的场景，两个事务无法同时并行操作，如果Tx1先执行，则会获取t1的自增锁，直到该条语句执行结束，然后Tx2才可以重新获取锁进行执行插入，需要注意的是，表级自增锁的持有时间范围是语句级别，并非事务级别。 该种模式下，虽然对于Insert的并发度非常差，但可以保证自增字段的连续性，并且对于基于SQL BINLOG的主从同步，可以保证从库的自增字段与主库一致。 连续锁模式(Consecutive lock mode) innodb_autoinc_lock_mode = 1 在MySQL8.0之前，该种模式是InnoDB的默认自增模式。 该种模式下，对于普通Insert语句，申请到自增锁后就马上释放，并非语句执行结束。但是对于bulk insert这样的批量插入数据语句，仍然会申请表级别的自增锁，会持有锁直到语句结束后才被释放。 需要注意的是，虽然单条Insert语句会避免使用表级自增锁，但是当其他的事务正在持有表级自增锁，那么在当前事务内，Insert操作时也会被阻塞，等待其他事务释放锁资源。 相较于传统锁模式，连续锁模式在语义上没有大的区别，但对于普通单条的Insert并发度有一定的提升。 交叉锁模式(Interleaved lock mode) innodb_autoinc_lock_mode = 2 在MySQL8.0中，该种模式是InnoDB的默认自增模式。 该种模式下，对于Insert语句的执行不会使用表级别的自增锁，这意味着多个事务的多个Insert可以并发执行，是所有模型中执行效率最高的模式。 但在该模式下，存在两个问题： ​ 1、在这种模式下，如果binlog格式为statement (SBR)，可能会引起数据不一致。也就是说，在主库的自增字段的值，同步到从库时，可能会不一致。 ​ 2、对于bulk inserts语句来说，它得到的自增值可能不是连续的。但是对于普通的Insert语句，则不会出现这个问题。 总结 OK，我们了解了MySQL InnoDB中自增长字段的三种执行模式，我们简单进行一下总结： Traditional lock mode传统锁模式： 此种模式可以说是最保守的执行模式，可以完全保证自增长键的连续性，但由于是通过表级锁进行的实现，性能较差，主要是为了兼容老版本，在目前的生产环境中不可能采用 Consecutive lock mode连续锁模式： 传统锁模式的进阶版本，MySQL5.7及其之前的默认模式，该种模式对于普通的Insert语句进行了优化，相较于传统锁模式大大的提升了并发度，但对于bulk inserts等批量操作，仍会进行等待锁资源，如果可以保证不会使用bulk inserts等操作的话，该种模式是没有问题的，对于主从复制也较为友好，对于任何种类的binlog同步类型，都可以保证主从一致性 Interleaved lock mode交叉锁模式： MySQL8.0之后版本的默认模式，目前看起来的最优解模式，该种模式完全不使用表级锁，可以真正的实现多事务Insert并发执行，缺点是对于bulk inserts语句执行时可能会出现自增长值不连续的情况，同时对于主从复制的statement binlog，无法保证主从的一致性。 本篇关于MySQL自增长键的介绍就到这里，关于更多的细节，可以查阅官方文档的解释： https://dev.mysql.com/doc/refman/8.0/en/innodb-auto-increment-handling.html">
+<link rel="canonical" href="http://localhost:4000/mysql/2024/09/25/MySQL%E4%B8%BB%E9%94%AE%E8%87%AA%E5%A2%9E%E6%9C%89%E5%87%A0%E7%A7%8D%E6%A8%A1%E5%BC%8F.html">
+<meta property="og:url" content="http://localhost:4000/mysql/2024/09/25/MySQL%E4%B8%BB%E9%94%AE%E8%87%AA%E5%A2%9E%E6%9C%89%E5%87%A0%E7%A7%8D%E6%A8%A1%E5%BC%8F.html">
+<meta property="og:site_name" content="wtopps">
+<meta property="og:type" content="article">
+<meta property="article:published_time" content="2024-09-25T00:00:00+08:00">
+<meta name="twitter:card" content="summary">
+<meta property="twitter:title" content="MySQL主键自增有几种模式？">
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"GitHub User"},"dateModified":"2024-09-25T00:00:00+08:00","datePublished":"2024-09-25T00:00:00+08:00","description":"前言 在大多数的业务场景下，我们的数据表的一般会默认使用主键自增长(AUTO_INCREMENT)模式，在执行insert语句时，MySQL会自动为数据行生成主键ID，保证其单调递增和不重复的。一般情况下，我们很少会关注AUTO_INCREMENT的策略模型，事实上，InnoDB提供了一个可配置的自增长模型机制，可以显著提高向带有AUTO_INCREMENT列的表添加记录的SQL语句的可扩展性和性能。 本篇，我们就来简要了解一下MySQL InnoDB的主键自增长策略模式。 INSERT种类 MySQL将INSERT操作分为三类： 1、Simple inserts 插入的记录行数是可以事先确定的。包括最常见的单条INSERT、REPLACE，但不包括INSERT ... ON DUPLICATE KEY UPDATE 2、Bulk inserts 插入的记录行数是无法事先确定的。包括 INSERT ... SELECT, REPLACE ... SELECT, LOAD DATA，不包括普通的INSERT操作 3、Mixed-mode inserts 该种类型也属于Simple inserts类型，插入的记录行数是可以事先确定的，但与Simple inserts不同的是，INSERT语句中有部分记录自行指定了自增长字段的值，例如： INSERT INTO t1 (c1,c2) VALUES (1,&#39;a&#39;), (NULL,&#39;b&#39;), (5,&#39;c&#39;), (NULL,&#39;d&#39;); 该模式也包括了INSERT ... ON DUPLICATE KEY UPDATE 自增长锁模型（AUTO_INCREMENT Lock Modes） InnoDB引擎提供了三种锁模型来支持AUTO_INCREMENT ，可以通过innodb_autoinc_lock_mode参数来进行指定，取值范围为(0，1，2)，分别对应”传统模式”、”连续模式”、”交错模式”，下面我们来依次看一下三种锁模式。 传统锁模式(Traditional lock mode) innodb_autoinc_lock_mode = 0 该种模式下，它会对所有的Insert模式操作都去获取一个特殊的表级别的自增长锁(AUTO-INC)，这种锁会持续到语句结束，以确保执行的Insert语句以可预测且可重复的顺序分配自动递增值。 这种模式更多是为了兼容老版本的MySQL运行。实际生产环境中不推荐使用。 由于对于所有的Insert执行时，都会尝试去获取表级别的自增锁，可以预见该种模式的并发性会非常的差，当同时存在多个事务同时执行Insert操作，只有其中一个事务可以获取到自增锁，而其他的事务必须等待其执行完毕释放锁后，才可以进行执行Insert操作。 我们来看一个例子： CREATE TABLE t1 ( c1 INT(11) NOT NULL AUTO_INCREMENT, c2 VARCHAR(10) DEFAULT NULL, PRIMARY KEY (c1) ) ENGINE=InnoDB; 我们有一张表t1，假定同时存在两个事务执行，并都使用自增长字段： Tx1: INSERT INTO t1 (c2) SELECT 1000 rows from another table ... Tx2: INSERT INTO t1 (c2) VALUES (&#39;xxx&#39;); 对于上面的场景，两个事务无法同时并行操作，如果Tx1先执行，则会获取t1的自增锁，直到该条语句执行结束，然后Tx2才可以重新获取锁进行执行插入，需要注意的是，表级自增锁的持有时间范围是语句级别，并非事务级别。 该种模式下，虽然对于Insert的并发度非常差，但可以保证自增字段的连续性，并且对于基于SQL BINLOG的主从同步，可以保证从库的自增字段与主库一致。 连续锁模式(Consecutive lock mode) innodb_autoinc_lock_mode = 1 在MySQL8.0之前，该种模式是InnoDB的默认自增模式。 该种模式下，对于普通Insert语句，申请到自增锁后就马上释放，并非语句执行结束。但是对于bulk insert这样的批量插入数据语句，仍然会申请表级别的自增锁，会持有锁直到语句结束后才被释放。 需要注意的是，虽然单条Insert语句会避免使用表级自增锁，但是当其他的事务正在持有表级自增锁，那么在当前事务内，Insert操作时也会被阻塞，等待其他事务释放锁资源。 相较于传统锁模式，连续锁模式在语义上没有大的区别，但对于普通单条的Insert并发度有一定的提升。 交叉锁模式(Interleaved lock mode) innodb_autoinc_lock_mode = 2 在MySQL8.0中，该种模式是InnoDB的默认自增模式。 该种模式下，对于Insert语句的执行不会使用表级别的自增锁，这意味着多个事务的多个Insert可以并发执行，是所有模型中执行效率最高的模式。 但在该模式下，存在两个问题： ​ 1、在这种模式下，如果binlog格式为statement (SBR)，可能会引起数据不一致。也就是说，在主库的自增字段的值，同步到从库时，可能会不一致。 ​ 2、对于bulk inserts语句来说，它得到的自增值可能不是连续的。但是对于普通的Insert语句，则不会出现这个问题。 总结 OK，我们了解了MySQL InnoDB中自增长字段的三种执行模式，我们简单进行一下总结： Traditional lock mode传统锁模式： 此种模式可以说是最保守的执行模式，可以完全保证自增长键的连续性，但由于是通过表级锁进行的实现，性能较差，主要是为了兼容老版本，在目前的生产环境中不可能采用 Consecutive lock mode连续锁模式： 传统锁模式的进阶版本，MySQL5.7及其之前的默认模式，该种模式对于普通的Insert语句进行了优化，相较于传统锁模式大大的提升了并发度，但对于bulk inserts等批量操作，仍会进行等待锁资源，如果可以保证不会使用bulk inserts等操作的话，该种模式是没有问题的，对于主从复制也较为友好，对于任何种类的binlog同步类型，都可以保证主从一致性 Interleaved lock mode交叉锁模式： MySQL8.0之后版本的默认模式，目前看起来的最优解模式，该种模式完全不使用表级锁，可以真正的实现多事务Insert并发执行，缺点是对于bulk inserts语句执行时可能会出现自增长值不连续的情况，同时对于主从复制的statement binlog，无法保证主从的一致性。 本篇关于MySQL自增长键的介绍就到这里，关于更多的细节，可以查阅官方文档的解释： https://dev.mysql.com/doc/refman/8.0/en/innodb-auto-increment-handling.html","headline":"MySQL主键自增有几种模式？","mainEntityOfPage":{"@type":"WebPage","@id":"http://localhost:4000/mysql/2024/09/25/MySQL%E4%B8%BB%E9%94%AE%E8%87%AA%E5%A2%9E%E6%9C%89%E5%87%A0%E7%A7%8D%E6%A8%A1%E5%BC%8F.html"},"url":"http://localhost:4000/mysql/2024/09/25/MySQL%E4%B8%BB%E9%94%AE%E8%87%AA%E5%A2%9E%E6%9C%89%E5%87%A0%E7%A7%8D%E6%A8%A1%E5%BC%8F.html"}</script>
+<!-- End Jekyll SEO tag -->
+<link rel="icon" href="">
+  <link rel="canonical" href="http://localhost:4000">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/typeface-noto-sans@0.0.72/index.min.css">
+  <link rel="stylesheet" href="/assets/css/main.css">
+  <script src="/assets/js/main.js"></script><link type="application/atom+xml" rel="alternate" href="http://localhost:4000/feed.xml" title="wtopps">
+<link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/styles/default.min.css">
+<script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/highlight.min.js"></script>
+<!-- and it's easy to individually load additional languages -->
+<script charset="UTF-8" src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/languages/go.min.js" async></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<script>
+// Init highlight js
+document.addEventListener('DOMContentLoaded', function(event) {
+  var els = document.querySelectorAll('pre code')
+
+  function addLangData(block) {
+    var outer = block.parentElement.parentElement.parentElement;
+    var lang = block.getAttribute('data-lang');
+    for (var i = 0; i < outer.classList.length; i++) {
+      var cls = outer.classList[i];
+      if (cls.startsWith('language-')) {
+        lang = cls;
+        break;
+      }
+    }
+    if (!lang) {
+      cls = block.getAttribute('class');
+      lang = cls ? cls.replace('hljs ', '') : '';
+    }
+    if (lang.startsWith('language-')) {
+      lang = lang.substr(9);
+    }
+    block.setAttribute('class', 'hljs ' + lang);
+    block.parentNode.setAttribute('data-lang', lang);
+  }
+
+  function addBadge(block) {
+    var enabled = ('true' || 'true').toLowerCase();
+    if (enabled == 'true') {
+      var pre = block.parentElement;
+      pre.classList.add('badge');
+    }
+  }
+
+  function handle(block) {
+    addLangData(block);
+    addBadge(block)
+    hljs.highlightBlock(block);
+  }
+
+  for (var i = 0; i < els.length; i++) {
+    var el = els[i];
+    handle(el);
+  }
+});
+</script>
+
+<style>
+  /* code language badge */
+  pre.badge::before {
+    content: attr(data-lang);
+    color: #fff;
+    background-color: #ff4e00;
+    padding: 0 .5em;
+    border-radius: 0 2px;
+    text-transform: uppercase;
+    text-align: center;
+    min-width: 32px;
+    display: inline-block;
+    position: absolute;
+    right: 0;
+  }
+
+  /* fix wrong badge display for firefox browser */
+  code > table pre::before {
+    display: none;
+  }
+</style>
+<script src="//cdnjs.cloudflare.com/ajax/libs/photoswipe/5.3.7/umd/photoswipe-lightbox.umd.min.js" async></script>
+<script src="//cdnjs.cloudflare.com/ajax/libs/photoswipe/5.3.7/umd/photoswipe.umd.min.js" async></script>
+<link href="//cdnjs.cloudflare.com/ajax/libs/photoswipe/5.3.7/photoswipe.min.css" rel="stylesheet">
+<style>
+  .pswp .pswp__container .pswp__img {
+    background-color: white;
+  }
+</style>
+
+<script>
+  function initPhotoSwipe() {
+    let customOptions = {};
+
+    try {
+      const data = ``.replaceAll("=>", ":");
+      customOptions = JSON.parse(data);
+    } catch (e) {
+      console.info("Invalid custom photo previewer options! " + e.message);
+    }
+
+    // Define object and gallery options
+    const options = Object.assign(
+      {
+        gallery: "section.main",
+        children: "a.photo-swipe",
+        photo_scale: 2,
+        // dynamic import is not supported in UMD version
+        pswpModule: PhotoSwipe,
+      },
+      customOptions
+    );
+
+    const galleryEl = document.querySelector(options.gallery);
+    if (!galleryEl) {
+      return;
+    }
+
+    const imgEls = [];
+    const els = galleryEl.querySelectorAll("img:not(.emoji)");
+    els.forEach((el) => {
+      if (el.src.trim() == "") {
+        return;
+      }
+      if (!imgEls.includes(el)) {
+        imgEls.push(el);
+      }
+    });
+
+    if (imgEls.length === 0) {
+      return;
+    }
+
+    imgEls.forEach((imgEl) => {
+      imgEl.outerHTML = `
+      <a class="photo-swipe"
+        href="${imgEl.src}"
+        data-pswp-width="${
+          Math.max(imgEl.naturalWidth, imgEl.width) * options.photo_scale
+        }"
+        data-pswp-height="${
+          Math.max(imgEl.naturalHeight, imgEl.height) * options.photo_scale
+        }"
+        data-pswp-caption="${imgEl.getAttribute("caption") || imgEl.alt}"
+        target="_blank">
+        ${imgEl.outerHTML}
+      </a>`;
+    });
+
+    // Initialize PhotoSwipe 5
+    var lightbox = new PhotoSwipeLightbox(options);
+
+    lightbox.init();
+  }
+
+  window.addEventListener("load", initPhotoSwipe);
+</script>
+</head>
+<body>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<header class="site-header " role="banner">
+
+  <div class="wrapper">
+    <div class="site-header-inner">
+<span class="site-brand"><a class="site-brand-inner" rel="author" href="/">
+  <img class="site-favicon" title="wtopps" src="" onerror="this.style.display='none'">
+  wtopps
+</a>
+</span><nav class="site-nav">
+          <input type="checkbox" id="nav-trigger" class="nav-trigger">
+          <label for="nav-trigger">
+            <span class="menu-icon">
+              <svg viewbox="0 0 18 15" width="18px" height="15px">
+                <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"></path>
+              </svg>
+            </span>
+          </label>
+
+          <div class="trigger">
+<a class="page-link" href="/about.html">ABOUT</a><a class="page-link" href="/archives.html">ARCHIVES</a><a class="page-link" href="/categories.html">CATEGORIES</a><a class="page-link" href="/">HOME</a><a class="page-link" href="/tags.html">TAGS</a>
+
+
+
+
+
+
+
+
+
+<div class="page-link" style="display: inline;">
+
+
+
+<div id="google_translate_element" style="display: none;">
+</div>
+
+<div class="ct-language">
+  <ul class="list-unstyled ct-language-dropdown">
+    
+      <li>
+        <a href="#" class="lang-select" data-lang="en">
+          
+          <img src="https://cdn.countryflags.com/thumbs/united-states-of-america/flag-400.png" title="English">
+          
+        </a>
+      </li>
+    
+      <li>
+        <a href="#" class="lang-select" data-lang="fr">
+          
+          <img src="https://cdn.countryflags.com/thumbs/france/flag-400.png" title="French">
+          
+        </a>
+      </li>
+    
+      <li>
+        <a href="#" class="lang-select" data-lang="zh-CN">
+          
+          <img src="https://cdn.countryflags.com/thumbs/china/flag-400.png" title="Chinese(Simple)">
+          
+        </a>
+      </li>
+    
+      <li>
+        <a href="#" class="lang-select" data-lang="ja">
+          
+          <img src="https://cdn.countryflags.com/thumbs/japan/flag-400.png" title="Japanese">
+          
+        </a>
+      </li>
+    
+      <li>
+        <a href="#" class="lang-select" data-lang="ko">
+          
+          <img src="https://cdn.countryflags.com/thumbs/south-korea/flag-400.png" title="Korean">
+          
+        </a>
+      </li>
+    
+      <li>
+        <a href="#" class="lang-select" data-lang="ru">
+          
+          <img src="https://cdn.countryflags.com/thumbs/russia/flag-400.png" title="Russian">
+          
+        </a>
+      </li>
+    
+  </ul>
+</div>
+
+<script type="text/javascript">
+function googleTranslateElementInit() {
+  new google.translate.TranslateElement({
+    pageLanguage: 'en',
+    autoDisplay: false,
+    layout: google.translate.TranslateElement.InlineLayout.VERTICAL
+  }, 'google_translate_element');
+
+  // Links to cross-origin destinations are unsafe
+  var gll = document.getElementsByClassName('goog-logo-link')[0];
+  if (gll) {
+    gll.setAttribute('rel', 'noopener');
+  }
+
+  function restoreLang() {
+    var iframe = document.getElementsByClassName('goog-te-banner-frame')[0];
+    if (!iframe) return;
+
+    var innerDoc = iframe.contentDocument || iframe.contentWindow.document;
+    var restore_el = innerDoc.getElementsByTagName("button");
+
+    for (var i = 0; i < restore_el.length; i++) {
+      if (restore_el[i].id.indexOf("restore") >= 0) {
+        restore_el[i].click();
+        var close_el = innerDoc.getElementsByClassName("goog-close-link");
+        close_el[0].click();
+        return;
+      }
+    }
+  }
+
+  function triggerHtmlEvent(element, eventName) {
+    var event;
+    if (document.createEvent) {
+      event = document.createEvent('HTMLEvents');
+      event.initEvent(eventName, true, true);
+      element.dispatchEvent(event);
+    } else {
+      event = document.createEventObject();
+      event.eventType = eventName;
+      element.fireEvent('on' + event.eventType, event);
+    }
+  }
+
+  var googleCombo = document.querySelector("select.goog-te-combo");
+  var langSelect = document.querySelector('.ct-language');
+  langSelect.addEventListener('click', function(event) {
+    if (!event.target) {
+      return;
+    }
+
+    var selected = document.querySelector('.ct-language .ct-language-selected');
+    if (selected) {
+      selected.classList.remove('ct-language-selected');
+    }
+
+    var target = event.target;
+    while (target && target !== langSelect ) {
+      if (target.matches('.lang-select')) {
+        break;
+      }
+      target = target.parentElement;
+    }
+
+    if (target && target.matches('.lang-select')) {
+      var lang = target.getAttribute('data-lang');
+      if (googleCombo.value == lang) {
+        restoreLang();
+      } else {
+        target.parentElement.classList.add('ct-language-selected');
+        googleCombo.value = lang;
+        triggerHtmlEvent(googleCombo, 'change');
+      }
+    }
+
+    event.preventDefault();
+  });
+}
+</script>
+
+<script type="text/javascript" src="https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit" async></script>
+</div>
+</div>
+        </nav>
+</div>
+  </div>
+</header>
+
+<script>
+  function initHeader() {
+    var lastScrollY = getScrollPos().y;
+    var documentElement = document.documentElement;
+
+    function storeScrollData() {
+      var y = getScrollPos().y;var scrollStatus = "";
+
+      if (y <= 0) {
+        scrollStatus = "top";
+      } else if ((window.innerHeight + y) >= document.body.offsetHeight) {
+        scrollStatus = "bottom";
+      } else {
+        var isScrollDown = (y - lastScrollY > 0) ? true : false;
+        scrollStatus = isScrollDown ? "down" : "up";
+      }
+
+      lastScrollY = y;
+      documentElement.setAttribute("data-scroll-status", scrollStatus);
+    }
+
+    window.addEventListener('scroll', function(e) {
+      storeScrollData();
+    });
+
+    storeScrollData();
+  }
+  document.addEventListener('DOMContentLoaded', initHeader);
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<script>
+  function hashLocate(hashValue) {
+    hashValue = hashValue.replace(/^.*#h-/, '');
+    hashValue = decodeURIComponent(hashValue);
+    var element = document.getElementById(hashValue);
+
+    if (!element) {
+      return;
+    }
+
+    var header = document.querySelector('header.site-header');
+    var headerRect = header.getBoundingClientRect();
+    var headerTop = Math.floor(headerRect.top);
+    var headerHeight = Math.floor(headerRect.height);
+    var scrollPos = getScrollPos();
+    var offsetY = element.offsetTop - (headerTop + headerHeight + 20);
+
+    if (offsetY == scrollPos.y) {
+      return;
+    }
+
+    if (headerTop == 0  && offsetY > scrollPos.y) {
+      offsetY += headerHeight + 2;
+    } else if (headerTop < 0  && offsetY < scrollPos.y) {
+      offsetY -= headerHeight - 2;
+    }
+
+    smoothScrollTo(offsetY);
+  }
+
+  // The first event occurred
+  window.addEventListener('load', function(event) {
+    if (window.location.hash) {
+      hashLocate(window.location.hash);
+    }
+  });
+
+  // The first event occurred
+  window.addEventListener('click', function(event) {
+    if (event.target.tagName.toLowerCase() == 'a') {
+      hashLocate(event.target.getAttribute('href'));
+    }
+  });
+</script>
+<div class="theme-toggle">
+  <input type="checkbox" id="theme-switch">
+  <label for="theme-switch">
+    <div class="toggle"></div>
+    <div class="names">
+      <p class="light">Light</p>
+      <p class="dark">Dark</p>
+    </div>
+  </label>
+</div>
+
+
+
+
+<script>
+  (function() {
+    var sw = document.getElementById('theme-switch');
+    var html = document.getElementsByTagName('html')[0];
+    var nightModeOption = ('auto' || 'auto').toLowerCase();
+    var storage = nightModeOption === 'manual'
+        ? localStorage
+        : sessionStorage;
+    var themeData = loadThemeData();
+
+    function saveThemeData(data) {
+      storage.setItem('theme', JSON.stringify(data));
+    }
+
+    function loadThemeData() {
+      var data = storage.getItem('theme');
+      try {
+        data = JSON.parse(data ? data : '');
+      } catch(e) {
+        data = { nightShift: undefined, autoToggleAt: 0 };
+        saveThemeData(data);
+      }
+      return data;
+    }
+
+    function handleThemeToggle(nightShift) {
+      themeData.nightShift = nightShift;
+      saveThemeData(themeData);
+      html.dataset.theme = nightShift ? 'dark' : 'light';
+      setTimeout(function() {
+        sw.checked = nightShift ? true : false;
+      }, 50);
+    }
+
+    function autoThemeToggle() {
+      // Next time point of theme toggle
+      var now = new Date();
+      var toggleAt = new Date();
+      var hours = now.getHours();
+      var nightShift = hours >= 19 || hours <=7;
+
+      if (nightShift) {
+        if (hours > 7) {
+          toggleAt.setDate(toggleAt.getDate() + 1);
+        }
+        toggleAt.setHours(7);
+      } else {
+        toggleAt.setHours(19);
+      }
+
+      toggleAt.setMinutes(0);
+      toggleAt.setSeconds(0);
+      toggleAt.setMilliseconds(0)
+
+      var delay = toggleAt.getTime() - now.getTime();
+
+      // auto toggle theme mode
+      setTimeout(function() {
+        handleThemeToggle(!nightShift);
+      }, delay);
+
+      return {
+        nightShift: nightShift,
+        toggleAt: toggleAt.getTime()
+      };
+    }
+
+    // Listen the theme toggle event
+    sw.addEventListener('change', function(event) {
+      handleThemeToggle(event.target.checked);
+    });
+
+    if (nightModeOption == 'auto') {
+      var data = autoThemeToggle();
+
+      // Toggle theme by local setting
+      if (data.toggleAt > themeData.autoToggleAt) {
+        themeData.autoToggleAt = data.toggleAt;
+        handleThemeToggle(data.nightShift);
+      } else {
+        handleThemeToggle(themeData.nightShift);
+      }
+    } else if (nightModeOption == 'manual') {
+      handleThemeToggle(themeData.nightShift);
+    } else {
+      var nightShift = themeData.nightShift;
+      if (nightShift === undefined) {
+        nightShift = nightModeOption === 'on';
+      }
+      handleThemeToggle(nightShift);
+    }
+  })();
+</script>
+<div id="click-to-top" class="click-to-top">
+  <i class="fa fa-arrow-up"></i>
+</div>
+<script>
+  (function () {
+    const clickToTop = document.getElementById('click-to-top');
+    window.addEventListener('scroll', () => {
+      if (window.scrollY > 100) {
+        clickToTop.classList.add('show')
+      }else {
+        clickToTop.classList.remove('show')
+      }
+    });
+    clickToTop.addEventListener('click', () => {
+      window.smoothScrollTo(0);
+    });
+  })();
+</script>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <div class="framework">
+  <section class="main">
+
+     <div class="post">
+  <section>
+
+
+
+
+
+
+
+
+
+<header class="post-header">
+  <h1 class="post-title p-name" itemprop="name headline">MySQL主键自增有几种模式？</h1>
+  <h2 class="post-subtitle">MySQL主键自增有几种模式？</h2>
+
+  <div class="post-meta">
+    <time class="dt-published" datetime="2024-09-25T00:00:00+08:00" itemprop="datePublished"><i class="fa fa-calendar"></i> Sep 25, 2024
+    </time>
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <span class="post-reading-time left-vsplit"><i class="fa fa-clock-o"></i> About 2 mins</span>
+  </div>
+<div class="post-tags"><a class="post-tag" href="/tags.html#MySQL">#MySQL</a></div></header>
+<article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+
+    <div class="post-content e-content" itemprop="articleBody">
+
+      <p><img src="https://github.com/jeffreytse/jekyll-theme-yat/assets/9413601/2ed22d49-90b1-4f7e-8e8f-b77b21dee505" alt="banner"></p>
+
+<h2 id="前言">前言</h2>
+
+<p>在大多数的业务场景下，我们的数据表的一般会默认使用主键自增长(<code class="language-plaintext highlighter-rouge">AUTO_INCREMENT</code>)模式，在执行<code class="language-plaintext highlighter-rouge">insert</code>语句时，MySQL会自动为数据行生成主键ID，保证其单调递增和不重复的。一般情况下，我们很少会关注<code class="language-plaintext highlighter-rouge">AUTO_INCREMENT</code>的策略模型，事实上，InnoDB提供了一个可配置的自增长模型机制，可以显著提高向带有<code class="language-plaintext highlighter-rouge">AUTO_INCREMENT</code>列的表添加记录的SQL语句的可扩展性和性能。</p>
+
+<p>本篇，我们就来简要了解一下MySQL InnoDB的主键自增长策略模式。</p>
+
+<h2 id="insert种类">INSERT种类</h2>
+
+<p>MySQL将<code class="language-plaintext highlighter-rouge">INSERT</code>操作分为三类：</p>
+
+<p>1、<code class="language-plaintext highlighter-rouge">Simple inserts</code></p>
+
+<p>插入的记录行数是可以事先确定的。包括最常见的单条<code class="language-plaintext highlighter-rouge">INSERT</code>、<code class="language-plaintext highlighter-rouge">REPLACE</code>，但不包括<code class="language-plaintext highlighter-rouge">INSERT ... ON DUPLICATE KEY UPDATE</code></p>
+
+<p>2、<code class="language-plaintext highlighter-rouge">Bulk inserts</code></p>
+
+<p>插入的记录行数是无法事先确定的。包括 <code class="language-plaintext highlighter-rouge">INSERT ... SELECT</code>,<code class="language-plaintext highlighter-rouge"> REPLACE ... SELECT</code>, <code class="language-plaintext highlighter-rouge">LOAD DATA</code>，不包括普通的<code class="language-plaintext highlighter-rouge">INSERT</code>操作</p>
+
+<p>3、<code class="language-plaintext highlighter-rouge">Mixed-mode inserts</code></p>
+
+<p>该种类型也属于<code class="language-plaintext highlighter-rouge">Simple inserts</code>类型，插入的记录行数是可以事先确定的，但与<code class="language-plaintext highlighter-rouge">Simple inserts</code>不同的是，<code class="language-plaintext highlighter-rouge">INSERT</code>语句中有部分记录自行指定了自增长字段的值，例如：</p>
+
+<div class="language-sql highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">INSERT</span> <span class="k">INTO</span> <span class="n">t1</span> <span class="p">(</span><span class="n">c1</span><span class="p">,</span><span class="n">c2</span><span class="p">)</span> <span class="k">VALUES</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="s1">'a'</span><span class="p">),</span> <span class="p">(</span><span class="k">NULL</span><span class="p">,</span><span class="s1">'b'</span><span class="p">),</span> <span class="p">(</span><span class="mi">5</span><span class="p">,</span><span class="s1">'c'</span><span class="p">),</span> <span class="p">(</span><span class="k">NULL</span><span class="p">,</span><span class="s1">'d'</span><span class="p">);</span>
+</code></pre></div></div>
+
+<p>该模式也包括了<code class="language-plaintext highlighter-rouge">INSERT ... ON DUPLICATE KEY UPDATE</code></p>
+
+<h2 id="自增长锁模型auto_increment-lock-modes">自增长锁模型（AUTO_INCREMENT Lock Modes）</h2>
+
+<p><code class="language-plaintext highlighter-rouge">InnoDB</code>引擎提供了三种锁模型来支持<code class="language-plaintext highlighter-rouge">AUTO_INCREMENT </code>，可以通过<code class="language-plaintext highlighter-rouge">innodb_autoinc_lock_mode</code>参数来进行指定，取值范围为(0，1，2)，分别对应”传统模式”、”连续模式”、”交错模式”，下面我们来依次看一下三种锁模式。</p>
+
+<h3 id="传统锁模式traditional-lock-mode">传统锁模式(Traditional lock mode)</h3>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>innodb_autoinc_lock_mode = 0
+</code></pre></div></div>
+
+<p>该种模式下，它会对所有的<code class="language-plaintext highlighter-rouge">Insert</code>模式操作都去获取一个特殊的表级别的自增长锁(<code class="language-plaintext highlighter-rouge">AUTO-INC</code>)，这种锁会持续到语句结束，以确保执行的<code class="language-plaintext highlighter-rouge">Insert</code>语句以可预测且可重复的顺序分配自动递增值。</p>
+
+<p>这种模式更多是为了兼容老版本的MySQL运行。实际生产环境中不推荐使用。</p>
+
+<p>由于对于所有的<code class="language-plaintext highlighter-rouge">Insert</code>执行时，都会尝试去获取表级别的自增锁，可以预见该种模式的并发性会非常的差，当同时存在多个事务同时执行<code class="language-plaintext highlighter-rouge">Insert</code>操作，只有其中一个事务可以获取到自增锁，而其他的事务必须等待其执行完毕释放锁后，才可以进行执行<code class="language-plaintext highlighter-rouge">Insert</code>操作。</p>
+
+<p>我们来看一个例子：</p>
+
+<div class="language-sql highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">CREATE</span> <span class="k">TABLE</span> <span class="n">t1</span> <span class="p">(</span>
+  <span class="n">c1</span> <span class="nb">INT</span><span class="p">(</span><span class="mi">11</span><span class="p">)</span> <span class="k">NOT</span> <span class="k">NULL</span> <span class="n">AUTO_INCREMENT</span><span class="p">,</span>
+  <span class="n">c2</span> <span class="nb">VARCHAR</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span> <span class="k">DEFAULT</span> <span class="k">NULL</span><span class="p">,</span>
+  <span class="k">PRIMARY</span> <span class="k">KEY</span> <span class="p">(</span><span class="n">c1</span><span class="p">)</span>
+<span class="p">)</span> <span class="n">ENGINE</span><span class="o">=</span><span class="n">InnoDB</span><span class="p">;</span>
+</code></pre></div></div>
+
+<p>我们有一张表<code class="language-plaintext highlighter-rouge">t1</code>，假定同时存在两个事务执行，并都使用自增长字段：</p>
+
+<div class="language-sql highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">Tx1</span><span class="p">:</span> <span class="k">INSERT</span> <span class="k">INTO</span> <span class="n">t1</span> <span class="p">(</span><span class="n">c2</span><span class="p">)</span> <span class="k">SELECT</span> <span class="mi">1000</span> <span class="k">rows</span> <span class="k">from</span> <span class="n">another</span> <span class="k">table</span> <span class="p">...</span>
+<span class="n">Tx2</span><span class="p">:</span> <span class="k">INSERT</span> <span class="k">INTO</span> <span class="n">t1</span> <span class="p">(</span><span class="n">c2</span><span class="p">)</span> <span class="k">VALUES</span> <span class="p">(</span><span class="s1">'xxx'</span><span class="p">);</span>
+</code></pre></div></div>
+
+<p>对于上面的场景，两个事务无法同时并行操作，如果<code class="language-plaintext highlighter-rouge">Tx1</code>先执行，则会获取<code class="language-plaintext highlighter-rouge">t1</code>的自增锁，直到该条语句执行结束，然后<code class="language-plaintext highlighter-rouge">Tx2</code>才可以重新获取锁进行执行插入，需要注意的是，表级自增锁的持有时间范围是语句级别，并非事务级别。</p>
+
+<p>该种模式下，虽然对于<code class="language-plaintext highlighter-rouge">Insert</code>的并发度非常差，但可以保证自增字段的连续性，并且对于基于<code class="language-plaintext highlighter-rouge">SQL BINLOG</code>的主从同步，可以保证从库的自增字段与主库一致。</p>
+
+<h3 id="连续锁模式consecutive-lock-mode">连续锁模式(Consecutive lock mode)</h3>
+
+<div class="language-sql highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">innodb_autoinc_lock_mode</span> <span class="o">=</span> <span class="mi">1</span>
+</code></pre></div></div>
+
+<p>在MySQL8.0之前，该种模式是InnoDB的默认自增模式。</p>
+
+<p>该种模式下，对于普通<code class="language-plaintext highlighter-rouge">Insert</code>语句，申请到自增锁后就马上释放，并非语句执行结束。但是对于<code class="language-plaintext highlighter-rouge">bulk insert</code>这样的批量插入数据语句，仍然会申请表级别的自增锁，会持有锁直到语句结束后才被释放。</p>
+
+<p>需要注意的是，虽然单条<code class="language-plaintext highlighter-rouge">Insert</code>语句会避免使用表级自增锁，但是当其他的事务正在持有表级自增锁，那么在当前事务内，<code class="language-plaintext highlighter-rouge">Insert</code>操作时也会被阻塞，等待其他事务释放锁资源。</p>
+
+<p>相较于传统锁模式，连续锁模式在语义上没有大的区别，但对于普通单条的<code class="language-plaintext highlighter-rouge">Insert</code>并发度有一定的提升。</p>
+
+<h3 id="交叉锁模式interleaved-lock-mode">交叉锁模式(Interleaved lock mode)</h3>
+
+<div class="language-sql highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">innodb_autoinc_lock_mode</span> <span class="o">=</span> <span class="mi">2</span>
+</code></pre></div></div>
+
+<p>在MySQL8.0中，该种模式是InnoDB的默认自增模式。</p>
+
+<p>该种模式下，对于<code class="language-plaintext highlighter-rouge">Insert</code>语句的执行不会使用表级别的自增锁，这意味着多个事务的多个<code class="language-plaintext highlighter-rouge">Insert</code>可以并发执行，是所有模型中执行效率最高的模式。</p>
+
+<p>但在该模式下，存在两个问题：</p>
+
+<p>​	1、在这种模式下，如果<code class="language-plaintext highlighter-rouge">binlog</code>格式为<code class="language-plaintext highlighter-rouge">statement (SBR)</code>，可能会引起数据不一致。也就是说，在主库的自增字段的值，同步到从库时，可能会不一致。</p>
+
+<p>​	2、对于<code class="language-plaintext highlighter-rouge">bulk inserts</code>语句来说，它得到的自增值可能不是连续的。但是对于普通的<code class="language-plaintext highlighter-rouge">Insert</code>语句，则不会出现这个问题。</p>
+
+<h2 id="总结">总结</h2>
+
+<p>OK，我们了解了MySQL InnoDB中自增长字段的三种执行模式，我们简单进行一下总结：</p>
+
+<p><code class="language-plaintext highlighter-rouge">Traditional lock mode</code>传统锁模式：</p>
+
+<p>此种模式可以说是最保守的执行模式，可以完全保证自增长键的连续性，但由于是通过表级锁进行的实现，性能较差，主要是为了兼容老版本，在目前的生产环境中不可能采用</p>
+
+<p><code class="language-plaintext highlighter-rouge">Consecutive lock mode</code>连续锁模式：</p>
+
+<p>传统锁模式的进阶版本，MySQL5.7及其之前的默认模式，该种模式对于普通的<code class="language-plaintext highlighter-rouge">Insert</code>语句进行了优化，相较于传统锁模式大大的提升了并发度，但对于<code class="language-plaintext highlighter-rouge">bulk inserts</code>等批量操作，仍会进行等待锁资源，如果可以保证不会使用<code class="language-plaintext highlighter-rouge">bulk inserts</code>等操作的话，该种模式是没有问题的，对于主从复制也较为友好，对于任何种类的<code class="language-plaintext highlighter-rouge">binlog</code>同步类型，都可以保证主从一致性</p>
+
+<p><code class="language-plaintext highlighter-rouge">Interleaved lock mode</code>交叉锁模式：</p>
+
+<p>MySQL8.0之后版本的默认模式，目前看起来的最优解模式，该种模式完全不使用表级锁，可以真正的实现多事务<code class="language-plaintext highlighter-rouge">Insert</code>并发执行，缺点是对于<code class="language-plaintext highlighter-rouge">bulk inserts</code>语句执行时可能会出现自增长值不连续的情况，同时对于主从复制的<code class="language-plaintext highlighter-rouge">statement  binlog</code>，无法保证主从的一致性。</p>
+
+<p>本篇关于MySQL自增长键的介绍就到这里，关于更多的细节，可以查阅官方文档的解释：</p>
+
+<p>https://dev.mysql.com/doc/refman/8.0/en/innodb-auto-increment-handling.html</p>
+
+
+
+    </div>
+
+</article>
+<div class="post-nav">
+<a class="previous" href="/mysql/2024/09/25/MySQL%E4%B8%BA%E4%BB%80%E4%B9%88%E6%9C%89%E4%BA%86redolog%E8%BF%98%E9%9C%80%E8%A6%81double-write-buffer.html" title="MySQL为什么有了redolog还需要double write buffer">MySQL为什么有了redolog还需要double write buffer</a><a class="next" href="/mysql/2024/09/25/MySQL%E6%85%A2SQL%E6%8E%A2%E7%A9%B6.html" title="MySQL慢SQL探究">MySQL慢SQL探究</a>
+</div>
+<div class="post-related">
+      <div>Related Articles</div>
+      <ul>
+        <li class="top-post">
+          <a class="post-link" href="/redis/2024/09/25/Redis-key%E8%BF%87%E6%9C%9F%E5%88%A0%E9%99%A4%E6%9C%BA%E5%88%B6.html" title="Redis key过期删除机制">
+            Redis key过期删除机制<span class="post-badges">
+  <span class="post-badge badge-top">TOP</span>
+  <span class="post-badge badge-new">NEW</span>
+</span>
+</a>
+        </li>
+<li class="top-post">
+          <a class="post-link" href="/mysql/2024/09/25/MySQL%E4%B8%BB%E9%94%AE%E8%87%AA%E5%A2%9E%E6%9C%89%E5%87%A0%E7%A7%8D%E6%A8%A1%E5%BC%8F.html" title="MySQL主键自增有几种模式？">
+            MySQL主键自增有几种模式？<span class="post-badges">
+  <span class="post-badge badge-top">TOP</span>
+  <span class="post-badge badge-new">NEW</span>
+</span>
+</a>
+        </li>
+<li class="top-post">
+          <a class="post-link" href="/mysql/2024/09/25/MySQL%E6%85%A2SQL%E6%8E%A2%E7%A9%B6.html" title="MySQL慢SQL探究">
+            MySQL慢SQL探究<span class="post-badges">
+  <span class="post-badge badge-top">TOP</span>
+  <span class="post-badge badge-new">NEW</span>
+</span>
+</a>
+        </li>
+<li class="top-post">
+          <a class="post-link" href="/mysql/2024/09/25/MySQL%E4%B8%BA%E4%BB%80%E4%B9%88%E6%9C%89%E4%BA%86redolog%E8%BF%98%E9%9C%80%E8%A6%81double-write-buffer.html" title="MySQL为什么有了redolog还需要double write buffer">
+            MySQL为什么有了redolog还需要double write buffer<span class="post-badges">
+  <span class="post-badge badge-top">TOP</span>
+  <span class="post-badge badge-new">NEW</span>
+</span>
+</a>
+        </li>
+</ul>
+    </div>
+<div class="post-comments"></div></section>
+</div>
+
+
+  </section>
+  <section class="sidebar" style="margin-left: 15px;">
+    <!-- Get sidebar items --><style type="text/css" media="screen">
+.post-menu ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+</style>
+
+<div class="post-menu">
+  <div class="post-menu-title">TOC</div>
+  <div class="post-menu-content"></div>
+</div>
+
+<script>
+  function generateContent() {
+    var menu = document.querySelector(".post-menu");
+    var menuContent =  menu.querySelector(".post-menu-content");
+    var headings = document.querySelector(".post-content").querySelectorAll("h2, h3, h4, h5, h6");
+
+    // Hide menu when no headings
+    if (headings.length === 0) {
+      return menu.style.display = "none";
+    }
+
+    // Generate post menu
+    var menuHTML = '';
+    for (var i = 0; i < headings.length; i++) {
+      var h = headings[i];
+      menuHTML += (
+        '<li class="h-' + h.tagName.toLowerCase() + '">'
+        + '<a href="#h-' + h.getAttribute('id') + '">' + h.textContent + '</a></li>');
+    }
+
+    menuContent.innerHTML = '<ul>' + menuHTML + '</ul>';
+
+    // The header element
+    var header = document.querySelector('header.site-header');
+
+    function doMenuCollapse(index, over_items) {
+      var items = menuContent.firstChild.children;
+
+      if (over_items == undefined) {
+        over_items = 20;
+      }
+
+      if (items.length < over_items) {
+        return;
+      }
+
+      var activeItem = items[index];
+      var beginItem = activeItem
+      var endItem = activeItem
+      var beginIndex = index;
+      var endIndex = index + 1;
+      while (beginIndex >= 0
+        && !items[beginIndex].classList.contains('h-h2')) {
+        beginIndex -= 1;
+      }
+      while (endIndex < items.length
+        && !items[endIndex].classList.contains('h-h2')) {
+        endIndex += 1;
+      }
+      for (var i = 0; i < beginIndex; i++) {
+        item = items[i]
+        if (!item.classList.contains('h-h2')) {
+          item.style.display = 'none';
+        }
+      }
+      for (var i = beginIndex + 1; i < endIndex; i++) {
+        item = items[i]
+        // if (!item.classList.contains('h-h2')) {
+          item.style.display = '';
+        // }
+      }
+      for (var i = endIndex; i < items.length; i++) {
+        item = items[i]
+        if (!item.classList.contains('h-h2')) {
+          item.style.display = 'none';
+        }
+      }
+    }
+
+    // Init menu collapsed
+    doMenuCollapse(-1);
+
+    // Active the menu item
+    window.addEventListener('scroll', function (event) {
+      var lastActive = menuContent.querySelector('.active');
+      var changed = true;
+      var activeIndex = -1;
+      for (var i = headings.length - 1; i >= 0; i--) {
+        var h = headings[i];
+        var headingRect = h.getBoundingClientRect();
+        var headerRect = header.getBoundingClientRect();
+        var headerTop = Math.floor(headerRect.top);
+        var headerHeight = Math.floor(headerRect.height);
+        var headerHeight = headerTop + headerHeight + 20;
+        if (headingRect.top <= headerHeight) {
+          var id = 'h-' + h.getAttribute('id');
+          var a = menuContent.querySelector('a[href="#' + id  + '"]');
+          var curActive = a.parentNode;
+          if (curActive) {
+            curActive.classList.add('active');
+            activeIndex = i;
+          }
+          if (lastActive == curActive) {
+            changed = false;
+          }
+          break;
+        }
+      }
+      if (changed) {
+        if (lastActive) {
+          lastActive.classList.remove('active');
+        }
+        doMenuCollapse(activeIndex);
+      }
+      event.preventDefault();
+    });
+  }
+  generateContent();
+</script>
+</section>
+</div>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/"></data>
+
+  <div class="wrapper">
+    <div class="site-footer-inner">
+<div>Unpublished Work <span class="copyleft">©</span> 2017-2024 GitHub User</div>
+      <div>Powered by <a title="Jekyll is a simple, blog-aware, static site
+      generator." href="https://jekyllrb.com/">Jekyll</a> &amp; <a title="Yat, yet
+      another theme." href="https://github.com/jeffreytse/jekyll-theme-yat">Yat Theme</a>.</div>
+      <div class="footer-col rss-subscribe">Subscribe <a href="/feed.xml">via RSS</a>
+</div>
+    </div>
+  </div>
+</footer>
+</body>
+</html>

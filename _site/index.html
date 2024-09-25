@@ -954,7 +954,115 @@ function googleTranslateElementInit() {
 
 <li class="post-item top-post">
   <h2 class="post-title">
-    <a class="post-link" href="/markdown/2024/09/22/Java-ThreadPoolExecutor%E7%BA%BF%E7%A8%8B%E6%B1%A0%E6%A6%82%E8%BF%B0.html">
+    <a class="post-link" href="/mysql/2024/09/25/MySQL%E4%B8%BA%E4%BB%80%E4%B9%88%E6%9C%89%E4%BA%86redolog%E8%BF%98%E9%9C%80%E8%A6%81double-write-buffer.html">
+      MySQL为什么有了redolog还需要double write buffer<span class="post-badges">
+  <span class="post-badge badge-top">TOP</span>
+  <span class="post-badge badge-new">NEW</span>
+</span>
+</a>
+  </h2>
+  <div class="post-meta">
+    <span class="post-date"><i class="fa fa-calendar"></i> Sep 25, 2024</span><span class="post-reading-time left-vsplit"><i class="fa fa-clock-o"></i> About 1 min</span>
+  </div>
+  <div class="post-excerpt">
+<a class="post-image" href="/mysql/2024/09/25/MySQL%E4%B8%BA%E4%BB%80%E4%B9%88%E6%9C%89%E4%BA%86redolog%E8%BF%98%E9%9C%80%E8%A6%81double-write-buffer.html" style="flex: 0 1 38.2%">
+      <div style="background-image: url(https://github.com/jeffreytse/jekyll-theme-yat/assets/9413601/2ed22d49-90b1-4f7e-8e8f-b77b21dee505); height: 160px"></div>
+    </a><a class="post-text" href="/mysql/2024/09/25/MySQL%E4%B8%BA%E4%BB%80%E4%B9%88%E6%9C%89%E4%BA%86redolog%E8%BF%98%E9%9C%80%E8%A6%81double-write-buffer.html">
+      <p>
+
+问题
+
+我们知道MySQL InnoDB引擎使用redolog作为异常容灾恢复的机制，当MySQL进程发生异常退出、机器断电等，在重新启动时，使用redolog恢复。
+
+OK，redolog是被MySQL设计为异常崩溃恢复的，double write buffer同样是为了保证数据完整性，那么既然已经有了redolog，为什么还需要double write buffer（双写缓冲区）呢？
+
+double write buffer
+
+InnoDB用double write buffer（双写缓冲区）来避免页没写完整所导致的数据损坏。当一个磁盘写操作不能完整地完成时，不完整的页写入就可能发生，16KB的页可能只有一部分被写到磁盘上。有多种多样的原因（崩溃、Bug，等等）可能导致页没有写... <span class="read_more">Read More</span></p>
+    </a>
+  </div>
+  <div class="post-tags"><a class="post-tag" href="/tags.html#MySQL">#MySQL</a></div>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li class="post-item top-post">
+  <h2 class="post-title">
+    <a class="post-link" href="/java/2024/09/25/Java-ThreadPoolExecutor%E7%BA%BF%E7%A8%8B%E6%B1%A0%E6%A6%82%E8%BF%B0.html">
       Java ThreadPoolExecutor线程池概述<span class="post-badges">
   <span class="post-badge badge-top">TOP</span>
   <span class="post-badge badge-new">NEW</span>
@@ -962,12 +1070,12 @@ function googleTranslateElementInit() {
 </a>
   </h2>
   <div class="post-meta">
-    <span class="post-date"><i class="fa fa-calendar"></i> Sep 22, 2024</span><span class="post-reading-time left-vsplit"><i class="fa fa-clock-o"></i> About 6 mins</span>
+    <span class="post-date"><i class="fa fa-calendar"></i> Sep 25, 2024</span><span class="post-reading-time left-vsplit"><i class="fa fa-clock-o"></i> About 6 mins</span>
   </div>
   <div class="post-excerpt">
-<a class="post-image" href="/markdown/2024/09/22/Java-ThreadPoolExecutor%E7%BA%BF%E7%A8%8B%E6%B1%A0%E6%A6%82%E8%BF%B0.html" style="flex: 0 1 38.2%">
+<a class="post-image" href="/java/2024/09/25/Java-ThreadPoolExecutor%E7%BA%BF%E7%A8%8B%E6%B1%A0%E6%A6%82%E8%BF%B0.html" style="flex: 0 1 38.2%">
       <div style="background-image: url(https://github.com/jeffreytse/jekyll-theme-yat/assets/9413601/2ed22d49-90b1-4f7e-8e8f-b77b21dee505); height: 160px"></div>
-    </a><a class="post-text" href="/markdown/2024/09/22/Java-ThreadPoolExecutor%E7%BA%BF%E7%A8%8B%E6%B1%A0%E6%A6%82%E8%BF%B0.html">
+    </a><a class="post-text" href="/java/2024/09/25/Java-ThreadPoolExecutor%E7%BA%BF%E7%A8%8B%E6%B1%A0%E6%A6%82%E8%BF%B0.html">
       <p>
 
 导航
@@ -1000,6 +1108,468 @@ function googleTranslateElementInit() {
     </a>
   </div>
   <div class="post-tags"><a class="post-tag" href="/tags.html#Java">#Java</a></div>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li class="post-item top-post">
+  <h2 class="post-title">
+    <a class="post-link" href="/mysql/2024/09/25/MySQL%E6%85%A2SQL%E6%8E%A2%E7%A9%B6.html">
+      MySQL慢SQL探究<span class="post-badges">
+  <span class="post-badge badge-top">TOP</span>
+  <span class="post-badge badge-new">NEW</span>
+</span>
+</a>
+  </h2>
+  <div class="post-meta">
+    <span class="post-date"><i class="fa fa-calendar"></i> Sep 25, 2024</span><span class="post-reading-time left-vsplit"><i class="fa fa-clock-o"></i> About 14 mins</span>
+  </div>
+  <div class="post-excerpt">
+<a class="post-image" href="/mysql/2024/09/25/MySQL%E6%85%A2SQL%E6%8E%A2%E7%A9%B6.html" style="flex: 0 1 38.2%">
+      <div style="background-image: url(https://github.com/jeffreytse/jekyll-theme-yat/assets/9413601/2ed22d49-90b1-4f7e-8e8f-b77b21dee505); height: 160px"></div>
+    </a><a class="post-text" href="/mysql/2024/09/25/MySQL%E6%85%A2SQL%E6%8E%A2%E7%A9%B6.html">
+      <p>
+
+前言
+
+我们在日常开发中，一定遇见过某些SQL执行较慢的情况，我们俗称“慢SQL”，如果你对系统的接口性能要求较高的话，一定不会放过这种SQL，肯定会想办法进行解决，那么，导致慢SQL出现的原因，究竟可能都有哪些呢？
+
+这是一道经典的面试题，就此我们来研究一番，下面，我们就来好好看一下，原因可能出在哪里。
+
+本篇我们将从如下几个方面进行讨论：
+
+1、慢SQL捕获
+
+2、执行计划分析
+
+3、引擎参数配置分析
+
+让我们就此开启本次慢SQL分析之旅，Let’s go！
+
+
+  ps: 本篇文章的讨论，主要基于MySQL8.0数据库，Oracle等其他数据库不在本篇讨论范围之列。
+
+
+1、慢SQL捕获
+
+追查应用服务的慢SQL，首先需要追踪哪些SQL可能是慢SQL，对于Java服务，很多数... <span class="read_more">Read More</span></p>
+    </a>
+  </div>
+  <div class="post-tags"><a class="post-tag" href="/tags.html#MySQL">#MySQL</a></div>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li class="post-item top-post">
+  <h2 class="post-title">
+    <a class="post-link" href="/mysql/2024/09/25/MySQL%E4%B8%BB%E9%94%AE%E8%87%AA%E5%A2%9E%E6%9C%89%E5%87%A0%E7%A7%8D%E6%A8%A1%E5%BC%8F.html">
+      MySQL主键自增有几种模式？<span class="post-badges">
+  <span class="post-badge badge-top">TOP</span>
+  <span class="post-badge badge-new">NEW</span>
+</span>
+</a>
+  </h2>
+  <div class="post-meta">
+    <span class="post-date"><i class="fa fa-calendar"></i> Sep 25, 2024</span><span class="post-reading-time left-vsplit"><i class="fa fa-clock-o"></i> About 2 mins</span>
+  </div>
+  <div class="post-excerpt">
+<a class="post-image" href="/mysql/2024/09/25/MySQL%E4%B8%BB%E9%94%AE%E8%87%AA%E5%A2%9E%E6%9C%89%E5%87%A0%E7%A7%8D%E6%A8%A1%E5%BC%8F.html" style="flex: 0 1 38.2%">
+      <div style="background-image: url(https://github.com/jeffreytse/jekyll-theme-yat/assets/9413601/2ed22d49-90b1-4f7e-8e8f-b77b21dee505); height: 160px"></div>
+    </a><a class="post-text" href="/mysql/2024/09/25/MySQL%E4%B8%BB%E9%94%AE%E8%87%AA%E5%A2%9E%E6%9C%89%E5%87%A0%E7%A7%8D%E6%A8%A1%E5%BC%8F.html">
+      <p>
+
+前言
+
+在大多数的业务场景下，我们的数据表的一般会默认使用主键自增长(AUTO_INCREMENT)模式，在执行insert语句时，MySQL会自动为数据行生成主键ID，保证其单调递增和不重复的。一般情况下，我们很少会关注AUTO_INCREMENT的策略模型，事实上，InnoDB提供了一个可配置的自增长模型机制，可以显著提高向带有AUTO_INCREMENT列的表添加记录的SQL语句的可扩展性和性能。
+
+本篇，我们就来简要了解一下MySQL InnoDB的主键自增长策略模式。
+
+INSERT种类
+
+MySQL将INSERT操作分为三类：
+
+1、Simple inserts
+
+插入的记录行数是可以事先确定的。包括最常见的单条INSERT、REPLACE，但不包括INSERT ...... <span class="read_more">Read More</span></p>
+    </a>
+  </div>
+  <div class="post-tags"><a class="post-tag" href="/tags.html#MySQL">#MySQL</a></div>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li class="post-item top-post">
+  <h2 class="post-title">
+    <a class="post-link" href="/redis/2024/09/25/Redis-key%E8%BF%87%E6%9C%9F%E5%88%A0%E9%99%A4%E6%9C%BA%E5%88%B6.html">
+      Redis key过期删除机制<span class="post-badges">
+  <span class="post-badge badge-top">TOP</span>
+  <span class="post-badge badge-new">NEW</span>
+</span>
+</a>
+  </h2>
+  <div class="post-meta">
+    <span class="post-date"><i class="fa fa-calendar"></i> Sep 25, 2024</span><span class="post-reading-time left-vsplit"><i class="fa fa-clock-o"></i> About 7 mins</span>
+  </div>
+  <div class="post-excerpt">
+<a class="post-image" href="/redis/2024/09/25/Redis-key%E8%BF%87%E6%9C%9F%E5%88%A0%E9%99%A4%E6%9C%BA%E5%88%B6.html" style="flex: 0 1 38.2%">
+      <div style="background-image: url(https://github.com/jeffreytse/jekyll-theme-yat/assets/9413601/2ed22d49-90b1-4f7e-8e8f-b77b21dee505); height: 160px"></div>
+    </a><a class="post-text" href="/redis/2024/09/25/Redis-key%E8%BF%87%E6%9C%9F%E5%88%A0%E9%99%A4%E6%9C%BA%E5%88%B6.html">
+      <p>
+
+##
+
+前言
+
+当我们创建Redis key时，可以通过expire命令指定key的过期时间(TTL)，当超过指定的TTL时间后，key将会失效。
+
+那么当key失效后，Redis会立刻将其删除么？如果不会，那么何时Redis才将其真正的删除呢？我们来一起一探究竟。
+
+Redis key过期淘汰机制
+
+Redis中的key过期淘汰机制是由两种方式实现：
+
+
+  惰性删除机制
+  定时扫描删除机制
+
+
+两种模式都不会在key达到过期时间后，第一时间删除key，而是等待特定的时机触发淘汰机制，这个很好理解，如果每一个key到达过期时间后，redis都需要第一时间检测到，并将其删除，那么将会消耗大量的资源，去实时的扫描全部key值，这显然是不合理的。
+
+下面我们来看一下两种方式的具体实现... <span class="read_more">Read More</span></p>
+    </a>
+  </div>
+  <div class="post-tags"><a class="post-tag" href="/tags.html#Redis">#Redis</a></div>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li class="post-item top-post">
+  <h2 class="post-title">
+    <a class="post-link" href="/redis/2024/09/25/Redis6.0-Client-Side%E7%BC%93%E5%AD%98%E6%98%AF%E4%BB%80%E4%B9%88.html">
+      Redis6.0 Client-Side缓存是什么<span class="post-badges">
+  <span class="post-badge badge-top">TOP</span>
+  <span class="post-badge badge-new">NEW</span>
+</span>
+</a>
+  </h2>
+  <div class="post-meta">
+    <span class="post-date"><i class="fa fa-calendar"></i> Sep 25, 2024</span><span class="post-reading-time left-vsplit"><i class="fa fa-clock-o"></i> About 2 mins</span>
+  </div>
+  <div class="post-excerpt">
+<a class="post-image" href="/redis/2024/09/25/Redis6.0-Client-Side%E7%BC%93%E5%AD%98%E6%98%AF%E4%BB%80%E4%B9%88.html" style="flex: 0 1 38.2%">
+      <div style="background-image: url(https://github.com/jeffreytse/jekyll-theme-yat/assets/9413601/2ed22d49-90b1-4f7e-8e8f-b77b21dee505); height: 160px"></div>
+    </a><a class="post-text" href="/redis/2024/09/25/Redis6.0-Client-Side%E7%BC%93%E5%AD%98%E6%98%AF%E4%BB%80%E4%B9%88.html">
+      <p>
+
+前言
+
+Redis在其6.0版本中加入了Client-side caching的支持，开启该功能后，Redis可以将指定的key-value缓存在客户端侧，这样当客户端发起请求时，如果客户端侧存在缓存，则无需请求Redis Server端。
+
+Why Client-side Caching？
+
++-------------+                                +----------+
+|             | ------- GET user:1234 -------&gt; |          |
+| Application |                                | Database |
+|             ... <span class="read_more">Read More</span></p>
+    </a>
+  </div>
+  <div class="post-tags"><a class="post-tag" href="/tags.html#Redis">#Redis</a></div>
 </li>
 <!-- Normal list item -->
 </ul>
@@ -1036,14 +1606,26 @@ function googleTranslateElementInit() {
   <ul>
     <li>
       <a href="/index.html">
-        All<span>1</span>
+        All<span>6</span>
       </a>
     </li>
 
     
       <li>
-        <a href="/categories.html#h-markdown">
-          markdown <span>1</span>
+        <a href="/categories.html#h-Java">
+          Java <span>1</span>
+        </a>
+      </li>
+    
+      <li>
+        <a href="/categories.html#h-MySQL">
+          MySQL <span>3</span>
+        </a>
+      </li>
+    
+      <li>
+        <a href="/categories.html#h-Redis">
+          Redis <span>2</span>
         </a>
       </li>
     
