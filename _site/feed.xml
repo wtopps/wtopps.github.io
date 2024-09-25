@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="4.3.4">Jekyll</generator><link href="http://localhost:4000/feed.xml" rel="self" type="application/atom+xml" /><link href="http://localhost:4000/" rel="alternate" type="text/html" /><updated>2024-09-25T17:54:05+08:00</updated><id>http://localhost:4000/feed.xml</id><title type="html">wtopps</title><subtitle>Write an awesome description for your new site here. You can edit this line in _config.yml. It will appear in your document head meta (for Google search results) and in your feed.xml site description.</subtitle><author><name>GitHub User</name></author><entry><title type="html">Java ThreadPoolExecutor线程池概述</title><link href="http://localhost:4000/java/2024/09/25/Java-ThreadPoolExecutor%E7%BA%BF%E7%A8%8B%E6%B1%A0%E6%A6%82%E8%BF%B0.html" rel="alternate" type="text/html" title="Java ThreadPoolExecutor线程池概述" /><published>2024-09-25T00:00:00+08:00</published><updated>2024-09-25T00:00:00+08:00</updated><id>http://localhost:4000/java/2024/09/25/Java%20ThreadPoolExecutor%E7%BA%BF%E7%A8%8B%E6%B1%A0%E6%A6%82%E8%BF%B0</id><content type="html" xml:base="http://localhost:4000/java/2024/09/25/Java-ThreadPoolExecutor%E7%BA%BF%E7%A8%8B%E6%B1%A0%E6%A6%82%E8%BF%B0.html"><![CDATA[<p><img src="https://github.com/jeffreytse/jekyll-theme-yat/assets/9413601/2ed22d49-90b1-4f7e-8e8f-b77b21dee505" alt="banner" /></p>
+<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="4.3.4">Jekyll</generator><link href="http://localhost:4000/feed.xml" rel="self" type="application/atom+xml" /><link href="http://localhost:4000/" rel="alternate" type="text/html" /><updated>2024-09-25T22:15:46+08:00</updated><id>http://localhost:4000/feed.xml</id><title type="html">wtopps</title><subtitle>Write an awesome description for your new site here. You can edit this line in _config.yml. It will appear in your document head meta (for Google search results) and in your feed.xml site description.</subtitle><author><name>GitHub User</name></author><entry><title type="html">Java ThreadPoolExecutor线程池概述</title><link href="http://localhost:4000/java/2024/09/25/Java-ThreadPoolExecutor%E7%BA%BF%E7%A8%8B%E6%B1%A0%E6%A6%82%E8%BF%B0.html" rel="alternate" type="text/html" title="Java ThreadPoolExecutor线程池概述" /><published>2024-09-25T00:00:00+08:00</published><updated>2024-09-25T00:00:00+08:00</updated><id>http://localhost:4000/java/2024/09/25/Java%20ThreadPoolExecutor%E7%BA%BF%E7%A8%8B%E6%B1%A0%E6%A6%82%E8%BF%B0</id><content type="html" xml:base="http://localhost:4000/java/2024/09/25/Java-ThreadPoolExecutor%E7%BA%BF%E7%A8%8B%E6%B1%A0%E6%A6%82%E8%BF%B0.html"><![CDATA[<p><img src="https://github.com/jeffreytse/jekyll-theme-yat/assets/9413601/2ed22d49-90b1-4f7e-8e8f-b77b21dee505" alt="banner" /></p>
 
 <h1 id="导航">导航</h1>
 
@@ -1672,11 +1672,11 @@ GET foo
 
 <p>在<strong>Invalidation Table</strong>中，Redis存储了Tracking key的指针地址与客户端之间的映射关系，使用了一种基数树(radix tree)的数据结构，<strong>因为键对象的指针就是内存地址，也就是长整型数据</strong>。客户端缓存的相关操作就是对该数据的增删改查：</p>
 
-<p><img src="https://raw.githubusercontent.com/wtopps/wtopps.github.io/refs/heads/master/images/da6ce7522abf46068e81dd1b47d4eda5.png" alt="tracking table" /></p>
+<p><img src="/assets/images/da6ce7522abf46068e81dd1b47d4eda5.png" alt="tracking table" /></p>
 
 <p>对于广播模式，实现的原理也是相似的，不过Redis并不是使用<strong>Invalidation Table</strong>存储，而是使用<strong>Prefixes Table</strong>存储key的前缀值与Client之间的关系：</p>
 
-<p><img src="https://raw.githubusercontent.com/wtopps/wtopps.github.io/refs/heads/master/images/e0a79f08014c4278a8277c8806589754.png" alt="Prefix Tracking Table" /></p>
+<p><img src="/assets/images/e0a79f08014c4278a8277c8806589754.png" alt="Prefix Tracking Table" /></p>
 
 <h2 id="problem">Problem</h2>
 
