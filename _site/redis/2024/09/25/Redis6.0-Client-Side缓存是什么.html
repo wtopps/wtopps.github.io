@@ -994,11 +994,11 @@ GET foo
 
 <p>在<strong>Invalidation Table</strong>中，Redis存储了Tracking key的指针地址与客户端之间的映射关系，使用了一种基数树(radix tree)的数据结构，<strong>因为键对象的指针就是内存地址，也就是长整型数据</strong>。客户端缓存的相关操作就是对该数据的增删改查：</p>
 
-<p><img src="https://img-blog.csdnimg.cn/direct/da6ce7522abf46068e81dd1b47d4eda5.png#pic_center" alt="tracking table"></p>
+<p><img src="https://raw.githubusercontent.com/wtopps/wtopps.github.io/refs/heads/master/images/da6ce7522abf46068e81dd1b47d4eda5.png" alt="tracking table"></p>
 
 <p>对于广播模式，实现的原理也是相似的，不过Redis并不是使用<strong>Invalidation Table</strong>存储，而是使用<strong>Prefixes Table</strong>存储key的前缀值与Client之间的关系：</p>
 
-<p><img src="https://img-blog.csdnimg.cn/direct/e0a79f08014c4278a8277c8806589754.png#pic_center" alt="Prefix Tracking Table"></p>
+<p><img src="https://raw.githubusercontent.com/wtopps/wtopps.github.io/refs/heads/master/images/e0a79f08014c4278a8277c8806589754.png" alt="Prefix Tracking Table"></p>
 
 <h2 id="problem">Problem</h2>
 
@@ -1038,8 +1038,24 @@ GET foo
       <div>Related Articles</div>
       <ul>
         <li class="top-post">
-          <a class="post-link" href="/mysql/2024/09/25/MySQL%E4%B8%BB%E9%94%AE%E8%87%AA%E5%A2%9E%E6%9C%89%E5%87%A0%E7%A7%8D%E6%A8%A1%E5%BC%8F.html" title="MySQL主键自增有几种模式？">
-            MySQL主键自增有几种模式？<span class="post-badges">
+          <a class="post-link" href="/redis/2024/09/25/Redis6.0-Client-Side%E7%BC%93%E5%AD%98%E6%98%AF%E4%BB%80%E4%B9%88.html" title="Redis6.0 Client-Side缓存是什么">
+            Redis6.0 Client-Side缓存是什么<span class="post-badges">
+  <span class="post-badge badge-top">TOP</span>
+  <span class="post-badge badge-new">NEW</span>
+</span>
+</a>
+        </li>
+<li class="top-post">
+          <a class="post-link" href="/mysql/2024/09/25/MySQL%E6%85%A2SQL%E6%8E%A2%E7%A9%B6.html" title="MySQL慢SQL探究">
+            MySQL慢SQL探究<span class="post-badges">
+  <span class="post-badge badge-top">TOP</span>
+  <span class="post-badge badge-new">NEW</span>
+</span>
+</a>
+        </li>
+<li class="top-post">
+          <a class="post-link" href="/redis/2024/09/25/Redis-key%E8%BF%87%E6%9C%9F%E5%88%A0%E9%99%A4%E6%9C%BA%E5%88%B6.html" title="Redis key过期删除机制">
+            Redis key过期删除机制<span class="post-badges">
   <span class="post-badge badge-top">TOP</span>
   <span class="post-badge badge-new">NEW</span>
 </span>
@@ -1048,22 +1064,6 @@ GET foo
 <li class="top-post">
           <a class="post-link" href="/mysql/2024/09/25/MySQL%E4%B8%BA%E4%BB%80%E4%B9%88%E6%9C%89%E4%BA%86redolog%E8%BF%98%E9%9C%80%E8%A6%81double-write-buffer.html" title="MySQL为什么有了redolog还需要double write buffer">
             MySQL为什么有了redolog还需要double write buffer<span class="post-badges">
-  <span class="post-badge badge-top">TOP</span>
-  <span class="post-badge badge-new">NEW</span>
-</span>
-</a>
-        </li>
-<li class="top-post">
-          <a class="post-link" href="/java/2024/09/25/Java-ThreadPoolExecutor%E7%BA%BF%E7%A8%8B%E6%B1%A0%E6%A6%82%E8%BF%B0.html" title="Java ThreadPoolExecutor线程池概述">
-            Java ThreadPoolExecutor线程池概述<span class="post-badges">
-  <span class="post-badge badge-top">TOP</span>
-  <span class="post-badge badge-new">NEW</span>
-</span>
-</a>
-        </li>
-<li class="top-post">
-          <a class="post-link" href="/redis/2024/09/25/Redis6.0-Client-Side%E7%BC%93%E5%AD%98%E6%98%AF%E4%BB%80%E4%B9%88.html" title="Redis6.0 Client-Side缓存是什么">
-            Redis6.0 Client-Side缓存是什么<span class="post-badges">
   <span class="post-badge badge-top">TOP</span>
   <span class="post-badge badge-new">NEW</span>
 </span>
