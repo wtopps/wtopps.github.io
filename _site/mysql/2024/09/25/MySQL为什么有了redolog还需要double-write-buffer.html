@@ -923,7 +923,7 @@ function googleTranslateElementInit() {
 
 <p>double write buffer是表空间一个特殊的保留区域，在一些连续的块中足够保存100个页。本质上是一个最近写回的页面的备份拷贝。当InnoDB从缓冲池刷新页面到磁盘时，首先把它们写（或者刷新）到double write buffer，然后再把它们写到其所属的数据区域中。这可以保证每个页面的写人都是原子并且持久化的。</p>
 
-<p><img src="https://img-blog.csdnimg.cn/1aad6486bc7d43bc90892a235fd814dc.png" alt="数据更新过程"></p>
+<p><img src="/assets/images/1aad6486bc7d43bc90892a235fd814dc.png" alt="数据更新过程"></p>
 
 <p>如果有一个不完整的页写到了double write buffer，原始的页依然会在磁盘上它的真实位置。当InnoDB恢复时，它将用原始页面替换掉双写缓冲中的损坏页面。</p>
 
@@ -972,8 +972,8 @@ function googleTranslateElementInit() {
       <div>Related Articles</div>
       <ul>
         <li class="top-post">
-          <a class="post-link" href="/java/2024/09/25/Java-ThreadPoolExecutor%E7%BA%BF%E7%A8%8B%E6%B1%A0%E6%A6%82%E8%BF%B0.html" title="Java ThreadPoolExecutor线程池概述">
-            Java ThreadPoolExecutor线程池概述<span class="post-badges">
+          <a class="post-link" href="/mysql/2024/09/25/MySQL%E6%85%A2SQL%E6%8E%A2%E7%A9%B6.html" title="MySQL慢SQL探究">
+            MySQL慢SQL探究<span class="post-badges">
   <span class="post-badge badge-top">TOP</span>
   <span class="post-badge badge-new">NEW</span>
 </span>
@@ -988,16 +988,16 @@ function googleTranslateElementInit() {
 </a>
         </li>
 <li class="top-post">
-          <a class="post-link" href="/mysql/2024/09/25/MySQL%E4%B8%BA%E4%BB%80%E4%B9%88%E6%9C%89%E4%BA%86redolog%E8%BF%98%E9%9C%80%E8%A6%81double-write-buffer.html" title="MySQL为什么有了redolog还需要double write buffer">
-            MySQL为什么有了redolog还需要double write buffer<span class="post-badges">
+          <a class="post-link" href="/mysql/2024/09/25/MySQL%E4%B8%BB%E9%94%AE%E8%87%AA%E5%A2%9E%E6%9C%89%E5%87%A0%E7%A7%8D%E6%A8%A1%E5%BC%8F.html" title="MySQL主键自增有几种模式？">
+            MySQL主键自增有几种模式？<span class="post-badges">
   <span class="post-badge badge-top">TOP</span>
   <span class="post-badge badge-new">NEW</span>
 </span>
 </a>
         </li>
 <li class="top-post">
-          <a class="post-link" href="/mysql/2024/09/25/MySQL%E6%85%A2SQL%E6%8E%A2%E7%A9%B6.html" title="MySQL慢SQL探究">
-            MySQL慢SQL探究<span class="post-badges">
+          <a class="post-link" href="/redis/2024/09/25/Redis6.0-Client-Side%E7%BC%93%E5%AD%98%E6%98%AF%E4%BB%80%E4%B9%88.html" title="Redis6.0 Client-Side缓存是什么">
+            Redis6.0 Client-Side缓存是什么<span class="post-badges">
   <span class="post-badge badge-top">TOP</span>
   <span class="post-badge badge-new">NEW</span>
 </span>

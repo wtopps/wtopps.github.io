@@ -1049,7 +1049,7 @@ function googleTranslateElementInit() {
 
 <p>这里我们用一张<code class="language-plaintext highlighter-rouge">string get</code>命令的时序图，总结一下<code class="language-plaintext highlighter-rouge">get</code>命令的执行流程：</p>
 
-<p><img src="https://img2018.cnblogs.com/i-beta/830731/202001/830731-20200122172051350-1377334291.png" alt="img"></p>
+<p><img src="/assets/images/830731-20200122172051350-1377334291.png" alt="img"></p>
 
 <h2 id="定时扫描删除机制">定时扫描删除机制</h2>
 
@@ -1061,7 +1061,7 @@ function googleTranslateElementInit() {
 
 <p>很好理解，如果redis中的key特别多，如果进行全量扫描，那对redis的性能会存在巨大的影响，如果有一个亿的key，每次定时任务执行都进行全量扫描，CPU岂不是爆炸。</p>
 
-<p><img src="https://mmbiz.qpic.cn/mmbiz_png/EoJib2tNvVtcOv8BrjWQFzmr4jXnQmsuGnHnXDiavLKozEfh7qiaBmWD1TIkXLgpd1iaib5SwR12v6w60rjd1YkJnuw/640?wx_fmt=png&wxfrom=5&wx_lazy=1&wx_co=1" alt="图片"></p>
+<p><img src="/assets/images/640.png" alt="图片"></p>
 
 <p>上图的流程图，简单的描述了定时任务的执行逻辑（实际上会复杂很多），还是老规矩，不多逼逼，上源码，Redis具体是如何实现的，我们来一起看一下源码实现。</p>
 
@@ -1142,8 +1142,16 @@ function googleTranslateElementInit() {
       <div>Related Articles</div>
       <ul>
         <li class="top-post">
-          <a class="post-link" href="/redis/2024/09/25/Redis6.0-Client-Side%E7%BC%93%E5%AD%98%E6%98%AF%E4%BB%80%E4%B9%88.html" title="Redis6.0 Client-Side缓存是什么">
-            Redis6.0 Client-Side缓存是什么<span class="post-badges">
+          <a class="post-link" href="/mysql/2024/09/25/MySQL%E4%B8%BA%E4%BB%80%E4%B9%88%E6%9C%89%E4%BA%86redolog%E8%BF%98%E9%9C%80%E8%A6%81double-write-buffer.html" title="MySQL为什么有了redolog还需要double write buffer">
+            MySQL为什么有了redolog还需要double write buffer<span class="post-badges">
+  <span class="post-badge badge-top">TOP</span>
+  <span class="post-badge badge-new">NEW</span>
+</span>
+</a>
+        </li>
+<li class="top-post">
+          <a class="post-link" href="/mysql/2024/09/25/MySQL%E6%85%A2SQL%E6%8E%A2%E7%A9%B6.html" title="MySQL慢SQL探究">
+            MySQL慢SQL探究<span class="post-badges">
   <span class="post-badge badge-top">TOP</span>
   <span class="post-badge badge-new">NEW</span>
 </span>
@@ -1160,14 +1168,6 @@ function googleTranslateElementInit() {
 <li class="top-post">
           <a class="post-link" href="/mysql/2024/09/25/MySQL%E4%B8%BB%E9%94%AE%E8%87%AA%E5%A2%9E%E6%9C%89%E5%87%A0%E7%A7%8D%E6%A8%A1%E5%BC%8F.html" title="MySQL主键自增有几种模式？">
             MySQL主键自增有几种模式？<span class="post-badges">
-  <span class="post-badge badge-top">TOP</span>
-  <span class="post-badge badge-new">NEW</span>
-</span>
-</a>
-        </li>
-<li class="top-post">
-          <a class="post-link" href="/mysql/2024/09/25/MySQL%E6%85%A2SQL%E6%8E%A2%E7%A9%B6.html" title="MySQL慢SQL探究">
-            MySQL慢SQL探究<span class="post-badges">
   <span class="post-badge badge-top">TOP</span>
   <span class="post-badge badge-new">NEW</span>
 </span>

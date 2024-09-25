@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="4.3.4">Jekyll</generator><link href="http://localhost:4000/feed.xml" rel="self" type="application/atom+xml" /><link href="http://localhost:4000/" rel="alternate" type="text/html" /><updated>2024-09-25T22:15:46+08:00</updated><id>http://localhost:4000/feed.xml</id><title type="html">wtopps</title><subtitle>Write an awesome description for your new site here. You can edit this line in _config.yml. It will appear in your document head meta (for Google search results) and in your feed.xml site description.</subtitle><author><name>GitHub User</name></author><entry><title type="html">Java ThreadPoolExecutor线程池概述</title><link href="http://localhost:4000/java/2024/09/25/Java-ThreadPoolExecutor%E7%BA%BF%E7%A8%8B%E6%B1%A0%E6%A6%82%E8%BF%B0.html" rel="alternate" type="text/html" title="Java ThreadPoolExecutor线程池概述" /><published>2024-09-25T00:00:00+08:00</published><updated>2024-09-25T00:00:00+08:00</updated><id>http://localhost:4000/java/2024/09/25/Java%20ThreadPoolExecutor%E7%BA%BF%E7%A8%8B%E6%B1%A0%E6%A6%82%E8%BF%B0</id><content type="html" xml:base="http://localhost:4000/java/2024/09/25/Java-ThreadPoolExecutor%E7%BA%BF%E7%A8%8B%E6%B1%A0%E6%A6%82%E8%BF%B0.html"><![CDATA[<p><img src="https://github.com/jeffreytse/jekyll-theme-yat/assets/9413601/2ed22d49-90b1-4f7e-8e8f-b77b21dee505" alt="banner" /></p>
+<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="4.3.4">Jekyll</generator><link href="http://localhost:4000/feed.xml" rel="self" type="application/atom+xml" /><link href="http://localhost:4000/" rel="alternate" type="text/html" /><updated>2024-09-25T22:37:45+08:00</updated><id>http://localhost:4000/feed.xml</id><title type="html">wtopps</title><subtitle>Write an awesome description for your new site here. You can edit this line in _config.yml. It will appear in your document head meta (for Google search results) and in your feed.xml site description.</subtitle><author><name>GitHub User</name></author><entry><title type="html">Java ThreadPoolExecutor线程池概述</title><link href="http://localhost:4000/java/2024/09/25/Java-ThreadPoolExecutor%E7%BA%BF%E7%A8%8B%E6%B1%A0%E6%A6%82%E8%BF%B0.html" rel="alternate" type="text/html" title="Java ThreadPoolExecutor线程池概述" /><published>2024-09-25T00:00:00+08:00</published><updated>2024-09-25T00:00:00+08:00</updated><id>http://localhost:4000/java/2024/09/25/Java%20ThreadPoolExecutor%E7%BA%BF%E7%A8%8B%E6%B1%A0%E6%A6%82%E8%BF%B0</id><content type="html" xml:base="http://localhost:4000/java/2024/09/25/Java-ThreadPoolExecutor%E7%BA%BF%E7%A8%8B%E6%B1%A0%E6%A6%82%E8%BF%B0.html"><![CDATA[<p><img src="https://github.com/jeffreytse/jekyll-theme-yat/assets/9413601/2ed22d49-90b1-4f7e-8e8f-b77b21dee505" alt="banner" /></p>
 
 <h1 id="导航">导航</h1>
 
@@ -502,7 +502,7 @@ pool-1-thread-2, currentIndex is : 7
 
 <p>double write buffer是表空间一个特殊的保留区域，在一些连续的块中足够保存100个页。本质上是一个最近写回的页面的备份拷贝。当InnoDB从缓冲池刷新页面到磁盘时，首先把它们写（或者刷新）到double write buffer，然后再把它们写到其所属的数据区域中。这可以保证每个页面的写人都是原子并且持久化的。</p>
 
-<p><img src="https://img-blog.csdnimg.cn/1aad6486bc7d43bc90892a235fd814dc.png" alt="数据更新过程" /></p>
+<p><img src="/assets/images/1aad6486bc7d43bc90892a235fd814dc.png" alt="数据更新过程" /></p>
 
 <p>如果有一个不完整的页写到了double write buffer，原始的页依然会在磁盘上它的真实位置。当InnoDB恢复时，它将用原始页面替换掉双写缓冲中的损坏页面。</p>
 
@@ -751,7 +751,7 @@ SELECT A.<span class="k">*</span> FROM <span class="sb">`</span>user<span class=
 
 <p>从客户端，到服务器，然后在服务器上进行解析，生成执行计划，执行，并返回结果给客户端。其中“执行”可以认为是整个生命周期中最重要的阶段，这其中包括了大量为了检索数据到存储引擎的调用以及调用后的数据处理，包括排序、分组等。</p>
 
-<p><img src="https://img-blog.csdnimg.cn/cd8a41908bfb440f839ff4af1b58e49d.png#pic_center" alt="mysql执行过程" /></p>
+<p><img src="/assets/images/cd8a41908bfb440f839ff4af1b58e49d.png" alt="mysql执行过程" /></p>
 
 <p>在完成这些任务的时候，查询需要在不同的地方花费时间，包括网络，CPU计算，生成统计信息和执行计划、锁等待（互斥等待）等操作，尤其是向底层存储引擎检索数据的调用操作，这些调用需要在内存操作、CPU操作和内存不足时导致的I/O操作上消耗时间。</p>
 
@@ -785,7 +785,7 @@ SELECT A.<span class="k">*</span> FROM <span class="sb">`</span>user<span class=
 
 <p>接下来，我们将逐步对SQL执行的过程进行分析拆解，通过工具手段剖析慢查询的具体原因。</p>
 
-<p><img src="https://img-blog.csdnimg.cn/b3f6e845c2494fd9bdcaa7141f2758d3.png#pic_center" alt="SQL分析三步走" /></p>
+<p><img src="/assets/images/b3f6e845c2494fd9bdcaa7141f2758d3.png" alt="SQL分析三步走" /></p>
 
 <h3 id="explain执行计划分析">explain执行计划分析</h3>
 
@@ -961,7 +961,7 @@ This is O(Log n) in the size of the list, whereas an equivalent series of OR cla
 <div class="language-sql highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">mysql</span><span class="o">&gt;</span> <span class="k">show</span> <span class="n">profile</span> <span class="n">block</span> <span class="n">io</span><span class="p">,</span><span class="n">cpu</span><span class="p">,</span><span class="n">memory</span><span class="p">,</span><span class="k">source</span> <span class="k">for</span> <span class="n">query</span> <span class="mi">1</span><span class="p">;</span>
 </code></pre></div></div>
 
-<p><img src="https://img-blog.csdnimg.cn/15dbb62df5fe4b958dce9d0f866d2f9e.png#pic_center" alt="profile执行耗时详情" /></p>
+<p><img src="/assets/images/15dbb62df5fe4b958dce9d0f866d2f9e.png" alt="profile执行耗时详情" /></p>
 
 <p>从<code class="language-plaintext highlighter-rouge">profile</code>执行结果中，我们可以清晰的看到一条SQL在每个执行阶段的耗时、CPU使用率、IO等指标，帮助我们定位到慢查询具体执行耗时的阶段，对于该条SQL，执行过程中最耗时的部分是<code class="language-plaintext highlighter-rouge">executing</code>部分，<code class="language-plaintext highlighter-rouge">executing</code>阶段包括了执行线程正在为<code class="language-plaintext highlighter-rouge">SELECT</code>读取和处理数据行，并将数据发送到客户端。因为在这个状态下发生的操作往往执行大量的磁盘读取，所以它往往是在整个查询的生命周期中运行时间最长的一个阶段。</p>
 
@@ -1504,7 +1504,7 @@ scd0              0.00     0.00    0.00    0.00     0.00     0.00     7.10     0
 
 <p>这里我们用一张<code class="language-plaintext highlighter-rouge">string get</code>命令的时序图，总结一下<code class="language-plaintext highlighter-rouge">get</code>命令的执行流程：</p>
 
-<p><img src="https://img2018.cnblogs.com/i-beta/830731/202001/830731-20200122172051350-1377334291.png" alt="img" /></p>
+<p><img src="/assets/images/830731-20200122172051350-1377334291.png" alt="img" /></p>
 
 <h2 id="定时扫描删除机制">定时扫描删除机制</h2>
 
@@ -1516,7 +1516,7 @@ scd0              0.00     0.00    0.00    0.00     0.00     0.00     7.10     0
 
 <p>很好理解，如果redis中的key特别多，如果进行全量扫描，那对redis的性能会存在巨大的影响，如果有一个亿的key，每次定时任务执行都进行全量扫描，CPU岂不是爆炸。</p>
 
-<p><img src="https://mmbiz.qpic.cn/mmbiz_png/EoJib2tNvVtcOv8BrjWQFzmr4jXnQmsuGnHnXDiavLKozEfh7qiaBmWD1TIkXLgpd1iaib5SwR12v6w60rjd1YkJnuw/640?wx_fmt=png&amp;wxfrom=5&amp;wx_lazy=1&amp;wx_co=1" alt="图片" /></p>
+<p><img src="/assets/images/640.png" alt="图片" /></p>
 
 <p>上图的流程图，简单的描述了定时任务的执行逻辑（实际上会复杂很多），还是老规矩，不多逼逼，上源码，Redis具体是如何实现的，我们来一起看一下源码实现。</p>
 

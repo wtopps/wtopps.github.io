@@ -28,7 +28,7 @@ MySQL的buffer一页的大小是16K，但是底层文件系统一页的大小是
 
 double write buffer是表空间一个特殊的保留区域，在一些连续的块中足够保存100个页。本质上是一个最近写回的页面的备份拷贝。当InnoDB从缓冲池刷新页面到磁盘时，首先把它们写（或者刷新）到double write buffer，然后再把它们写到其所属的数据区域中。这可以保证每个页面的写人都是原子并且持久化的。
 
-![数据更新过程](https://img-blog.csdnimg.cn/1aad6486bc7d43bc90892a235fd814dc.png)
+![数据更新过程](/assets/images/1aad6486bc7d43bc90892a235fd814dc.png)
 
 如果有一个不完整的页写到了double write buffer，原始的页依然会在磁盘上它的真实位置。当InnoDB恢复时，它将用原始页面替换掉双写缓冲中的损坏页面。
 

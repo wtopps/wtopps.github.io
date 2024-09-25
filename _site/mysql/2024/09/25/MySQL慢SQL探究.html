@@ -1021,7 +1021,7 @@ SELECT A.<span class="k">*</span> FROM <span class="sb">`</span>user<span class=
 
 <p>从客户端，到服务器，然后在服务器上进行解析，生成执行计划，执行，并返回结果给客户端。其中“执行”可以认为是整个生命周期中最重要的阶段，这其中包括了大量为了检索数据到存储引擎的调用以及调用后的数据处理，包括排序、分组等。</p>
 
-<p><img src="https://img-blog.csdnimg.cn/cd8a41908bfb440f839ff4af1b58e49d.png#pic_center" alt="mysql执行过程"></p>
+<p><img src="/assets/images/cd8a41908bfb440f839ff4af1b58e49d.png" alt="mysql执行过程"></p>
 
 <p>在完成这些任务的时候，查询需要在不同的地方花费时间，包括网络，CPU计算，生成统计信息和执行计划、锁等待（互斥等待）等操作，尤其是向底层存储引擎检索数据的调用操作，这些调用需要在内存操作、CPU操作和内存不足时导致的I/O操作上消耗时间。</p>
 
@@ -1055,7 +1055,7 @@ SELECT A.<span class="k">*</span> FROM <span class="sb">`</span>user<span class=
 
 <p>接下来，我们将逐步对SQL执行的过程进行分析拆解，通过工具手段剖析慢查询的具体原因。</p>
 
-<p><img src="https://img-blog.csdnimg.cn/b3f6e845c2494fd9bdcaa7141f2758d3.png#pic_center" alt="SQL分析三步走"></p>
+<p><img src="/assets/images/b3f6e845c2494fd9bdcaa7141f2758d3.png" alt="SQL分析三步走"></p>
 
 <h3 id="explain执行计划分析">explain执行计划分析</h3>
 
@@ -1232,7 +1232,7 @@ This is O(Log n) in the size of the list, whereas an equivalent series of OR cla
 <div class="language-sql highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">mysql</span><span class="o">&gt;</span> <span class="k">show</span> <span class="n">profile</span> <span class="n">block</span> <span class="n">io</span><span class="p">,</span><span class="n">cpu</span><span class="p">,</span><span class="n">memory</span><span class="p">,</span><span class="k">source</span> <span class="k">for</span> <span class="n">query</span> <span class="mi">1</span><span class="p">;</span>
 </code></pre></div></div>
 
-<p><img src="https://img-blog.csdnimg.cn/15dbb62df5fe4b958dce9d0f866d2f9e.png#pic_center" alt="profile执行耗时详情"></p>
+<p><img src="/assets/images/15dbb62df5fe4b958dce9d0f866d2f9e.png" alt="profile执行耗时详情"></p>
 
 <p>从<code class="language-plaintext highlighter-rouge">profile</code>执行结果中，我们可以清晰的看到一条SQL在每个执行阶段的耗时、CPU使用率、IO等指标，帮助我们定位到慢查询具体执行耗时的阶段，对于该条SQL，执行过程中最耗时的部分是<code class="language-plaintext highlighter-rouge">executing</code>部分，<code class="language-plaintext highlighter-rouge">executing</code>阶段包括了执行线程正在为<code class="language-plaintext highlighter-rouge">SELECT</code>读取和处理数据行，并将数据发送到客户端。因为在这个状态下发生的操作往往执行大量的磁盘读取，所以它往往是在整个查询的生命周期中运行时间最长的一个阶段。</p>
 
@@ -1644,22 +1644,6 @@ scd0              0.00     0.00    0.00    0.00     0.00     0.00     7.10     0
       <div>Related Articles</div>
       <ul>
         <li class="top-post">
-          <a class="post-link" href="/java/2024/09/25/Java-ThreadPoolExecutor%E7%BA%BF%E7%A8%8B%E6%B1%A0%E6%A6%82%E8%BF%B0.html" title="Java ThreadPoolExecutor线程池概述">
-            Java ThreadPoolExecutor线程池概述<span class="post-badges">
-  <span class="post-badge badge-top">TOP</span>
-  <span class="post-badge badge-new">NEW</span>
-</span>
-</a>
-        </li>
-<li class="top-post">
-          <a class="post-link" href="/mysql/2024/09/25/MySQL%E4%B8%BB%E9%94%AE%E8%87%AA%E5%A2%9E%E6%9C%89%E5%87%A0%E7%A7%8D%E6%A8%A1%E5%BC%8F.html" title="MySQL主键自增有几种模式？">
-            MySQL主键自增有几种模式？<span class="post-badges">
-  <span class="post-badge badge-top">TOP</span>
-  <span class="post-badge badge-new">NEW</span>
-</span>
-</a>
-        </li>
-<li class="top-post">
           <a class="post-link" href="/redis/2024/09/25/Redis-key%E8%BF%87%E6%9C%9F%E5%88%A0%E9%99%A4%E6%9C%BA%E5%88%B6.html" title="Redis key过期删除机制">
             Redis key过期删除机制<span class="post-badges">
   <span class="post-badge badge-top">TOP</span>
@@ -1668,8 +1652,24 @@ scd0              0.00     0.00    0.00    0.00     0.00     0.00     7.10     0
 </a>
         </li>
 <li class="top-post">
-          <a class="post-link" href="/redis/2024/09/25/Redis6.0-Client-Side%E7%BC%93%E5%AD%98%E6%98%AF%E4%BB%80%E4%B9%88.html" title="Redis6.0 Client-Side缓存是什么">
-            Redis6.0 Client-Side缓存是什么<span class="post-badges">
+          <a class="post-link" href="/mysql/2024/09/25/MySQL%E4%B8%BA%E4%BB%80%E4%B9%88%E6%9C%89%E4%BA%86redolog%E8%BF%98%E9%9C%80%E8%A6%81double-write-buffer.html" title="MySQL为什么有了redolog还需要double write buffer">
+            MySQL为什么有了redolog还需要double write buffer<span class="post-badges">
+  <span class="post-badge badge-top">TOP</span>
+  <span class="post-badge badge-new">NEW</span>
+</span>
+</a>
+        </li>
+<li class="top-post">
+          <a class="post-link" href="/java/2024/09/25/Java-ThreadPoolExecutor%E7%BA%BF%E7%A8%8B%E6%B1%A0%E6%A6%82%E8%BF%B0.html" title="Java ThreadPoolExecutor线程池概述">
+            Java ThreadPoolExecutor线程池概述<span class="post-badges">
+  <span class="post-badge badge-top">TOP</span>
+  <span class="post-badge badge-new">NEW</span>
+</span>
+</a>
+        </li>
+<li class="top-post">
+          <a class="post-link" href="/mysql/2024/09/25/MySQL%E6%85%A2SQL%E6%8E%A2%E7%A9%B6.html" title="MySQL慢SQL探究">
+            MySQL慢SQL探究<span class="post-badges">
   <span class="post-badge badge-top">TOP</span>
   <span class="post-badge badge-new">NEW</span>
 </span>
