@@ -1,0 +1,639 @@
+<p>Put the math expression within <span>$</span>…$:</p>
+
+<p>\(\LaTeX{}\)</p>
+
+<p>$\Pi$</p>
+
+<p>$ a * b = c ^ b $</p>
+
+<p>$ 2^{\frac{n-1}{3}} $</p>
+
+<p>$ \int_a^b f(x)\,dx. $</p>
+
+<p>\( \int_a^b f(x)\,dx. \)</p>
+
+\[\begin{cases}
+\text{if true}\ foo \\
+\text{if false}\ bar
+\end{cases}\]
+
+<table>
+  <tbody>
+    <tr>
+      <td>$ \rho {\rm{FOD}} = \sum\limits{\sigma ,i} {(\delta _1 - \delta _2 n_i^\sigma )</td>
+      <td>\phi _i^\sigma ({\bf{r}})</td>
+      <td>^2} $</td>
+    </tr>
+  </tbody>
+</table>
+
+\[\rho {\rm{FOD}} = \sum\limits{\sigma ,i} {(\delta _1 - \delta _2 n_i^\sigma )|\phi _i^\sigma ({\bf{r}})|^2}\]
+
+<p>Here is a liquid filter.</p>
+
+<p>`escape inline code`<br />
+<code class="language-plaintext highlighter-rouge">inline code</code><br />
+Here is a <strong>capture block</strong>.</p>
+
+<p>100 / 3 = 33</p>
+
+<p>:+1:
+:bolivia:</p>
+
+<p>\1. 21312<br />
+\2. 21312<br />
+\4. 4214</p>
+
+<figure class="highlight"><pre><code class="language-python" data-lang="python"><table class="rouge-table"><tbody><tr><td class="gutter gl"><pre class="lineno">1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+28
+29
+30
+31
+32
+33
+34
+35
+36
+37
+38
+</pre></td><td class="code"><pre><span class="kn">import</span> <span class="n">networkx</span> <span class="k">as</span> <span class="n">nx</span>
+<span class="kn">from</span> <span class="n">collections</span> <span class="kn">import</span> <span class="n">Counter</span>
+
+<span class="n">diagrams</span> <span class="o">=</span> <span class="nf">defaultdict</span><span class="p">(</span><span class="nb">list</span><span class="p">)</span>
+<span class="n">particle_counts</span> <span class="o">=</span> <span class="nf">defaultdict</span><span class="p">(</span><span class="n">Counter</span><span class="p">)</span>
+
+<span class="nf">for </span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">),</span> <span class="n">neighbors</span> <span class="ow">in</span> <span class="n">common_neighbors</span><span class="p">.</span><span class="nf">items</span><span class="p">():</span>
+    <span class="c1"># Build up the graph of connections between the
+</span>    <span class="c1"># common neighbors of a and b.
+</span>    <span class="n">g</span> <span class="o">=</span> <span class="n">nx</span><span class="p">.</span><span class="nc">Graph</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">neighbors</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nf">set</span><span class="p">(</span><span class="n">nl</span><span class="p">.</span><span class="n">point_indices</span><span class="p">[</span>
+            <span class="n">nl</span><span class="p">.</span><span class="n">query_point_indices</span> <span class="o">==</span> <span class="n">i</span><span class="p">]).</span><span class="nf">intersection</span><span class="p">(</span><span class="n">neighbors</span><span class="p">):</span>
+            <span class="n">g</span><span class="p">.</span><span class="nf">add_edge</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">)</span>
+
+    <span class="c1"># Define the identifiers for a CNA diagram:
+</span>    <span class="c1"># The first integer is 1 if the particles are bonded, otherwise 2
+</span>    <span class="c1"># The second integer is the number of shared neighbors
+</span>    <span class="c1"># The third integer is the number of bonds among shared neighbors
+</span>    <span class="c1"># The fourth integer is an index, just to ensure uniqueness of diagrams
+</span>    <span class="n">diagram_type</span> <span class="o">=</span> <span class="mi">2</span><span class="o">-</span><span class="nf">int</span><span class="p">(</span><span class="n">b</span> <span class="ow">in</span> <span class="n">nl</span><span class="p">.</span><span class="n">point_indices</span><span class="p">[</span><span class="n">nl</span><span class="p">.</span><span class="n">query_point_indices</span> <span class="o">==</span> <span class="n">a</span><span class="p">])</span>
+    <span class="n">key</span> <span class="o">=</span> <span class="p">(</span><span class="n">diagram_type</span><span class="p">,</span> <span class="nf">len</span><span class="p">(</span><span class="n">neighbors</span><span class="p">),</span> <span class="n">g</span><span class="p">.</span><span class="nf">number_of_edges</span><span class="p">())</span>
+    <span class="c1"># If we've seen any neighborhood graphs with this signature,
+</span>    <span class="c1"># we explicitly check if the two graphs are identical to
+</span>    <span class="c1"># determine whether to save this one. Otherwise, we add
+</span>    <span class="c1"># the new graph immediately.
+</span>    <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">diagrams</span><span class="p">:</span>
+        <span class="n">isomorphs</span> <span class="o">=</span> <span class="p">[</span><span class="n">nx</span><span class="p">.</span><span class="nf">is_isomorphic</span><span class="p">(</span><span class="n">g</span><span class="p">,</span> <span class="n">h</span><span class="p">)</span> <span class="k">for</span> <span class="n">h</span> <span class="ow">in</span> <span class="n">diagrams</span><span class="p">[</span><span class="n">key</span><span class="p">]]</span>
+        <span class="k">if</span> <span class="nf">any</span><span class="p">(</span><span class="n">isomorphs</span><span class="p">):</span>
+            <span class="n">idx</span> <span class="o">=</span> <span class="n">isomorphs</span><span class="p">.</span><span class="nf">index</span><span class="p">(</span><span class="bp">True</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">diagrams</span><span class="p">[</span><span class="n">key</span><span class="p">].</span><span class="nf">append</span><span class="p">(</span><span class="n">g</span><span class="p">)</span>
+            <span class="n">idx</span> <span class="o">=</span> <span class="n">diagrams</span><span class="p">[</span><span class="n">key</span><span class="p">].</span><span class="nf">index</span><span class="p">(</span><span class="n">g</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">diagrams</span><span class="p">[</span><span class="n">key</span><span class="p">].</span><span class="nf">append</span><span class="p">(</span><span class="n">g</span><span class="p">)</span>
+        <span class="n">idx</span> <span class="o">=</span> <span class="n">diagrams</span><span class="p">[</span><span class="n">key</span><span class="p">].</span><span class="nf">index</span><span class="p">(</span><span class="n">g</span><span class="p">)</span>
+    <span class="n">cna_signature</span> <span class="o">=</span> <span class="n">key</span> <span class="o">+</span> <span class="p">(</span><span class="n">idx</span><span class="p">,)</span>
+    <span class="n">particle_counts</span><span class="p">[</span><span class="n">a</span><span class="p">].</span><span class="nf">update</span><span class="p">([</span><span class="n">cna_signature</span><span class="p">])</span>
+</pre></td></tr></tbody></table></code></pre></figure>
+
+<div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kt">void</span> <span class="nf">insert</span><span class="p">(</span><span class="k">const</span> <span class="kt">char</span><span class="o">*</span> <span class="n">key</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">if</span> <span class="p">(</span><span class="o">*</span><span class="n">key</span> <span class="o">==</span> <span class="sc">'\0'</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">finish</span> <span class="o">=</span> <span class="nb">true</span><span class="p">;</span>
+    <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+        <span class="kt">int</span> <span class="n">idx</span> <span class="o">=</span> <span class="o">*</span><span class="n">key</span> <span class="o">-</span> <span class="sc">'A'</span><span class="p">;</span>
+        <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">next</span><span class="p">[</span><span class="n">idx</span><span class="p">])</span>
+            <span class="n">next</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Trie</span><span class="p">();</span>
+        <span class="n">next</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span><span class="o">-&gt;</span><span class="n">insert</span><span class="p">(</span><span class="n">key</span> <span class="o">+</span> <span class="mi">1</span><span class="p">);</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<div class="language-ruby highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nb">p</span> <span class="s2">":+1:"</span>
+</code></pre></div></div>
+
+<div class="language-diff highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="gi">+        'user_exists' =&gt; 'SELECT EXISTS(SELECT 1 FROM table WHERE username = (:username || \'@sample'))',
++        'get_users' =&gt; 'SELECT split_part(username, \'@\', 1) FROM table WHERE (username ILIKE :search) OR (name ILIKE :search)',
++        'get_password_hash_for_user' =&gt; 'SELECT split_part(password, \'{CRYPT}\', 2) FROM table WHERE username = (:username || \'@sample\')',
++        'set_password_hash_for_user' =&gt; 'UPDATE table SET password =  \'{CRYPT}\' || :new_password_hash WHERE username = (:username || \'@sample\')',
+</span></code></pre></div></div>
+
+<p>Reload the Nginx:</p>
+
+<div class="language-console highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="gp">$</span><span class="w"> </span><span class="nb">sudo </span>nginx <span class="nt">-s</span> reload
+</code></pre></div></div>
+
+<table>
+  <thead>
+    <tr>
+      <th>:</th>
+      <th>:                  :</th>
+      <th>: \(O_3 + C_2H_2 \rightarrow\)         :</th>
+      <th> </th>
+      <th> </th>
+      <th>:  \(O_3 + C_2H_4 \rightarrow\) :</th>
+      <th> </th>
+      <th> </th>
+      <th>:       :</th>
+    </tr>
+    <tr>
+      <th>:  ^^ Method            :</th>
+      <th>^^ \(\lambda^a\)</th>
+      <th>vdW</th>
+      <th>TS</th>
+      <th>cycloadd.</th>
+      <th>vdW</th>
+      <th>TS</th>
+      <th>cycloadd.</th>
+      <th>^^ MAE</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>\(\lambda\)-tPBE</td>
+      <td>0.20</td>
+      <td>-0.40</td>
+      <td>7.69</td>
+      <td>-68.00</td>
+      <td>-1.86</td>
+      <td>4.87</td>
+      <td>-57.57</td>
+      <td>1.29</td>
+    </tr>
+  </tbody>
+  <tbody>
+    <tr>
+      <td>MC1H-PBE \(^b\)</td>
+      <td>0.25</td>
+      <td>-1.08</td>
+      <td>3.66</td>
+      <td>-70.97</td>
+      <td>-1.25</td>
+      <td>0.13</td>
+      <td>-61.26</td>
+      <td>3.35</td>
+    </tr>
+  </tbody>
+  <tbody>
+    <tr>
+      <td>Reference values \(^c\)</td>
+      <td>———</td>
+      <td>-1.90</td>
+      <td>7.74</td>
+      <td>-63.80</td>
+      <td>-1.94</td>
+      <td>3.37</td>
+      <td>-57.15</td>
+      <td>———</td>
+    </tr>
+  </tbody>
+  <tfoot>
+    <tr>
+      <td>\(^a\) The optimal mixing parameter.\(\~\) \(^b\) From Ref. .\(\~\)  \(^c\) Best estimates from Ref. .</td>
+      <td> </td>
+      <td> </td>
+      <td> </td>
+      <td> </td>
+      <td> </td>
+      <td> </td>
+      <td> </td>
+      <td> </td>
+    </tr>
+  </tfoot>
+</table>
+
+<table class="custom-table">
+  <tbody>
+    <tr>
+      <td>1</td>
+      <td>2</td>
+      <td>3</td>
+      <td>4</td>
+      <td>5</td>
+      <td>6</td>
+      <td>7</td>
+    </tr>
+    <tr>
+      <td>spancell1</td>
+      <td> </td>
+      <td>spancell2</td>
+      <td> </td>
+      <td>cell</td>
+      <td>spancell3</td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td>^^ spancell1</td>
+      <td> </td>
+      <td>spancell2</td>
+      <td> </td>
+      <td>cell</td>
+      <td>spancell3</td>
+      <td> </td>
+    </tr>
+  </tbody>
+</table>
+
+<script>
+|:-----:|:-----:|:-----:|:-----:|
+| (0,0) | (0,1) | (0,2) | (0,3) |
+|     (1,0)    || ^^    | (1,3) |
+</script>
+
+<table>
+  <tbody>
+    <tr>
+      <td>(0,0)</td>
+      <td>(0,1)</td>
+      <td>(0,2)</td>
+      <td>(0,3)</td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td>(1,0)</td>
+      <td> </td>
+      <td>^^</td>
+      <td>(1,3)</td>
+      <td> </td>
+    </tr>
+  </tbody>
+</table>
+
+<table>
+  <tbody>
+    <tr>
+      <td>(0,0)</td>
+      <td>(0,1)</td>
+      <td>(0,2)</td>
+      <td>(0,3)</td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td>(1,0)</td>
+      <td> </td>
+      <td> </td>
+      <td>(1,3)</td>
+      <td> </td>
+    </tr>
+  </tbody>
+</table>
+
+<table>
+  <tbody>
+    <tr>
+      <td>(0,0)</td>
+      <td>(0,1)</td>
+      <td>(0,2)</td>
+      <td>(0,3)</td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td>(1,0)</td>
+      <td> </td>
+      <td> </td>
+      <td>^^</td>
+      <td> </td>
+    </tr>
+  </tbody>
+</table>
+
+<table>
+  <tbody>
+    <tr>
+      <td>(0,0)</td>
+      <td>(0,1)</td>
+      <td>(0,2)</td>
+      <td>(0,3)</td>
+      <td>\</td>
+    </tr>
+    <tr>
+      <td>(1,0)</td>
+      <td> </td>
+      <td> </td>
+      <td>^^</td>
+      <td> </td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="table">Table</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th style="text-align: right">Stage</th>
+      <th style="text-align: right">Direct Products</th>
+      <th style="text-align: right">ATP Yields</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td style="text-align: right">Glycolysis</td>
+      <td style="text-align: right">2 ATP</td>
+      <td style="text-align: right"> </td>
+    </tr>
+    <tr>
+      <td style="text-align: right">^^</td>
+      <td style="text-align: right">2 NADH</td>
+      <td style="text-align: right">3–5 ATP</td>
+    </tr>
+    <tr>
+      <td style="text-align: right">Pyruvaye oxidation</td>
+      <td style="text-align: right">2 NADH</td>
+      <td style="text-align: right">5 ATP</td>
+    </tr>
+    <tr>
+      <td style="text-align: right">Citric acid cycle</td>
+      <td style="text-align: right">2 ATP</td>
+      <td style="text-align: right"> </td>
+    </tr>
+    <tr>
+      <td style="text-align: right">^^</td>
+      <td style="text-align: right">6 NADH</td>
+      <td style="text-align: right">15 ATP</td>
+    </tr>
+    <tr>
+      <td style="text-align: right">^^</td>
+      <td style="text-align: right">2 FADH</td>
+      <td style="text-align: right">3 ATP</td>
+    </tr>
+    <tr>
+      <td style="text-align: right">30–32 ATP</td>
+      <td style="text-align: right"> </td>
+      <td style="text-align: right"> </td>
+    </tr>
+  </tbody>
+</table>
+
+<table>
+  <thead>
+    <tr>
+      <th>:             Here’s a Inline Attribute Lists example                 :</th>
+      <th> </th>
+      <th> </th>
+      <th> </th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>:       :</td>
+      <td>:  &lt;div style="color: red;"&gt; &lt; Normal HTML Block &gt; &lt;/div&gt; :</td>
+      <td> </td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td>^^</td>
+      <td>Red    {: .cls style=”background: orange” }</td>
+      <td> </td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td>^^ IALs</td>
+      <td>Green  {: #id style=”background: green; color: white” }</td>
+      <td> </td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td>^^</td>
+      <td>Blue   {: style=”background: blue; color: white” }</td>
+      <td> </td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td>^^</td>
+      <td>Black  {: color-style font-style}</td>
+      <td> </td>
+      <td> </td>
+    </tr>
+  </tbody>
+</table>
+
+<table>
+  <thead>
+    <tr>
+      <th>Heading</th>
+      <th>Column 1</th>
+      <th>Column 2</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Row 1</td>
+      <td>Apple<sup id="fnref:1" role="doc-noteref"><a href="#fn:1" class="footnote" rel="footnote">1</a></sup></td>
+      <td><a href="https://www.youtube.com">Youtube (Home)</a></td>
+    </tr>
+    <tr>
+      <td>Row 2</td>
+      <td>Banana</td>
+      <td><a href="https://www.github.com">Github</a></td>
+    </tr>
+    <tr>
+      <td>Row 3 (merged)</td>
+      <td>Blueberry</td>
+      <td><a href="https://www.google.com">Google</a> *****  <a href="https://www.github.com">Github</a></td>
+    </tr>
+    <tr>
+      <td>^^</td>
+      <td><a href="https://example.com">Plum</a></td>
+      <td>Raspberry <img src="https://jekyllrb.com/img/octojekyll.png" alt="example" title="An exemplary image" /></td>
+    </tr>
+    <tr>
+      <td>Row 4</td>
+      <td><a href="https://www.google.com">https://www.google.com</a></td>
+      <td><a href="https://www.google.com" target="_blank">test</a></td>
+    </tr>
+    <tr>
+      <td>^^</td>
+      <td>^^ <a href="https://www.youtube.com">https://www.youtube.com</a></td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td>Row 5</td>
+      <td><a href="https://www.google.com">https://www.google.com</a></td>
+      <td> </td>
+    </tr>
+  </tbody>
+</table>
+
+<p><a href="https://www.google.com">https://www.google.com</a></p>
+
+<p>Not in table: <code class="language-plaintext highlighter-rouge">&lt;Mail Gateway&gt;</code></p>
+
+<p>In table:</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Decision Point</th>
+      <th>Design Decision</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Authoritative DNS MX Record</td>
+      <td><code class="language-plaintext highlighter-rouge">&lt;Mail Gateway&gt;</code></td>
+    </tr>
+  </tbody>
+</table>
+
+<p>9 * 9</p>
+
+<table>
+  <tbody>
+    <tr>
+      <td>1 * 1 = 1</td>
+      <td> </td>
+      <td> </td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td>1 * 2 = 2</td>
+      <td>2 * 2 = 4</td>
+      <td> </td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td>1 * 3 = 3</td>
+      <td>2 * 3 = 6</td>
+      <td>3 * 3 = 9</td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td>1 * 3 = 3</td>
+      <td>2 * 3 = 6</td>
+      <td>3 * 4 = 12</td>
+      <td>4 * 4 = 16</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="emoji">Emoji</h2>
+<p>:+1:</p>
+
+<h2 id="mathjax">Mathjax</h2>
+
+<p>$\LaTeX{}$</p>
+
+<h2 id="plantuml">PlantUML</h2>
+
+<p>@startuml
+Bob -&gt; Alice : hello
+@enduml</p>
+
+<h2 id="mermaid">Mermaid</h2>
+
+<pre><code class="language-mermaid!">graph LR
+  concurrent.futures ---&gt;| on top of | threading
+  concurrent.futures ---&gt;| on top of | multiprocessing
+  threading ---&gt;| on top of | \_thread
+  click concurrent.futures "https://docs.python.org/3.9/library/concurrent.futures.html" _blank
+</code></pre>
+
+<h2 id="video">Video</h2>
+
+<p><img src="https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.webm" alt="Flower" /></p>
+
+<p><img src="//www.youtube.com/watch?v=Ptk_1Dc2iPY" alt="" /></p>
+
+<p><img src="https://avatars3.githubusercontent.com/hubot?v=3&amp;s=40" alt="" /></p>
+
+<p><a href="//www.youtube.com/watch?v=Ptk_1Dc2iPY">[video link]</a></p>
+
+<h2 id="audio">Audio</h2>
+
+<p><a href="https://hpr.dogphilosophy.net/test/">HTML5 Audio Formats Test</a></p>
+
+<p>Opus Audio (“.opus”):</p>
+
+<p><img src="https://hpr.dogphilosophy.net/test/opus.opus" alt="" /></p>
+
+<p>“MP3” file (“.mp3”) :</p>
+
+<p><img src="https://hpr.dogphilosophy.net/test/mp3.mp3" alt="" /></p>
+
+<p>WebM Audio (“.weba”):</p>
+
+<p><img src="https://hpr.dogphilosophy.net/test/weba.weba" alt="" /></p>
+
+<p>WebMv2 Audio (“.webm”):</p>
+
+<p><img src="https://hpr.dogphilosophy.net/test/webmv2.webm" alt="" /></p>
+
+<p>Ogg Vorbis (“.ogg”) :</p>
+
+<p><img src="https://hpr.dogphilosophy.net/test/ogg.ogg" alt="" /></p>
+
+<p>“wave” file(“.wav”) :</p>
+
+<p><img src="https://hpr.dogphilosophy.net/test/wav.wav" alt="" /></p>
+
+<p>FLAC file (“.flac”) :</p>
+
+<p><img src="https://hpr.dogphilosophy.net/test/flac.flac" alt="" /></p>
+
+<p>CAF file (“.caf”) :</p>
+
+<p><img src="https://hpr.dogphilosophy.net/test/cafopus.caf" alt="" /></p>
+
+<p>Spotify Podcast:</p>
+
+<p><img src="https://open.spotify.com/episode/2sXXGexCXPhGsdf9l99Q73?si=717c6671590745b3" alt="" /></p>
+
+<h2 id="special-media-links">Special media links</h2>
+
+<p>Local video file (“.webm”):</p>
+
+<p><img src="/assets/videos/devstories.webm" alt="" /></p>
+
+<p>Video with custom thumbnail:</p>
+
+<p><a href="https://www.youtube.com/watch?v=kCHGDRHZ4eU"><img src="https://i.imgur.com/bc9HOJU.png" alt="w:1100" /></a></p>
+
+<p>Tips:</p>
+<ul>
+  <li>Use pipes (<code class="language-plaintext highlighter-rouge">|</code>) to delineate columns, and dashes to delineate the header row from the rest of the table.</li>
+  <li>Spacing doesn’t matter to the markdown processor, any extra white space is removed, but it can really help with readability.
+The two markdown examples below both create this table.</li>
+</ul>
+
+<table>
+  <tbody>
+    <tr>
+      <td>Use pipes <code class="language-plaintext highlighter-rouge">(</code></td>
+      <td><code class="language-plaintext highlighter-rouge">)</code> to delineate columns, and dashes to delineate the header row from the rest of the table.</td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="footnotes" role="doc-endnotes">
+  <ol>
+    <li id="fn:1" role="doc-endnote">
+      <p>Footnote <a href="#fnref:1" class="reversefootnote" role="doc-backlink">&#8617;</a></p>
+    </li>
+  </ol>
+</div>

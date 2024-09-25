@@ -1,0 +1,64 @@
+<h3 id="1-pie-chart">1. Pie chart</h3>
+
+<pre><code class="language-mermaid!">pie title Pets adopted by volunteers
+  "Dogs" : 386
+  "Cats" : 85
+  "Rats" : 35
+</code></pre>
+
+<h3 id="2-sequence-diagram">2. sequence diagram</h3>
+
+<p>@startmermaid
+sequenceDiagram
+  Alice -» Bob: Hello Bob, how are you?
+  Bob–»John: How about you John?
+  Bob–x Alice: I am good thanks!
+  Bob-x John: I am good thanks!
+  Note right of John: Bob thinks a long<br />long time, so long<br />that the text does<br />not fit on a row.</p>
+
+<p>Bob–&gt;Alice: Checking with John…
+  Alice-&gt;John: Yes… John, how are you?
+@endmermaid</p>
+
+<pre><code class="language-mermaid!">graph TD
+A[Christmas] --&gt;|Get money| B(Go shopping)
+  B --&gt; C{Let me think}
+  C --&gt;|One| D[Laptop]
+  C --&gt;|Two| E[iPhone]
+  C --&gt;|Three| F[fa:fa-car Car]
+</code></pre>
+
+<h3 id="3-class-diagram">3. Class diagram</h3>
+<pre><code class="language-mermaid!">classDiagram
+Animal &lt;|-- Duck
+Animal &lt;|-- Fish
+Animal &lt;|-- Zebra
+Animal : +int age
+Animal : +String gender
+Animal: +isMammal()
+Animal: +mate()
+class Duck{
+  +String beakColor
+    +swim()
+    +quack()
+}
+class Fish{
+  -int sizeInFeet
+    -canEat()
+}
+class Zebra{
+  +bool is_wild
+    +run()
+}
+</code></pre>
+
+<h3 id="4-state-diagram">4. State diagram</h3>
+<pre><code class="language-mermaid!">stateDiagram
+[*] --&gt; Still
+Still --&gt; [*]
+
+Still --&gt; Moving
+Moving --&gt; Still
+Moving --&gt; Crash
+Crash --&gt; [*]
+</code></pre>

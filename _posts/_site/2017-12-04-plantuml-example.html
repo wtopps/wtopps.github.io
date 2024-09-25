@@ -1,0 +1,55 @@
+<h2 id="my-first-plantuml">My First PlantUML</h2>
+
+<h3 id="plantuml-block-1">PlantUML Block-1</h3>
+<p>@startuml
+Bob -&gt; Alice : hello
+@enduml</p>
+
+<h3 id="plantuml-block-2">PlantUML Block-2</h3>
+<pre><code class="language-plantuml!">Bob -&gt; Alice : hello world
+</code></pre>
+
+<h3 id="plantuml-block-3">PlantUML Block-3</h3>
+<p>@startuml
+(*) –&gt; “Initialization”</p>
+
+<p>if “Some Test” then
+  –&gt;[true] “Some Activity”
+  –&gt; “Another activity”
+  -right-&gt; (<em>)
+else
+  -&gt;[false] “Something else”
+  –&gt;[Ending process] (</em>)
+endif
+@enduml</p>
+
+<h3 id="plantuml-block-4">PlantUML Block-4</h3>
+
+<p>@startuml
+skinparam handwritten true</p>
+
+<p>skinparam usecase {
+  BackgroundColor DarkSeaGreen
+  BorderColor DarkSlateGray</p>
+
+<p>BackgroundColor« Main » YellowGreen
+  BorderColor« Main » YellowGreen</p>
+
+<p>ArrowColor Olive
+  ActorBorderColor black
+  ActorFontName Courier</p>
+
+<p>ActorBackgroundColor« Human » Gold
+}</p>
+
+<p>User « Human »
+:Main Database: as MySql « Application »
+(Start) « One Shot »
+(Use the application) as (Use) « Main »</p>
+
+<p>User -&gt; (Start)
+User –&gt; (Use)</p>
+
+<p>MySql –&gt; (Use)</p>
+
+<p>@enduml</p>
