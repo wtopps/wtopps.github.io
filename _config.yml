@@ -226,6 +226,19 @@ defaults:
 #   client_secret: "Your client secret"
 #   redirect_uri: "Your redirect url"   # If you use a custom domain name
 
+comments:
+  active: giscus
+  # The active options are as follows:
+  giscus:
+    repo: "wtopps/wtopps.github.io" # <gh-username>/<repo>
+    repo_id: "MDEwOlJlcG9zaXRvcnk2NzY3NTA3MA=="
+    category: "Comments"
+    category_id: "DIC_kwDOBAijvs4CizS6"
+    mapping: "pathname" # optional, default to 'pathname'
+    input_position: "bottom" # optional, default to 'bottom'
+    lang: "zh-CN" # optional, default to the value of `site.lang`
+    reactions_enabled: # optional, default to the value of `1`
+
 # Utterances comments
 # See https://utteranc.es/
 # set follow_site_theme true to make utterances' theme follow the site's
