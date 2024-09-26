@@ -65,3 +65,21 @@ redolog的设计之初，是“账本的作用”，是一种操作日志，用�
 本文参考：
 
 《高性能MySQL第三版》
+
+
+
+<script src="https://giscus.app/client.js"
+        data-repo="wtopps/wtopps.github.io"
+        data-repo-id="MDEwOlJlcG9zaXRvcnk2NzY3NTA3MA=="
+        data-category="Comments"
+        data-category-id="DIC_kwDOBAijvs4CizS6"
+        data-mapping="pathname"
+        data-strict="0"
+        data-reactions-enabled="1"
+        data-emit-metadata="0"
+        data-input-position="bottom"
+        data-theme="preferred_color_scheme"
+        data-lang="zh-CN"
+        crossorigin="anonymous"
+        async>
+</script>

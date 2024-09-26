@@ -1438,8 +1438,6 @@ MySQL将INSERT操作分为三类：
     </a><a class="post-text" href="/redis/2024/09/25/Redis-key%E8%BF%87%E6%9C%9F%E5%88%A0%E9%99%A4%E6%9C%BA%E5%88%B6.html">
       <p>
 
-##
-
 前言
 
 当我们创建Redis key时，可以通过expire命令指定key的过期时间(TTL)，当超过指定的TTL时间后，key将会失效。
@@ -1457,7 +1455,8 @@ Redis中的key过期淘汰机制是由两种方式实现：
 
 两种模式都不会在key达到过期时间后，第一时间删除key，而是等待特定的时机触发淘汰机制，这个很好理解，如果每一个key到达过期时间后，redis都需要第一时间检测到，并将其删除，那么将会消耗大量的资源，去实时的扫描全部key值，这显然是不合理的。
 
-下面我们来看一下两种方式的具体实现... <span class="read_more">Read More</span></p>
+下面我们来看一下两种方式的具体实现机制。
+... <span class="read_more">Read More</span></p>
     </a>
   </div>
   <div class="post-tags"><a class="post-tag" href="/tags.html#Redis">#Redis</a></div>
