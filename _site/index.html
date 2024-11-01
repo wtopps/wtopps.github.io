@@ -954,6 +954,124 @@ function googleTranslateElementInit() {
 
 <li class="post-item top-post">
   <h2 class="post-title">
+    <a class="post-link" href="/system/design/2024/11/01/%E4%BA%BF%E7%BA%A7%E6%8E%92%E8%A1%8C%E6%A6%9C%E8%AE%BE%E8%AE%A1.html">
+      亿级排行榜设计<span class="post-badges">
+  <span class="post-badge badge-top">TOP</span>
+  <span class="post-badge badge-new">NEW</span>
+</span>
+</a>
+  </h2>
+  <div class="post-meta">
+    <span class="post-date"><i class="fa fa-calendar"></i> Nov 01, 2024</span><span class="post-reading-time left-vsplit"><i class="fa fa-clock-o"></i> About 14 mins</span>
+  </div>
+  <div class="post-excerpt">
+<a class="post-image" href="/system/design/2024/11/01/%E4%BA%BF%E7%BA%A7%E6%8E%92%E8%A1%8C%E6%A6%9C%E8%AE%BE%E8%AE%A1.html" style="flex: 0 1 38.2%">
+      <div style="background-image: url(https://github.com/jeffreytse/jekyll-theme-yat/assets/9413601/2ed22d49-90b1-4f7e-8e8f-b77b21dee505); height: 160px"></div>
+    </a><a class="post-text" href="/system/design/2024/11/01/%E4%BA%BF%E7%BA%A7%E6%8E%92%E8%A1%8C%E6%A6%9C%E8%AE%BE%E8%AE%A1.html">
+      <p>
+
+问题
+
+假如有10亿的用户，每个用户有自己的分数(score)，请你设计一个排行榜，可以根据用户的分数进行排名，每个用户可以知道自己在排行榜中的排名情况。
+
+分析
+
+一说到排行榜，我们的第一反应肯定是使用Redis的ZSET结构实现，那么使用ZSET如何实现对10亿用户进行排序？
+
+ZSET单key
+
+第一种思路，使用ZSET单key，也就是将10亿用户都放入一个ZSET key中，简单明了，这样设计是最简单的，但查询的性能是否可以接受？我们来计算一下：
+
+ZSET结构使用SkipList实现，查询的时间复杂度：ZREVRANK：O(log(N))
+
+查询单个排名的理论时间复杂度：O(log(10^9)) ≈ 30次比较
+
+内存占用分析：
+
+public class Perform... <span class="read_more">Read More</span></p>
+    </a>
+  </div>
+  <div class="post-tags"><a class="post-tag" href="/tags.html#System%20Design">#System Design</a></div>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li class="post-item top-post">
+  <h2 class="post-title">
     <a class="post-link" href="/mysql/2024/09/25/MySQL%E4%B8%BA%E4%BB%80%E4%B9%88%E6%9C%89%E4%BA%86redolog%E8%BF%98%E9%9C%80%E8%A6%81double-write-buffer.html">
       MySQL为什么有了redolog还需要double write buffer<span class="post-badges">
   <span class="post-badge badge-top">TOP</span>
@@ -1605,10 +1723,16 @@ Why Client-side Caching？
   <ul>
     <li>
       <a href="/index.html">
-        All<span>6</span>
+        All<span>7</span>
       </a>
     </li>
 
+    
+      <li>
+        <a href="/categories.html#h-Design">
+          Design <span>1</span>
+        </a>
+      </li>
     
       <li>
         <a href="/categories.html#h-Java">
@@ -1625,6 +1749,12 @@ Why Client-side Caching？
       <li>
         <a href="/categories.html#h-Redis">
           Redis <span>2</span>
+        </a>
+      </li>
+    
+      <li>
+        <a href="/categories.html#h-System">
+          System <span>1</span>
         </a>
       </li>
     
