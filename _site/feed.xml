@@ -1,870 +1,143 @@
-<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="4.3.4">Jekyll</generator><link href="http://localhost:4000/feed.xml" rel="self" type="application/atom+xml" /><link href="http://localhost:4000/" rel="alternate" type="text/html" /><updated>2024-11-01T15:07:24+08:00</updated><id>http://localhost:4000/feed.xml</id><title type="html">wtopps</title><subtitle>Write an awesome description for your new site here. You can edit this line in _config.yml. It will appear in your document head meta (for Google search results) and in your feed.xml site description.</subtitle><author><name>GitHub User</name></author><entry><title type="html">亿级排行榜设计</title><link href="http://localhost:4000/system/design/2024/11/01/%E4%BA%BF%E7%BA%A7%E6%8E%92%E8%A1%8C%E6%A6%9C%E8%AE%BE%E8%AE%A1.html" rel="alternate" type="text/html" title="亿级排行榜设计" /><published>2024-11-01T00:00:00+08:00</published><updated>2024-11-01T00:00:00+08:00</updated><id>http://localhost:4000/system/design/2024/11/01/%E4%BA%BF%E7%BA%A7%E6%8E%92%E8%A1%8C%E6%A6%9C%E8%AE%BE%E8%AE%A1</id><content type="html" xml:base="http://localhost:4000/system/design/2024/11/01/%E4%BA%BF%E7%BA%A7%E6%8E%92%E8%A1%8C%E6%A6%9C%E8%AE%BE%E8%AE%A1.html"><![CDATA[<p><img src="https://github.com/jeffreytse/jekyll-theme-yat/assets/9413601/2ed22d49-90b1-4f7e-8e8f-b77b21dee505" alt="banner" /></p>
-
-<h2 id="问题">问题</h2>
-
-<p>假如有10亿的用户，每个用户有自己的分数(score)，请你设计一个排行榜，可以根据用户的分数进行排名，每个用户可以知道自己在排行榜中的排名情况。</p>
-
-<h2 id="分析">分析</h2>
-
-<p>一说到排行榜，我们的第一反应肯定是使用Redis的ZSET结构实现，那么使用ZSET如何实现对10亿用户进行排序？</p>
-
-<h2 id="zset单key">ZSET单key</h2>
-
-<p>第一种思路，使用ZSET单key，也就是将10亿用户都放入一个ZSET key中，简单明了，这样设计是最简单的，但查询的性能是否可以接受？我们来计算一下：</p>
-
-<p>ZSET结构使用SkipList实现，查询的时间复杂度：ZREVRANK：O(log(N))</p>
-
-<p>查询单个排名的理论时间复杂度：O(log(10^9)) ≈ 30次比较</p>
-
-<p>内存占用分析：</p>
-
-<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">public</span> <span class="kd">class</span> <span class="nc">PerformanceAnalysis</span> <span class="o">{</span>
-    <span class="c1">// 1. 内存占用(假设每个成员)</span>
-    <span class="kd">private</span> <span class="kd">static</span> <span class="kd">final</span> <span class="kt">long</span> <span class="no">MEMORY_PER_MEMBER</span> <span class="o">=</span> 
-        <span class="o">+</span> <span class="mi">8</span>    <span class="c1">// score (double)</span>
-        <span class="o">+</span> <span class="mi">20</span>   <span class="c1">// member (假设userId字符串)</span>
-        <span class="o">+</span> <span class="mi">8</span>    <span class="c1">// 指针</span>
-        <span class="o">+</span> <span class="mi">32</span><span class="o">;</span>  <span class="c1">// 跳表节点开销</span>
-    
-    <span class="c1">// 10亿用户预估内存</span>
-    <span class="kd">private</span> <span class="kd">static</span> <span class="kd">final</span> <span class="kt">long</span> <span class="no">TOTAL_MEMORY</span> <span class="o">=</span> 
-        <span class="no">MEMORY_PER_MEMBER</span> <span class="o">*</span> <span class="mi">1_000_000_000L</span><span class="o">;</span> <span class="c1">// 约68GB</span>
-        
-    <span class="c1">// 2. 跳表层数</span>
-    <span class="kd">private</span> <span class="kd">static</span> <span class="kd">final</span> <span class="kt">int</span> <span class="no">SKIP_LIST_LEVELS</span> <span class="o">=</span> 
-        <span class="o">(</span><span class="kt">int</span><span class="o">)</span> <span class="nc">Math</span><span class="o">.</span><span class="na">log</span><span class="o">(</span><span class="mi">1_000_000_000L</span><span class="o">)</span> <span class="o">/</span> <span class="nc">Math</span><span class="o">.</span><span class="na">log</span><span class="o">(</span><span class="mi">2</span><span class="o">);</span> <span class="c1">// 约30层</span>
-<span class="o">}</span>
-</code></pre></div></div>
-
-<p>假定每个成员对象约68字节，那么10亿用户约需要68GB内存，当然实际场景下，可以考虑对单个成员对象再进行压缩，内存占用可以再小一点。</p>
-
-<p>如果仅从查询的效率考虑，如果仅查询单个成员的排名，Redis的查询耗时是不用担心的，但如果要进行范围查询，那么性能则非常不乐观了。</p>
-
-<p>在实际的生产环境中，如此大的单Key我们一般称为GodKey或者BigKey，是需要极力避免的，我们都知道Redis是纯内存的数据库，执行命令是单线程执行的，对于内存操作是非常的快的，但是如果单个Key值特别大时，容易阻塞线程，影响其他命令的执行，同时对于Redis服务器的网卡也是一个巨大的挑战，试想如果对于68G的 ZSET Key进行范围查询的话，如果1W QPS，Redis怕是直接会被打爆。</p>
-
-<p>如此看来，这个使用单Key存储全部的用户数据，应该行不通的。</p>
-
-<h2 id="zset多key">ZSET多Key</h2>
-
-<p>“一个篱笆三个桩，一个好汉三个帮”，那么既然一个key搞不定，那我们就分多个key就好了吧？那么我们该如何将10亿用户存储到多个key中呢？</p>
-
-<p>正常第一反应，我们就搞10000个key，然后使用userId取模，路由到对应的子key就好了吧？但是我们的需求是，需要可以知道每个用户在排行榜中的排名，显然这种路由的方式，是无法满足需求的。</p>
-
-<p>拆分多个子key，根据某种规则路由的思路是完全没问题的，不能根据userId路由，那我们可否换一种思路，以其他维度进行路由？</p>
-
-<p><img src="https://github.com/wtopps/wtopps.github.io/blob/master/images/WechatIMG35.jpg?raw=true" alt="分片" /></p>
-
-<p>换一个思路，如果以分数作为分桶逻辑，初始化N个分桶，每个分桶的划定范围以分数区间划定，当新用户获得分数后，根据其分数路由到所在的分桶中。</p>
-
-<p>那么，用户的排名该如何计算？</p>
-
-<p><img src="https://github.com/wtopps/wtopps.github.io/blob/master/images/WechatIMG36.jpg?raw=true" alt="get rank" /></p>
-
-<p>计算用户的排名，我们肯定已经知道用户所在的分桶，可以直接获得在当前分桶中的排名，同时比当前分桶分数大的分桶名称我们肯定也可以知道，那么将所有的前面的分桶中的总数量累加，再加上当前分桶的排名，就是该用户的总排名。</p>
-
-<h3 id="问题-1">问题</h3>
-
-<p>综上，多个子key也就是数据分桶的逻辑，基本上是可以满足我们的需求的，但是还有一个问题，就是数据分布不均匀的问题，我们设定的多个分桶，但是每个分桶中的数据量一定不是均匀的，可能会出现数据倾斜的问题，如何解决？</p>
-
-<p>对此，较为简单的处理方式，当某个数据桶的数据量超过一定的阈值后，可以进行拆分，缩小分桶的数值范围，分割成两个子桶，如此循环往复，直到无法再切分为止。</p>
-
-<h1 id="实现demo">实现demo</h1>
-
-<p>下面的Claude给出的代码实现Demo，逻辑可能不严谨，仅作参考：</p>
-
-<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="nn">lombok.Data</span><span class="o">;</span>
-<span class="kn">import</span> <span class="nn">org.springframework.data.redis.core.RedisTemplate</span><span class="o">;</span>
-<span class="kn">import</span> <span class="nn">org.springframework.data.redis.core.ZSetOperations</span><span class="o">;</span>
-
-<span class="kn">import</span> <span class="nn">java.util.ArrayList</span><span class="o">;</span>
-<span class="kn">import</span> <span class="nn">java.util.List</span><span class="o">;</span>
-<span class="kn">import</span> <span class="nn">java.util.Set</span><span class="o">;</span>
-<span class="kn">import</span> <span class="nn">java.util.concurrent.ConcurrentHashMap</span><span class="o">;</span>
-
-<span class="kd">public</span> <span class="kd">class</span> <span class="nc">ScoreBucketRankingSystem</span> <span class="o">{</span>
-
-    <span class="nd">@Data</span>
-    <span class="kd">public</span> <span class="kd">class</span> <span class="nc">UserScore</span> <span class="o">{</span>
-        <span class="kd">private</span> <span class="kt">long</span> <span class="n">userId</span><span class="o">;</span>
-        <span class="kd">private</span> <span class="kt">double</span> <span class="n">score</span><span class="o">;</span>
-        <span class="kd">private</span> <span class="kt">long</span> <span class="n">timestamp</span><span class="o">;</span>
-    <span class="o">}</span>
-
-    <span class="nd">@Data</span>
-    <span class="kd">public</span> <span class="kd">class</span> <span class="nc">RankInfo</span> <span class="o">{</span>
-        <span class="kd">private</span> <span class="kt">long</span> <span class="n">userId</span><span class="o">;</span>
-        <span class="kd">private</span> <span class="kt">double</span> <span class="n">score</span><span class="o">;</span>
-        <span class="kd">private</span> <span class="kt">long</span> <span class="n">rank</span><span class="o">;</span>
-        <span class="kd">private</span> <span class="nc">String</span> <span class="n">bucketKey</span><span class="o">;</span>
-    <span class="o">}</span>
-
-    <span class="nd">@Data</span>
-    <span class="kd">public</span> <span class="kd">class</span> <span class="nc">ScoreBucket</span> <span class="o">{</span>
-        <span class="kd">private</span> <span class="nc">String</span> <span class="n">bucketKey</span><span class="o">;</span>
-        <span class="kd">private</span> <span class="kt">double</span> <span class="n">minScore</span><span class="o">;</span>
-        <span class="kd">private</span> <span class="kt">double</span> <span class="n">maxScore</span><span class="o">;</span>
-        <span class="kd">private</span> <span class="kt">long</span> <span class="n">userCount</span><span class="o">;</span>
-    <span class="o">}</span>
-
-    <span class="kd">private</span> <span class="kd">final</span> <span class="nc">RedisTemplate</span><span class="o">&lt;</span><span class="nc">String</span><span class="o">,</span> <span class="nc">String</span><span class="o">&gt;</span> <span class="n">redisTemplate</span><span class="o">;</span>
-    <span class="kd">private</span> <span class="kd">final</span> <span class="nc">String</span> <span class="no">BUCKET_PREFIX</span> <span class="o">=</span> <span class="s">"rank:bucket:"</span><span class="o">;</span>
-    <span class="kd">private</span> <span class="kd">final</span> <span class="nc">String</span> <span class="no">BUCKET_META_KEY</span> <span class="o">=</span> <span class="s">"rank:bucket:meta"</span><span class="o">;</span>
-    
-    <span class="c1">// 缓存分桶信息</span>
-    <span class="kd">private</span> <span class="kd">final</span> <span class="nc">ConcurrentHashMap</span><span class="o">&lt;</span><span class="nc">String</span><span class="o">,</span> <span class="nc">ScoreBucket</span><span class="o">&gt;</span> <span class="n">bucketCache</span> <span class="o">=</span> <span class="k">new</span> <span class="nc">ConcurrentHashMap</span><span class="o">&lt;&gt;();</span>
-    
-    <span class="c1">// 初始化分桶配置</span>
-    <span class="kd">private</span> <span class="kd">final</span> <span class="nc">List</span><span class="o">&lt;</span><span class="nc">ScoreBucket</span><span class="o">&gt;</span> <span class="n">initBuckets</span> <span class="o">=</span> <span class="k">new</span> <span class="nc">ArrayList</span><span class="o">&lt;&gt;()</span> <span class="o">;</span>
-
-    <span class="kd">public</span> <span class="nf">ScoreBucketRankingSystem</span><span class="o">(</span><span class="nc">RedisTemplate</span><span class="o">&lt;</span><span class="nc">String</span><span class="o">,</span> <span class="nc">String</span><span class="o">&gt;</span> <span class="n">redisTemplate</span><span class="o">)</span> <span class="o">{</span>
-        <span class="k">this</span><span class="o">.</span><span class="na">redisTemplate</span> <span class="o">=</span> <span class="n">redisTemplate</span><span class="o">;</span>
-        <span class="n">initBuckets</span><span class="o">();</span>
-    <span class="o">}</span>
-
-    <span class="c1">// 初始化分桶</span>
-    <span class="kd">private</span> <span class="kt">void</span> <span class="nf">initBuckets</span><span class="o">()</span> <span class="o">{</span>
-        <span class="k">for</span> <span class="o">(</span><span class="nc">ScoreBucket</span> <span class="n">bucket</span> <span class="o">:</span> <span class="n">initBuckets</span><span class="o">)</span> <span class="o">{</span>
-            <span class="nc">String</span> <span class="n">bucketKey</span> <span class="o">=</span> <span class="no">BUCKET_PREFIX</span> <span class="o">+</span> <span class="n">bucket</span><span class="o">.</span><span class="na">getBucketKey</span><span class="o">();</span>
-            <span class="n">bucketCache</span><span class="o">.</span><span class="na">put</span><span class="o">(</span><span class="n">bucketKey</span><span class="o">,</span> <span class="n">bucket</span><span class="o">);</span>
-            <span class="c1">// 存储分桶元信息</span>
-            <span class="n">redisTemplate</span><span class="o">.</span><span class="na">opsForHash</span><span class="o">().</span><span class="na">put</span><span class="o">(</span>
-                <span class="no">BUCKET_META_KEY</span><span class="o">,</span>
-                <span class="n">bucketKey</span><span class="o">,</span>
-                <span class="no">JSON</span><span class="o">.</span><span class="na">toJSONString</span><span class="o">(</span><span class="n">bucket</span><span class="o">)</span>
-            <span class="o">);</span>
-        <span class="o">}</span>
-    <span class="o">}</span>
-
-    <span class="c1">// 更新用户分数</span>
-    <span class="kd">public</span> <span class="kt">void</span> <span class="nf">updateScore</span><span class="o">(</span><span class="kt">long</span> <span class="n">userId</span><span class="o">,</span> <span class="kt">double</span> <span class="n">newScore</span><span class="o">)</span> <span class="o">{</span>
-        <span class="c1">// 1. 找到用户当前所在的分桶</span>
-        <span class="nc">String</span> <span class="n">oldBucketKey</span> <span class="o">=</span> <span class="n">findUserCurrentBucket</span><span class="o">(</span><span class="n">userId</span><span class="o">);</span>
-        
-        <span class="c1">// 2. 计算用户应该在的分桶</span>
-        <span class="nc">String</span> <span class="n">newBucketKey</span> <span class="o">=</span> <span class="n">calculateBucketKey</span><span class="o">(</span><span class="n">newScore</span><span class="o">);</span>
-        
-        <span class="c1">// 3. 如果分桶发生变化，需要迁移</span>
-        <span class="k">if</span> <span class="o">(</span><span class="n">oldBucketKey</span> <span class="o">!=</span> <span class="kc">null</span> <span class="o">&amp;&amp;</span> <span class="o">!</span><span class="n">oldBucketKey</span><span class="o">.</span><span class="na">equals</span><span class="o">(</span><span class="n">newBucketKey</span><span class="o">))</span> <span class="o">{</span>
-            <span class="n">moveUserToBucket</span><span class="o">(</span><span class="n">userId</span><span class="o">,</span> <span class="n">oldBucketKey</span><span class="o">,</span> <span class="n">newBucketKey</span><span class="o">,</span> <span class="n">newScore</span><span class="o">);</span>
-        <span class="o">}</span> <span class="k">else</span> <span class="o">{</span>
-            <span class="c1">// 4. 直接更新分数</span>
-            <span class="n">updateUserScore</span><span class="o">(</span><span class="n">userId</span><span class="o">,</span> <span class="n">newBucketKey</span><span class="o">,</span> <span class="n">newScore</span><span class="o">);</span>
-        <span class="o">}</span>
-    <span class="o">}</span>
-
-    <span class="c1">// 查找用户当前所在的分桶</span>
-    <span class="kd">private</span> <span class="nc">String</span> <span class="nf">findUserCurrentBucket</span><span class="o">(</span><span class="kt">long</span> <span class="n">userId</span><span class="o">)</span> <span class="o">{</span>
-        <span class="k">for</span> <span class="o">(</span><span class="nc">String</span> <span class="n">bucketKey</span> <span class="o">:</span> <span class="n">bucketCache</span><span class="o">.</span><span class="na">keySet</span><span class="o">())</span> <span class="o">{</span>
-            <span class="nc">Double</span> <span class="n">score</span> <span class="o">=</span> <span class="n">redisTemplate</span><span class="o">.</span><span class="na">opsForZSet</span><span class="o">().</span><span class="na">score</span><span class="o">(</span><span class="n">bucketKey</span><span class="o">,</span> <span class="nc">String</span><span class="o">.</span><span class="na">valueOf</span><span class="o">(</span><span class="n">userId</span><span class="o">));</span>
-            <span class="k">if</span> <span class="o">(</span><span class="n">score</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
-                <span class="k">return</span> <span class="n">bucketKey</span><span class="o">;</span>
-            <span class="o">}</span>
-        <span class="o">}</span>
-        <span class="k">return</span> <span class="kc">null</span><span class="o">;</span>
-    <span class="o">}</span>
-
-    <span class="c1">// 根据分数计算应该所在的分桶</span>
-    <span class="kd">private</span> <span class="nc">String</span> <span class="nf">calculateBucketKey</span><span class="o">(</span><span class="kt">double</span> <span class="n">score</span><span class="o">)</span> <span class="o">{</span>
-        <span class="k">for</span> <span class="o">(</span><span class="nc">ScoreBucket</span> <span class="n">bucket</span> <span class="o">:</span> <span class="n">bucketCache</span><span class="o">.</span><span class="na">values</span><span class="o">())</span> <span class="o">{</span>
-            <span class="k">if</span> <span class="o">(</span><span class="n">score</span> <span class="o">&gt;=</span> <span class="n">bucket</span><span class="o">.</span><span class="na">getMinScore</span><span class="o">()</span> <span class="o">&amp;&amp;</span> <span class="n">score</span> <span class="o">&lt;=</span> <span class="n">bucket</span><span class="o">.</span><span class="na">getMaxScore</span><span class="o">())</span> <span class="o">{</span>
-                <span class="k">return</span> <span class="no">BUCKET_PREFIX</span> <span class="o">+</span> <span class="n">bucket</span><span class="o">.</span><span class="na">getBucketKey</span><span class="o">();</span>
-            <span class="o">}</span>
-        <span class="o">}</span>
-        <span class="k">throw</span> <span class="k">new</span> <span class="nf">IllegalArgumentException</span><span class="o">(</span><span class="s">"Score out of range: "</span> <span class="o">+</span> <span class="n">score</span><span class="o">);</span>
-    <span class="o">}</span>
-
-    <span class="c1">// 将用户从旧分桶移动到新分桶</span>
-    <span class="kd">private</span> <span class="kt">void</span> <span class="nf">moveUserToBucket</span><span class="o">(</span><span class="kt">long</span> <span class="n">userId</span><span class="o">,</span> <span class="nc">String</span> <span class="n">oldBucketKey</span><span class="o">,</span> <span class="nc">String</span> <span class="n">newBucketKey</span><span class="o">,</span> <span class="kt">double</span> <span class="n">newScore</span><span class="o">)</span> <span class="o">{</span>
-        <span class="n">redisTemplate</span><span class="o">.</span><span class="na">execute</span><span class="o">(</span><span class="k">new</span> <span class="nc">SessionCallback</span><span class="o">&lt;</span><span class="nc">List</span><span class="o">&lt;</span><span class="nc">Object</span><span class="o">&gt;&gt;()</span> <span class="o">{</span>
-            <span class="nd">@Override</span>
-            <span class="kd">public</span> <span class="nc">List</span><span class="o">&lt;</span><span class="nc">Object</span><span class="o">&gt;</span> <span class="nf">execute</span><span class="o">(</span><span class="nc">RedisOperations</span> <span class="n">operations</span><span class="o">)</span> <span class="o">{</span>
-                <span class="n">operations</span><span class="o">.</span><span class="na">multi</span><span class="o">();</span>
-                
-                <span class="c1">// 从旧分桶删除</span>
-                <span class="n">operations</span><span class="o">.</span><span class="na">opsForZSet</span><span class="o">().</span><span class="na">remove</span><span class="o">(</span><span class="n">oldBucketKey</span><span class="o">,</span> <span class="nc">String</span><span class="o">.</span><span class="na">valueOf</span><span class="o">(</span><span class="n">userId</span><span class="o">));</span>
-                
-                <span class="c1">// 更新分桶计数</span>
-                <span class="n">operations</span><span class="o">.</span><span class="na">opsForHash</span><span class="o">().</span><span class="na">increment</span><span class="o">(</span><span class="no">BUCKET_META_KEY</span><span class="o">,</span> <span class="n">oldBucketKey</span> <span class="o">+</span> <span class="s">":count"</span><span class="o">,</span> <span class="o">-</span><span class="mi">1</span><span class="o">);</span>
-                <span class="n">operations</span><span class="o">.</span><span class="na">opsForHash</span><span class="o">().</span><span class="na">increment</span><span class="o">(</span><span class="no">BUCKET_META_KEY</span><span class="o">,</span> <span class="n">newBucketKey</span> <span class="o">+</span> <span class="s">":count"</span><span class="o">,</span> <span class="mi">1</span><span class="o">);</span>
-                
-                <span class="c1">// 添加到新分桶</span>
-                <span class="n">operations</span><span class="o">.</span><span class="na">opsForZSet</span><span class="o">().</span><span class="na">add</span><span class="o">(</span><span class="n">newBucketKey</span><span class="o">,</span> <span class="nc">String</span><span class="o">.</span><span class="na">valueOf</span><span class="o">(</span><span class="n">userId</span><span class="o">),</span> <span class="n">newScore</span><span class="o">);</span>
-                
-                <span class="k">return</span> <span class="n">operations</span><span class="o">.</span><span class="na">exec</span><span class="o">();</span>
-            <span class="o">}</span>
-        <span class="o">});</span>
-    <span class="o">}</span>
-
-    <span class="c1">// 更新用户分数</span>
-    <span class="kd">private</span> <span class="kt">void</span> <span class="nf">updateUserScore</span><span class="o">(</span><span class="kt">long</span> <span class="n">userId</span><span class="o">,</span> <span class="nc">String</span> <span class="n">bucketKey</span><span class="o">,</span> <span class="kt">double</span> <span class="n">newScore</span><span class="o">)</span> <span class="o">{</span>
-        <span class="n">redisTemplate</span><span class="o">.</span><span class="na">opsForZSet</span><span class="o">().</span><span class="na">add</span><span class="o">(</span><span class="n">bucketKey</span><span class="o">,</span> <span class="nc">String</span><span class="o">.</span><span class="na">valueOf</span><span class="o">(</span><span class="n">userId</span><span class="o">),</span> <span class="n">newScore</span><span class="o">);</span>
-    <span class="o">}</span>
-
-    <span class="c1">// 获取用户排名信息</span>
-    <span class="kd">public</span> <span class="nc">RankInfo</span> <span class="nf">getUserRankInfo</span><span class="o">(</span><span class="kt">long</span> <span class="n">userId</span><span class="o">)</span> <span class="o">{</span>
-        <span class="nc">String</span> <span class="n">bucketKey</span> <span class="o">=</span> <span class="n">findUserCurrentBucket</span><span class="o">(</span><span class="n">userId</span><span class="o">);</span>
-        <span class="k">if</span> <span class="o">(</span><span class="n">bucketKey</span> <span class="o">==</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
-            <span class="k">return</span> <span class="kc">null</span><span class="o">;</span>
-        <span class="o">}</span>
-
-        <span class="nc">Double</span> <span class="n">score</span> <span class="o">=</span> <span class="n">redisTemplate</span><span class="o">.</span><span class="na">opsForZSet</span><span class="o">().</span><span class="na">score</span><span class="o">(</span><span class="n">bucketKey</span><span class="o">,</span> <span class="nc">String</span><span class="o">.</span><span class="na">valueOf</span><span class="o">(</span><span class="n">userId</span><span class="o">));</span>
-        <span class="nc">Long</span> <span class="n">rank</span> <span class="o">=</span> <span class="n">redisTemplate</span><span class="o">.</span><span class="na">opsForZSet</span><span class="o">().</span><span class="na">reverseRank</span><span class="o">(</span><span class="n">bucketKey</span><span class="o">,</span> <span class="nc">String</span><span class="o">.</span><span class="na">valueOf</span><span class="o">(</span><span class="n">userId</span><span class="o">));</span>
-        
-        <span class="k">if</span> <span class="o">(</span><span class="n">score</span> <span class="o">==</span> <span class="kc">null</span> <span class="o">||</span> <span class="n">rank</span> <span class="o">==</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
-            <span class="k">return</span> <span class="kc">null</span><span class="o">;</span>
-        <span class="o">}</span>
-
-        <span class="c1">// 计算全局排名</span>
-        <span class="kt">long</span> <span class="n">globalRank</span> <span class="o">=</span> <span class="n">calculateGlobalRank</span><span class="o">(</span><span class="n">bucketKey</span><span class="o">,</span> <span class="n">rank</span><span class="o">);</span>
-
-        <span class="nc">RankInfo</span> <span class="n">rankInfo</span> <span class="o">=</span> <span class="k">new</span> <span class="nc">RankInfo</span><span class="o">();</span>
-        <span class="n">rankInfo</span><span class="o">.</span><span class="na">setUserId</span><span class="o">(</span><span class="n">userId</span><span class="o">);</span>
-        <span class="n">rankInfo</span><span class="o">.</span><span class="na">setScore</span><span class="o">(</span><span class="n">score</span><span class="o">);</span>
-        <span class="n">rankInfo</span><span class="o">.</span><span class="na">setRank</span><span class="o">(</span><span class="n">globalRank</span><span class="o">);</span>
-        <span class="n">rankInfo</span><span class="o">.</span><span class="na">setBucketKey</span><span class="o">(</span><span class="n">bucketKey</span><span class="o">);</span>
-        
-        <span class="k">return</span> <span class="n">rankInfo</span><span class="o">;</span>
-    <span class="o">}</span>
-
-    <span class="c1">// 计算全局排名</span>
-    <span class="kd">private</span> <span class="kt">long</span> <span class="nf">calculateGlobalRank</span><span class="o">(</span><span class="nc">String</span> <span class="n">currentBucketKey</span><span class="o">,</span> <span class="kt">long</span> <span class="n">rankInBucket</span><span class="o">)</span> <span class="o">{</span>
-        <span class="kt">long</span> <span class="n">globalRank</span> <span class="o">=</span> <span class="n">rankInBucket</span><span class="o">;</span>
-        
-        <span class="c1">// 加上更高分数段的用户数</span>
-        <span class="k">for</span> <span class="o">(</span><span class="nc">ScoreBucket</span> <span class="n">bucket</span> <span class="o">:</span> <span class="n">bucketCache</span><span class="o">.</span><span class="na">values</span><span class="o">())</span> <span class="o">{</span>
-            <span class="nc">String</span> <span class="n">bucketKey</span> <span class="o">=</span> <span class="no">BUCKET_PREFIX</span> <span class="o">+</span> <span class="n">bucket</span><span class="o">.</span><span class="na">getBucketKey</span><span class="o">();</span>
-            <span class="k">if</span> <span class="o">(</span><span class="n">bucket</span><span class="o">.</span><span class="na">getMaxScore</span><span class="o">()</span> <span class="o">&gt;</span> <span class="n">bucketCache</span><span class="o">.</span><span class="na">get</span><span class="o">(</span><span class="n">currentBucketKey</span><span class="o">).</span><span class="na">getMaxScore</span><span class="o">())</span> <span class="o">{</span>
-                <span class="n">globalRank</span> <span class="o">+=</span> <span class="n">bucket</span><span class="o">.</span><span class="na">getUserCount</span><span class="o">();</span>
-            <span class="o">}</span>
-        <span class="o">}</span>
-        
-        <span class="k">return</span> <span class="n">globalRank</span><span class="o">;</span>
-    <span class="o">}</span>
-
-    <span class="c1">// 获取排行榜区间</span>
-    <span class="kd">public</span> <span class="nc">List</span><span class="o">&lt;</span><span class="nc">RankInfo</span><span class="o">&gt;</span> <span class="nf">getRankRange</span><span class="o">(</span><span class="kt">int</span> <span class="n">start</span><span class="o">,</span> <span class="kt">int</span> <span class="n">end</span><span class="o">)</span> <span class="o">{</span>
-        <span class="nc">List</span><span class="o">&lt;</span><span class="nc">RankInfo</span><span class="o">&gt;</span> <span class="n">result</span> <span class="o">=</span> <span class="k">new</span> <span class="nc">ArrayList</span><span class="o">&lt;&gt;();</span>
-        <span class="kt">int</span> <span class="n">currentPosition</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span>
-        
-        <span class="c1">// 从高分到低分遍历分桶</span>
-        <span class="k">for</span> <span class="o">(</span><span class="nc">ScoreBucket</span> <span class="n">bucket</span> <span class="o">:</span> <span class="n">bucketCache</span><span class="o">.</span><span class="na">values</span><span class="o">())</span> <span class="o">{</span>
-            <span class="nc">String</span> <span class="n">bucketKey</span> <span class="o">=</span> <span class="no">BUCKET_PREFIX</span> <span class="o">+</span> <span class="n">bucket</span><span class="o">.</span><span class="na">getBucketKey</span><span class="o">();</span>
-            
-            <span class="c1">// 获取分桶内的排名区间</span>
-            <span class="nc">Set</span><span class="o">&lt;</span><span class="nc">ZSetOperations</span><span class="o">.</span><span class="na">TypedTuple</span><span class="o">&lt;</span><span class="nc">String</span><span class="o">&gt;&gt;</span> <span class="n">ranksInBucket</span> <span class="o">=</span> 
-                <span class="n">redisTemplate</span><span class="o">.</span><span class="na">opsForZSet</span><span class="o">().</span><span class="na">reverseRangeWithScores</span><span class="o">(</span>
-                    <span class="n">bucketKey</span><span class="o">,</span> 
-                    <span class="nc">Math</span><span class="o">.</span><span class="na">max</span><span class="o">(</span><span class="mi">0</span><span class="o">,</span> <span class="n">start</span> <span class="o">-</span> <span class="n">currentPosition</span><span class="o">),</span>
-                    <span class="n">end</span> <span class="o">-</span> <span class="n">currentPosition</span>
-                <span class="o">);</span>
-                
-            <span class="k">if</span> <span class="o">(</span><span class="n">ranksInBucket</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
-                <span class="k">for</span> <span class="o">(</span><span class="nc">ZSetOperations</span><span class="o">.</span><span class="na">TypedTuple</span><span class="o">&lt;</span><span class="nc">String</span><span class="o">&gt;</span> <span class="n">rank</span> <span class="o">:</span> <span class="n">ranksInBucket</span><span class="o">)</span> <span class="o">{</span>
-                    <span class="k">if</span> <span class="o">(</span><span class="n">currentPosition</span> <span class="o">&gt;=</span> <span class="n">start</span> <span class="o">&amp;&amp;</span> <span class="n">currentPosition</span> <span class="o">&lt;=</span> <span class="n">end</span><span class="o">)</span> <span class="o">{</span>
-                        <span class="nc">RankInfo</span> <span class="n">rankInfo</span> <span class="o">=</span> <span class="k">new</span> <span class="nc">RankInfo</span><span class="o">();</span>
-                        <span class="n">rankInfo</span><span class="o">.</span><span class="na">setUserId</span><span class="o">(</span><span class="nc">Long</span><span class="o">.</span><span class="na">parseLong</span><span class="o">(</span><span class="n">rank</span><span class="o">.</span><span class="na">getValue</span><span class="o">()));</span>
-                        <span class="n">rankInfo</span><span class="o">.</span><span class="na">setScore</span><span class="o">(</span><span class="n">rank</span><span class="o">.</span><span class="na">getScore</span><span class="o">());</span>
-                        <span class="n">rankInfo</span><span class="o">.</span><span class="na">setRank</span><span class="o">(</span><span class="n">currentPosition</span> <span class="o">+</span> <span class="mi">1</span><span class="o">);</span>
-                        <span class="n">rankInfo</span><span class="o">.</span><span class="na">setBucketKey</span><span class="o">(</span><span class="n">bucketKey</span><span class="o">);</span>
-                        <span class="n">result</span><span class="o">.</span><span class="na">add</span><span class="o">(</span><span class="n">rankInfo</span><span class="o">);</span>
-                    <span class="o">}</span>
-                    <span class="n">currentPosition</span><span class="o">++;</span>
-                <span class="o">}</span>
-            <span class="o">}</span>
-            
-            <span class="k">if</span> <span class="o">(</span><span class="n">currentPosition</span> <span class="o">&gt;</span> <span class="n">end</span><span class="o">)</span> <span class="o">{</span>
-                <span class="k">break</span><span class="o">;</span>
-            <span class="o">}</span>
-        <span class="o">}</span>
-        
-        <span class="k">return</span> <span class="n">result</span><span class="o">;</span>
-    <span class="o">}</span>
-
-    <span class="c1">// 获取分桶统计信息</span>
-    <span class="kd">public</span> <span class="nc">List</span><span class="o">&lt;</span><span class="nc">ScoreBucket</span><span class="o">&gt;</span> <span class="nf">getBucketStats</span><span class="o">()</span> <span class="o">{</span>
-        <span class="nc">List</span><span class="o">&lt;</span><span class="nc">ScoreBucket</span><span class="o">&gt;</span> <span class="n">stats</span> <span class="o">=</span> <span class="k">new</span> <span class="nc">ArrayList</span><span class="o">&lt;&gt;();</span>
-        
-        <span class="k">for</span> <span class="o">(</span><span class="nc">ScoreBucket</span> <span class="n">bucket</span> <span class="o">:</span> <span class="n">bucketCache</span><span class="o">.</span><span class="na">values</span><span class="o">())</span> <span class="o">{</span>
-            <span class="nc">String</span> <span class="n">bucketKey</span> <span class="o">=</span> <span class="no">BUCKET_PREFIX</span> <span class="o">+</span> <span class="n">bucket</span><span class="o">.</span><span class="na">getBucketKey</span><span class="o">();</span>
-            <span class="nc">Long</span> <span class="n">count</span> <span class="o">=</span> <span class="n">redisTemplate</span><span class="o">.</span><span class="na">opsForZSet</span><span class="o">().</span><span class="na">zCard</span><span class="o">(</span><span class="n">bucketKey</span><span class="o">);</span>
-            
-            <span class="nc">ScoreBucket</span> <span class="n">stat</span> <span class="o">=</span> <span class="k">new</span> <span class="nc">ScoreBucket</span><span class="o">();</span>
-            <span class="n">stat</span><span class="o">.</span><span class="na">setBucketKey</span><span class="o">(</span><span class="n">bucket</span><span class="o">.</span><span class="na">getBucketKey</span><span class="o">());</span>
-            <span class="n">stat</span><span class="o">.</span><span class="na">setMinScore</span><span class="o">(</span><span class="n">bucket</span><span class="o">.</span><span class="na">getMinScore</span><span class="o">());</span>
-            <span class="n">stat</span><span class="o">.</span><span class="na">setMaxScore</span><span class="o">(</span><span class="n">bucket</span><span class="o">.</span><span class="na">getMaxScore</span><span class="o">());</span>
-            <span class="n">stat</span><span class="o">.</span><span class="na">setUserCount</span><span class="o">(</span><span class="n">count</span> <span class="o">!=</span> <span class="kc">null</span> <span class="o">?</span> <span class="n">count</span> <span class="o">:</span> <span class="mi">0</span><span class="o">);</span>
-            
-            <span class="n">stats</span><span class="o">.</span><span class="na">add</span><span class="o">(</span><span class="n">stat</span><span class="o">);</span>
-        <span class="o">}</span>
-        
-        <span class="k">return</span> <span class="n">stats</span><span class="o">;</span>
-    <span class="o">}</span>
-
-    <span class="c1">// 定期优化分桶</span>
-    <span class="kd">public</span> <span class="kt">void</span> <span class="nf">optimizeBuckets</span><span class="o">()</span> <span class="o">{</span>
-        <span class="nc">List</span><span class="o">&lt;</span><span class="nc">ScoreBucket</span><span class="o">&gt;</span> <span class="n">stats</span> <span class="o">=</span> <span class="n">getBucketStats</span><span class="o">();</span>
-        
-        <span class="c1">// 检查是否需要分裂或合并分桶</span>
-        <span class="k">for</span> <span class="o">(</span><span class="nc">ScoreBucket</span> <span class="n">bucket</span> <span class="o">:</span> <span class="n">stats</span><span class="o">)</span> <span class="o">{</span>
-            <span class="k">if</span> <span class="o">(</span><span class="n">bucket</span><span class="o">.</span><span class="na">getUserCount</span><span class="o">()</span> <span class="o">&gt;</span> <span class="mi">100_000_000</span><span class="o">)</span> <span class="o">{</span> <span class="c1">// 1亿用户</span>
-                <span class="c1">// 分裂分桶</span>
-                <span class="n">splitBucket</span><span class="o">(</span><span class="n">bucket</span><span class="o">);</span>
-            <span class="o">}</span> <span class="k">else</span> <span class="k">if</span> <span class="o">(</span><span class="n">bucket</span><span class="o">.</span><span class="na">getUserCount</span><span class="o">()</span> <span class="o">&lt;</span> <span class="mi">1_000_000</span><span class="o">)</span> <span class="o">{</span> <span class="c1">// 100万用户</span>
-                <span class="c1">// 考虑合并分桶</span>
-                <span class="n">mergeBucket</span><span class="o">(</span><span class="n">bucket</span><span class="o">);</span>
-            <span class="o">}</span>
-        <span class="o">}</span>
-    <span class="o">}</span>
-
-    <span class="c1">// 分裂分桶</span>
-    <span class="kd">private</span> <span class="kt">void</span> <span class="nf">splitBucket</span><span class="o">(</span><span class="nc">ScoreBucket</span> <span class="n">bucket</span><span class="o">)</span> <span class="o">{</span>
-        <span class="kt">double</span> <span class="n">mid</span> <span class="o">=</span> <span class="o">(</span><span class="n">bucket</span><span class="o">.</span><span class="na">getMinScore</span><span class="o">()</span> <span class="o">+</span> <span class="n">bucket</span><span class="o">.</span><span class="na">getMaxScore</span><span class="o">())</span> <span class="o">/</span> <span class="mi">2</span><span class="o">;</span>
-        
-        <span class="nc">ScoreBucket</span> <span class="n">lowerBucket</span> <span class="o">=</span> <span class="k">new</span> <span class="nc">ScoreBucket</span><span class="o">();</span>
-        <span class="n">lowerBucket</span><span class="o">.</span><span class="na">setBucketKey</span><span class="o">(</span><span class="n">bucket</span><span class="o">.</span><span class="na">getBucketKey</span><span class="o">()</span> <span class="o">+</span> <span class="s">"_lower"</span><span class="o">);</span>
-        <span class="n">lowerBucket</span><span class="o">.</span><span class="na">setMinScore</span><span class="o">(</span><span class="n">bucket</span><span class="o">.</span><span class="na">getMinScore</span><span class="o">());</span>
-        <span class="n">lowerBucket</span><span class="o">.</span><span class="na">setMaxScore</span><span class="o">(</span><span class="n">mid</span><span class="o">);</span>
-        
-        <span class="nc">ScoreBucket</span> <span class="n">upperBucket</span> <span class="o">=</span> <span class="k">new</span> <span class="nc">ScoreBucket</span><span class="o">();</span>
-        <span class="n">upperBucket</span><span class="o">.</span><span class="na">setBucketKey</span><span class="o">(</span><span class="n">bucket</span><span class="o">.</span><span class="na">getBucketKey</span><span class="o">()</span> <span class="o">+</span> <span class="s">"_upper"</span><span class="o">);</span>
-        <span class="n">upperBucket</span><span class="o">.</span><span class="na">setMinScore</span><span class="o">(</span><span class="n">mid</span> <span class="o">+</span> <span class="mi">1</span><span class="o">);</span>
-        <span class="n">upperBucket</span><span class="o">.</span><span class="na">setMaxScore</span><span class="o">(</span><span class="n">bucket</span><span class="o">.</span><span class="na">getMaxScore</span><span class="o">());</span>
-        
-        <span class="c1">// 重新分配用户到新分桶</span>
-        <span class="n">redistributeUsers</span><span class="o">(</span><span class="n">bucket</span><span class="o">,</span> <span class="n">lowerBucket</span><span class="o">,</span> <span class="n">upperBucket</span><span class="o">);</span>
-    <span class="o">}</span>
-
-    <span class="c1">// 合并分桶</span>
-    <span class="kd">private</span> <span class="kt">void</span> <span class="nf">mergeBucket</span><span class="o">(</span><span class="nc">ScoreBucket</span> <span class="n">bucket</span><span class="o">)</span> <span class="o">{</span>
-        <span class="c1">// 实现合并逻辑</span>
-    <span class="o">}</span>
-
-    <span class="c1">// 重新分配用户</span>
-    <span class="kd">private</span> <span class="kt">void</span> <span class="nf">redistributeUsers</span><span class="o">(</span><span class="nc">ScoreBucket</span> <span class="n">oldBucket</span><span class="o">,</span> <span class="nc">ScoreBucket</span> <span class="n">lowerBucket</span><span class="o">,</span> <span class="nc">ScoreBucket</span> <span class="n">upperBucket</span><span class="o">)</span> <span class="o">{</span>
-        <span class="nc">String</span> <span class="n">oldBucketKey</span> <span class="o">=</span> <span class="no">BUCKET_PREFIX</span> <span class="o">+</span> <span class="n">oldBucket</span><span class="o">.</span><span class="na">getBucketKey</span><span class="o">();</span>
-        <span class="nc">String</span> <span class="n">lowerBucketKey</span> <span class="o">=</span> <span class="no">BUCKET_PREFIX</span> <span class="o">+</span> <span class="n">lowerBucket</span><span class="o">.</span><span class="na">getBucketKey</span><span class="o">();</span>
-        <span class="nc">String</span> <span class="n">upperBucketKey</span> <span class="o">=</span> <span class="no">BUCKET_PREFIX</span> <span class="o">+</span> <span class="n">upperBucket</span><span class="o">.</span><span class="na">getBucketKey</span><span class="o">();</span>
-        
-        <span class="kt">long</span> <span class="n">cursor</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span>
-        <span class="nc">ScanOptions</span> <span class="n">options</span> <span class="o">=</span> <span class="nc">ScanOptions</span><span class="o">.</span><span class="na">scanOptions</span><span class="o">().</span><span class="na">count</span><span class="o">(</span><span class="mi">1000</span><span class="o">).</span><span class="na">build</span><span class="o">();</span>
-        
-        <span class="k">do</span> <span class="o">{</span>
-            <span class="nc">ScanResult</span><span class="o">&lt;</span><span class="nc">ZSetOperations</span><span class="o">.</span><span class="na">TypedTuple</span><span class="o">&lt;</span><span class="nc">String</span><span class="o">&gt;&gt;</span> <span class="n">scanResult</span> <span class="o">=</span> 
-                <span class="n">redisTemplate</span><span class="o">.</span><span class="na">opsForZSet</span><span class="o">().</span><span class="na">scan</span><span class="o">(</span><span class="n">oldBucketKey</span><span class="o">,</span> <span class="n">options</span><span class="o">);</span>
-                
-            <span class="k">for</span> <span class="o">(</span><span class="nc">ZSetOperations</span><span class="o">.</span><span class="na">TypedTuple</span><span class="o">&lt;</span><span class="nc">String</span><span class="o">&gt;</span> <span class="n">tuple</span> <span class="o">:</span> <span class="n">scanResult</span><span class="o">.</span><span class="na">getContent</span><span class="o">())</span> <span class="o">{</span>
-                <span class="nc">String</span> <span class="n">userId</span> <span class="o">=</span> <span class="n">tuple</span><span class="o">.</span><span class="na">getValue</span><span class="o">();</span>
-                <span class="kt">double</span> <span class="n">score</span> <span class="o">=</span> <span class="n">tuple</span><span class="o">.</span><span class="na">getScore</span><span class="o">();</span>
-                
-                <span class="k">if</span> <span class="o">(</span><span class="n">score</span> <span class="o">&lt;=</span> <span class="n">lowerBucket</span><span class="o">.</span><span class="na">getMaxScore</span><span class="o">())</span> <span class="o">{</span>
-                    <span class="n">redisTemplate</span><span class="o">.</span><span class="na">opsForZSet</span><span class="o">().</span><span class="na">add</span><span class="o">(</span><span class="n">lowerBucketKey</span><span class="o">,</span> <span class="n">userId</span><span class="o">,</span> <span class="n">score</span><span class="o">);</span>
-                <span class="o">}</span> <span class="k">else</span> <span class="o">{</span>
-                    <span class="n">redisTemplate</span><span class="o">.</span><span class="na">opsForZSet</span><span class="o">().</span><span class="na">add</span><span class="o">(</span><span class="n">upperBucketKey</span><span class="o">,</span> <span class="n">userId</span><span class="o">,</span> <span class="n">score</span><span class="o">);</span>
-                <span class="o">}</span>
-            <span class="o">}</span>
-            
-            <span class="n">cursor</span> <span class="o">=</span> <span class="n">scanResult</span><span class="o">.</span><span class="na">getCursor</span><span class="o">();</span>
-        <span class="o">}</span> <span class="k">while</span> <span class="o">(</span><span class="n">cursor</span> <span class="o">!=</span> <span class="mi">0</span><span class="o">);</span>
-        
-        <span class="c1">// 更新分桶缓存</span>
-        <span class="n">bucketCache</span><span class="o">.</span><span class="na">put</span><span class="o">(</span><span class="n">lowerBucketKey</span><span class="o">,</span> <span class="n">lowerBucket</span><span class="o">);</span>
-        <span class="n">bucketCache</span><span class="o">.</span><span class="na">put</span><span class="o">(</span><span class="n">upperBucketKey</span><span class="o">,</span> <span class="n">upperBucket</span><span class="o">);</span>
-        <span class="n">bucketCache</span><span class="o">.</span><span class="na">remove</span><span class="o">(</span><span class="n">oldBucketKey</span><span class="o">);</span>
-        
-        <span class="c1">// 删除旧分桶</span>
-        <span class="n">redisTemplate</span><span class="o">.</span><span class="na">delete</span><span class="o">(</span><span class="n">oldBucketKey</span><span class="o">);</span>
-    <span class="o">}</span>
-<span class="o">}</span>
-</code></pre></div></div>
-
-<script src="https://giscus.app/client.js" data-repo="wtopps/wtopps.github.io" data-repo-id="MDEwOlJlcG9zaXRvcnk2NzY3NTA3MA==" data-category="Comments" data-category-id="DIC_kwDOBAijvs4CizS6" data-mapping="pathname" data-strict="0" data-reactions-enabled="1" data-emit-metadata="0" data-input-position="bottom" data-theme="preferred_color_scheme" data-lang="zh-CN" crossorigin="anonymous" async="">
-</script>]]></content><author><name>GitHub User</name></author><category term="System" /><category term="Design" /><category term="System Design" /><summary type="html"><![CDATA[]]></summary></entry><entry><title type="html">Java ThreadPoolExecutor线程池概述</title><link href="http://localhost:4000/java/2024/09/25/Java-ThreadPoolExecutor%E7%BA%BF%E7%A8%8B%E6%B1%A0%E6%A6%82%E8%BF%B0.html" rel="alternate" type="text/html" title="Java ThreadPoolExecutor线程池概述" /><published>2024-09-25T00:00:00+08:00</published><updated>2024-09-25T00:00:00+08:00</updated><id>http://localhost:4000/java/2024/09/25/Java%20ThreadPoolExecutor%E7%BA%BF%E7%A8%8B%E6%B1%A0%E6%A6%82%E8%BF%B0</id><content type="html" xml:base="http://localhost:4000/java/2024/09/25/Java-ThreadPoolExecutor%E7%BA%BF%E7%A8%8B%E6%B1%A0%E6%A6%82%E8%BF%B0.html"><![CDATA[<p><img src="https://github.com/jeffreytse/jekyll-theme-yat/assets/9413601/2ed22d49-90b1-4f7e-8e8f-b77b21dee505" alt="banner" /></p>
-
-<h1 id="导航">导航</h1>
-
-<ol>
-  <li><a href="#前言">前言</a></li>
-  <li><a href="#为什么要使用线程池">为什么要使用线程池</a></li>
-  <li><a href="#线程池使用方式">线程池使用方式</a></li>
-  <li><a href="##Executors创建线程池">Executors创建线程池</a>
-    <ol>
-      <li><a href="#newCachedThreadPool">newCachedThreadPool</a></li>
-      <li><a href="#newFixedThreadPool">newFixedThreadPool</a></li>
-      <li><a href="#newScheduledThreadPool">newScheduledThreadPool</a></li>
-      <li><a href="#newSingleThreadExecutor">newSingleThreadExecutor</a></li>
-    </ol>
-  </li>
-  <li><a href="#四种线程池对比">四种线程池对比</a></li>
-  <li><a href="#ThreadPoolExecutor创建线程池">ThreadPoolExecutor创建线程池</a></li>
-  <li><a href="#排队策略">排队策略</a></li>
-  <li><a href="#工作队列对比">工作队列对比</a></li>
-  <li><a href="#线程池关闭">线程池关闭</a></li>
-  <li><a href="#线程池大小设置">线程池大小设置</a></li>
-  <li><a href="#线程池的状态监控">线程池的状态监控</a></li>
-  <li><a href="#结语">结语</a></li>
-</ol>
+<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="4.3.4">Jekyll</generator><link href="http://localhost:4000/feed.xml" rel="self" type="application/atom+xml" /><link href="http://localhost:4000/" rel="alternate" type="text/html" /><updated>2024-11-11T16:31:55+08:00</updated><id>http://localhost:4000/feed.xml</id><title type="html">wtopps</title><subtitle>Write an awesome description for your new site here. You can edit this line in _config.yml. It will appear in your document head meta (for Google search results) and in your feed.xml site description.</subtitle><author><name>GitHub User</name></author><entry><title type="html">Protobuf Varint序列化原理</title><link href="http://localhost:4000/others/2024/11/11/Protobuf-Varint%E5%BA%8F%E5%88%97%E5%8C%96%E5%8E%9F%E7%90%86.html" rel="alternate" type="text/html" title="Protobuf Varint序列化原理" /><published>2024-11-11T00:00:00+08:00</published><updated>2024-11-11T00:00:00+08:00</updated><id>http://localhost:4000/others/2024/11/11/Protobuf%20Varint%E5%BA%8F%E5%88%97%E5%8C%96%E5%8E%9F%E7%90%86</id><content type="html" xml:base="http://localhost:4000/others/2024/11/11/Protobuf-Varint%E5%BA%8F%E5%88%97%E5%8C%96%E5%8E%9F%E7%90%86.html"><![CDATA[<p><img src="https://raw.githubusercontent.com/wtopps/wtopps.github.io/refs/heads/master/images/image1.webp" alt="banner" /></p>
 
 <h2 id="前言">前言</h2>
 
-<p>在互联网的开发场景下，很多业务场景下我们需要使用到多线程的技术，从 Java 5 开始，Java 提供了自己的线程池，线程池就是一个线程的容器，每次只执行额定数量的线程。java.util.concurrent包中提供了ThreadPoolExecutor类来管理线程，本文将介绍一下ThreadPoolExecutor类的使用。</p>
+<p>Protocol Buffers（简称 protobuf）使用 varint（可变长整数）格式来序列化一些整数类型（如 int32, int64, uint32, uint64 等）。varint 的基本原理是将整数按照字节进行分段编码，以尽可能节省存储空间。这种编码方式使得对于较小的整数值，占用的字节数非常少，而对于较大的整数，则会根据需要动态增加字节。</p>
 
-<h2 id="为什么要使用线程池">为什么要使用线程池？</h2>
+<h2 id="varint-序列化的工作原理">Varint 序列化的工作原理</h2>
 
-<p>在执行一个异步任务或并发任务时，往往是通过直接new Thread()方法来创建新的线程，这样做弊端较多，更好的解决方案是合理地利用线程池，线程池的优势很明显，如下：</p>
+<p><strong>字节按位拆分</strong>：Protobuf 将整数值分解为一组 7 位的块（字节），每个字节保存一个 7 位的数据</p>
 
-<ul>
-  <li>降低系统资源消耗，通过重用已存在的线程，降低线程创建和销毁造成的消耗；</li>
-  <li>提高系统响应速度，当有任务到达时，无需等待新线程的创建便能立即执行；</li>
-  <li>方便线程并发数的管控，线程若是无限制的创建，不仅会额外消耗大量系统资源，更是占用过多资源而阻塞系统或oom等状况，从而降低系统的稳定性。线程池能有效管控线程，统一分配、调优，提供资源使用率；</li>
-  <li>更强大的功能，线程池提供了定时、定期以及可控线程数等功能的线程池，使用方便简单。</li>
-</ul>
-
-<h2 id="线程池使用方式">线程池使用方式</h2>
-
-<p>java.util.concurrent包中提供了多种线程池的创建方式，我们可以直接使用ThreadPoolExecutor类直接创建一个线程池，也可以使用Executors类创建，下面我们分别说一下这几种创建的方式。</p>
-
-<hr />
-
-<h2 id="executors创建线程池">Executors创建线程池</h2>
-
-<p>Executors类是java.util.concurrent提供的一个创建线程池的工厂类，使用该类可以方便的创建线程池，此类提供的几种方法，支持创建四种类型的线程池，分别是：newCachedThreadPool、newFixedThreadPool、newScheduledThreadPool、newSingleThreadExecutor。</p>
-
-<h3 id="newcachedthreadpool">newCachedThreadPool</h3>
-
-<p>创建一个可缓存的无界线程池，该方法无参数。当线程池中的线程空闲时间超过60s则会自动回收该线程，当任务超过线程池的线程数则创建新线程。线程池的大小上限为Integer.MAX_VALUE，可看做是无限大。</p>
-
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>/**
-     * 创建无边界大小的线程池
-     */
-    public static void createCachedThreadPool() {
-        ExecutorService cachedThreadPool = Executors.newCachedThreadPool();
-        final CountDownLatch countDownLatch = new CountDownLatch(10);
-        for (int i = 0; i &lt; 10; i++) {
-            final int currentIndex = i;
-            cachedThreadPool.execute(() -&gt; {
-                System.out.println(Thread.currentThread().getName() + ", currentIndex is : " + currentIndex);
-                countDownLatch.countDown();
-            });
-        }
-        try {
-            countDownLatch.await();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-        System.out.println("全部线程执行完毕");
-    }
-</code></pre></div></div>
-<p>上面的Demo中创建了一个无边界限制的线程池，同时使用了一个多线程辅助类CountDownLatch，关于该类的使用，后面会有介绍。<br />
-执行结果：</p>
-
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>public static void main(String[] args) {
-        createCachedThreadPool();
-    }
-</code></pre></div></div>
-
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>pool-1-thread-1, currentIndex is : 0
-pool-1-thread-5, currentIndex is : 4
-pool-1-thread-4, currentIndex is : 3
-pool-1-thread-3, currentIndex is : 2
-pool-1-thread-2, currentIndex is : 1
-pool-1-thread-9, currentIndex is : 8
-pool-1-thread-8, currentIndex is : 7
-pool-1-thread-7, currentIndex is : 6
-pool-1-thread-6, currentIndex is : 5
-pool-1-thread-5, currentIndex is : 9
-全部线程执行完毕
-</code></pre></div></div>
-
-<h3 id="newfixedthreadpool">newFixedThreadPool</h3>
-
-<p>创建一个可重用固定线程数的线程池，以共享的无界队列方式来运行这些线程。在任意点，在大多数 nThreads 线程会处于处理任务的活动状态。如果在所有线程处于活动状态时提交附加任务，则在有可用线程之前，附加任务将在队列中等待。</p>
-
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>/**
-     * 创建固定大小的线程池
-     */
-    public static void createFixedThreadPool() {
-        ExecutorService fixedThreadPool = Executors.newFixedThreadPool(5);
-        final CountDownLatch countDownLatch = new CountDownLatch(5);
-        for (int i = 0; i &lt; 5; i++) {
-            final int currentIndex = i;
-            fixedThreadPool.execute(() -&gt; {
-                System.out.println(Thread.currentThread().getName() + ", currentIndex is : " + currentIndex);
-                countDownLatch.countDown();
-            });
-        }
-        try {
-            countDownLatch.await();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-        System.out.println("全部线程执行完毕");
-    }
-</code></pre></div></div>
-
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>public static void main(String[] args) {
-        createFixedThreadPool();
-    }
-</code></pre></div></div>
-
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>pool-1-thread-4, currentIndex is : 3
-pool-1-thread-5, currentIndex is : 4
-pool-1-thread-2, currentIndex is : 1
-pool-1-thread-1, currentIndex is : 0
-pool-1-thread-3, currentIndex is : 2
-全部线程执行完毕
-</code></pre></div></div>
-
-<h3 id="newscheduledthreadpool">newScheduledThreadPool</h3>
-
-<p>创建一个线程池，它可安排在给定延迟后运行命令或者定期地执行。</p>
-
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    /**
-     * 创建给定延迟后运行命令或者定期地执行的线程池
-     */
-    public static void createScheduledThreadPool() {
-        ScheduledExecutorService scheduledThreadPool = Executors.newScheduledThreadPool(5);
-        final CountDownLatch countDownLatch = new CountDownLatch(5);
-        for (int i = 0; i &lt; 5; i++) {
-            final int currentIndex = i;
-            //定时执行一次的任务，延迟1s后执行
-            scheduledThreadPool.schedule(() -&gt; {
-                System.out.println(Thread.currentThread().getName() + ", currentIndex is : " + currentIndex);
-                countDownLatch.countDown();
-            }, 1, TimeUnit.SECONDS);
-            //周期性地执行任务，延迟2s后，每3s一次地周期性执行任务
-            scheduledThreadPool.scheduleAtFixedRate(() -&gt; System.out.println(Thread.currentThread().getName() + "every 3s"), 2, 3, TimeUnit.SECONDS);
-        }
-    }
-</code></pre></div></div>
-<p>这里创建了一个调度的线程池，执行两个任务，第一个任务延迟1秒后执行，第二个任务为周期性任务，延迟2秒后，每三秒执行一次
-<br />
-执行结果：</p>
-
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>public static void main(String[] args) {
-        createScheduledThreadPool();
-    }
-</code></pre></div></div>
-
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>pool-1-thread-1, currentIndex is : 0
-pool-1-thread-2, currentIndex is : 1
-pool-1-thread-3, currentIndex is : 2
-pool-1-thread-2, currentIndex is : 3
-pool-1-thread-4, currentIndex is : 4
-pool-1-thread-5every 3s
-pool-1-thread-2every 3s
-pool-1-thread-3every 3s
-pool-1-thread-1every 3s
-pool-1-thread-5every 3s
-pool-1-thread-2every 3s
-pool-1-thread-4every 3s
-pool-1-thread-4every 3s
-pool-1-thread-3every 3s
-pool-1-thread-2every 3s
-</code></pre></div></div>
-<p>可以看到，第一个任务执行完毕后，开始执行定时调度型任务</p>
-
-<p>该线程池提供了多个方法：</p>
+<p><strong>高位标记</strong>：每个字节的最高位（第 8 位）是一个标志位，用于指示该字节是否是最后一个字节。具体地：</p>
 
 <ul>
-  <li>schedule(Runnable command, long delay, TimeUnit unit)，延迟一定时间后执行Runnable任务；</li>
-  <li>schedule(Callable callable, long delay, TimeUnit unit)，延迟一定时间后执行Callable任务；</li>
-  <li>scheduleAtFixedRate(Runnable command, long initialDelay, long period, TimeUnit unit)，延迟一定时间后，以间隔period时间的频率周期性地执行任务；</li>
-  <li>scheduleWithFixedDelay(Runnable command, long initialDelay, long delay,TimeUnit unit)，与scheduleAtFixedRate()方法很类似，但是不同的是scheduleWithFixedDelay()方法的周期时间间隔是以上一个任务执行结束到下一个任务开始执行的间隔，而scheduleAtFixedRate()方法的周期时间间隔是以上一个任务开始执行到下一个任务开始执行的间隔，也就是这一些任务系列的触发时间都是可预知的。</li>
+  <li>如果字节的最高位为 1，表示该字节之后还有更多字节（即这个字节不是最后一个字节）</li>
+  <li>如果字节的最高位为 0，表示这是该整数的最后一个字节</li>
 </ul>
 
-<h3 id="newsinglethreadexecutor">newSingleThreadExecutor</h3>
+<p><strong>分块与压缩：</strong>通过将整数分成多个 7 位的块，Protobuf 能够将小整数用一个字节表示，而对较大的整数则按需增加字节数</p>
 
-<p>创建一个单线程的线程池，以无界队列方式来运行该线程。当多个任务提交到单线程线程池中，线程池将逐个去进行执行，未执行的任务将放入无界队列进行等待。</p>
+<h2 id="why-varint">Why Varint？</h2>
 
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>/**
-     * 创建单线程的线程池
-     */
-    public static void createSingleThreadPool() {
-        ExecutorService singleThreadPool = Executors.newSingleThreadExecutor();
-        singleThreadPool.execute(()-&gt; System.out.println(Thread.currentThread().getName()));
-    }
-</code></pre></div></div>
-<p>执行结果：</p>
+<p>当我们日常处理的数字大多数都是比较小的数值时，比如1、2、3这样的整数，使用标准的32位二进制格式来存储这些值实际上是非常浪费资源的做法。</p>
 
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>public static void main(String[] args) {
-        createSingleThreadPool();
-    }
-</code></pre></div></div>
+<p>这是因为每个这样的小数都会占用整整32位的空间，而其中大部分位都被设置为了0，这导致了存储空间上的极大浪费。为了解决这个问题，人们提出了变长整数（varint）编码方案。</p>
 
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>pool-1-thread-1
-</code></pre></div></div>
+<p>Varint是一种能够根据实际需要动态调整所占位数的数据表示方法。对于较小的整数来说，它可以在保证信息完整性的前提下大大减少所需的空间。具体而言，当一个整数足够小时，它可以被编码成较少的字节；随着数值增大，才逐渐增加额外的字节数以容纳更大的数值范围。这样做的好处是显著提高了小数值情况下的存储效率。</p>
 
-<h3 id="四种线程池对比">四种线程池对比</h3>
+<p>然而，虽然varint在处理小数字方面表现优异，但如果应用场景中频繁出现非常大的整数，则采用这种编码方式反而可能会消耗比固定长度编码更多的空间。这是因为在varint编码机制下，较大的数值需要通过多个字节来表达，并且每个字节还必须包含一些额外的信息（如标志位），用来指示当前字节是否属于该数值的一部分以及是否还有后续字节。因此，在某些特定条件下，与直接使用固定的32位或64位表示法相比，varint可能不是最优的选择。</p>
 
-<table>
-  <thead>
-    <tr>
-      <th>线程池方法</th>
-      <th>初始化线程池数</th>
-      <th>最大线程池数</th>
-      <th>线程池中线程存活时间</th>
-      <th>时间单位</th>
-      <th>工作队列</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td>newCachedThreadPool</td>
-      <td>0</td>
-      <td>Integer.MAX_VALUE</td>
-      <td>60</td>
-      <td>秒</td>
-      <td>SynchronousQueue</td>
-    </tr>
-    <tr>
-      <td>newFixedThreadPool</td>
-      <td>入参指定大小</td>
-      <td>入参指定大小</td>
-      <td>0</td>
-      <td>毫秒</td>
-      <td>LinkedBlockingQueue</td>
-    </tr>
-    <tr>
-      <td>newScheduledThreadPool</td>
-      <td>入参指定大小</td>
-      <td>Integer.MAX_VALUE</td>
-      <td>0</td>
-      <td>微秒</td>
-      <td>DelayedWorkQueue</td>
-    </tr>
-    <tr>
-      <td>newSingleThreadExecutor</td>
-      <td>1</td>
-      <td>1</td>
-      <td>0</td>
-      <td>毫秒</td>
-      <td>LinkedBlockingQueue</td>
-    </tr>
-  </tbody>
-</table>
-
-<hr />
-
-<h2 id="threadpoolexecutor创建线程池">ThreadPoolExecutor创建线程池</h2>
-
-<p>Executors类提供4个静态工厂方法：newCachedThreadPool()、newFixedThreadPool(int)、newSingleThreadExecutor和newScheduledThreadPool(int)。这些方法最终都是通过ThreadPoolExecutor类来完成的，当有一些场景需要更细粒度的控制的线程池，可以使用ThreadPoolExecutor方法创建线程池。</p>
-
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>/**
-     * 使用ThreadPoolExecutor创建线程池
-     */
-    public void createThreadPoolExecutor() {
-
-        ThreadPoolExecutor threadPoolExecutor = new ThreadPoolExecutor(5, 10, 10L, TimeUnit.SECONDS,
-                new LinkedBlockingDeque&lt;&gt;(1000),
-                new ThreadPoolExecutor.AbortPolicy());
-
-        final CountDownLatch countDownLatch = new CountDownLatch(8);
-        for (int i = 0; i &lt; 8; i++) {
-            final int currentIndex = i;
-            System.out.println("提交第" + i + "个线程");
-            threadPoolExecutor.execute(() -&gt; {
-                System.out.println(Thread.currentThread().getName() + ", currentIndex is : " + currentIndex);
-                countDownLatch.countDown();
-            });
-        }
-        System.out.println("全部提交完毕");
-        try {
-            System.out.println("准备等待线程池任务执行完毕");
-            countDownLatch.await();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-        System.out.println("全部线程执行完毕");
-    }
-</code></pre></div></div>
-
-<p>执行结果：</p>
-
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>提交第0个线程
-提交第1个线程
-提交第2个线程
-提交第3个线程
-提交第4个线程
-pool-1-thread-2, currentIndex is : 1
-提交第5个线程
-pool-1-thread-4, currentIndex is : 3
-pool-1-thread-3, currentIndex is : 2
-pool-1-thread-1, currentIndex is : 0
-pool-1-thread-3, currentIndex is : 5
-pool-1-thread-5, currentIndex is : 4
-提交第6个线程
-提交第7个线程
-pool-1-thread-2, currentIndex is : 6
-pool-1-thread-2, currentIndex is : 7
-全部提交完毕
-准备等待线程池任务执行完毕
-全部线程执行完毕
-</code></pre></div></div>
-
-<p><b>接下来看一下ThreadPoolExecutor的中的各个参数的含义。</b></p>
-
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>public ThreadPoolExecutor(int corePoolSize,
-                              int maximumPoolSize,
-                              long keepAliveTime,
-                              TimeUnit unit,
-                              BlockingQueue&lt;Runnable&gt; workQueue,
-                              ThreadFactory threadFactory,
-                              RejectedExecutionHandler handler) {
-        if (corePoolSize &lt; 0 ||
-            maximumPoolSize &lt;= 0 ||
-            maximumPoolSize &lt; corePoolSize ||
-            keepAliveTime &lt; 0)
-            throw new IllegalArgumentException();
-        if (workQueue == null || threadFactory == null || handler == null)
-            throw new NullPointerException();
-        this.corePoolSize = corePoolSize;
-        this.maximumPoolSize = maximumPoolSize;
-        this.workQueue = workQueue;
-        this.keepAliveTime = unit.toNanos(keepAliveTime);
-        this.threadFactory = threadFactory;
-        this.handler = handler;
-    }
-</code></pre></div></div>
-
-<h4 id="各个参数含义">各个参数含义：</h4>
-<ul>
-  <li>corePoolSize - 池中所保存的线程数，包括空闲线程，必须大于或等于0。</li>
-  <li>maximumPoolSize - 池中允许的最大线程数，必须大于或等于corePoolSize。</li>
-  <li>keepAliveTime - 线程存活时间，当线程数大于核心时，此为终止前多余的空闲线程等待新任务的最长时间。</li>
-  <li>unit - keepAliveTime 参数的时间单位，必须大于或等于0。</li>
-  <li>workQueue - 工作队列，执行前用于保持任务的队列。此队列仅保持由 execute 方法提交的 Runnable 任务。</li>
-  <li>threadFactory - 执行程序创建新线程时使用的工厂，默认为DefaultThreadFactory类。</li>
-  <li>handler - 拒绝策略，由于超出线程范围和队列容量而使执行被阻塞时所使用的处理程序，默认策略为ThreadPoolExecutor.AbortPolicy。</li>
-</ul>
-
-<h4 id="各个参数详细解释">各个参数详细解释：</h4>
+<h2 id="具体编码流程">具体编码流程</h2>
 
 <ol>
-  <li>corePoolSize（线程池基本大小）：当向线程池提交一个任务时，若线程池已创建的线程数小于corePoolSize，即便此时存在空闲线程，也会通过创建一个新线程来执行该任务，直到已创建的线程数大于或等于corePoolSize时，才会根据是否存在空闲线程，来决定是否需要创建新的线程。除了利用提交新任务来创建和启动线程（按需构造），也可以通过 prestartCoreThread() 或 prestartAllCoreThreads() 方法来提前启动线程池中的基本线程。</li>
-  <li>maximumPoolSize（线程池最大大小）：线程池所允许的最大线程个数。当队列满了，且已创建的线程数小于maximumPoolSize，则线程池会创建新的线程来执行任务。另外，对于无界队列，可忽略该参数。</li>
-  <li>keepAliveTime（线程存活保持时间）：默认情况下，当线程池的线程个数多于corePoolSize时，线程的空闲时间超过keepAliveTime则会终止。但只要keepAliveTime大于0，allowCoreThreadTimeOut(boolean) 方法也可将此超时策略应用于核心线程。另外，也可以使用setKeepAliveTime()动态地更改参数。</li>
-  <li>unit（存活时间的单位）：时间单位，分为7类，从细到粗顺序：NANOSECONDS（纳秒），MICROSECONDS（微妙），MILLISECONDS（毫秒），SECONDS（秒），MINUTES（分），HOURS（小时），DAYS（天）；</li>
-  <li>workQueue（任务队列）：用于传输和保存等待执行任务的阻塞队列。可以使用此队列与线程池进行交互：
-    <ul>
-      <li>如果运行的线程数少于 corePoolSize，则 Executor 始终首选添加新的线程，而不进行排队。</li>
-      <li>如果运行的线程数等于或多于 corePoolSize，则 Executor 始终首选将请求加入队列，而不添加新的线程。</li>
-      <li>如果无法将请求加入队列，则创建新的线程，除非创建此线程超出maximumPoolSize，在这种情况下，任务将被拒绝。</li>
-    </ul>
+  <li>
+    <p>假设要编码一个 32 位的整数 ( n )，下面是具体的编码步骤：</p>
   </li>
-  <li>threadFactory（线程工厂）：用于创建新线程。由同一个threadFactory创建的线程，属于同一个ThreadGroup，创建的线程优先级都为Thread.NORM_PRIORITY，以及是非守护进程状态。threadFactory创建的线程也是采用new Thread()方式，threadFactory创建的线程名都具有统一的风格：pool-m-thread-n（m为线程池的编号，n为线程池内的线程编号）；</li>
-  <li>handler（线程饱和策略）：当线程池和队列都满了，则表明该线程池已达饱和状态。
+  <li>
+    <p>将整数 ( n ) 拆分为多个 7 位块，按顺序存储在字节流中。</p>
+
+    <p>对于每个字节：</p>
+
     <ul>
-      <li>ThreadPoolExecutor.AbortPolicy：处理程序遭到拒绝，则直接抛出运行时异常RejectedExecutionException。(默认策略)</li>
-      <li>ThreadPoolExecutor.CallerRunsPolicy：调用者所在线程来运行该任务，此策略提供简单的反馈控制机制，能够减缓新任务的提交速度。</li>
-      <li>ThreadPoolExecutor.DiscardPolicy：无法执行的任务将被删除。</li>
-      <li>ThreadPoolExecutor.DiscardOldestPolicy：如果执行程序尚未关闭，则位于工作队列头部的任务将被删除，然后重新尝试执行任务（如果再次失败，则重复此过程）。</li>
+      <li>
+        <p>取整数的低 7 位（n &amp; 0x7F），这部分将存储在字节的低 7 位中。</p>
+      </li>
+      <li>
+        <p>如果整数还剩余部分，右移 7 位（n »= 7），然后继续编码下一字节。</p>
+      </li>
+      <li>
+        <p>每个字节的高位（第 8 位）标记是否是最后一个字节。如果是最后一个字节，设置高位为 0，否则设置高位为 1。</p>
+      </li>
     </ul>
   </li>
 </ol>
 
-<h4 id="排队策略">排队策略：</h4>
+<h3 id="举个例子">举个例子</h3>
+<p>假设我们要编码整数 300：</p>
 
 <ol>
-  <li>直接提交。工作队列的默认选项是SynchronousQueue，它将任务直接提交给线程而不保持它们。在此，如果不存在可用于立即运行任务的线程，则试图把任务加入队列将失败，因此会构造一个新的线程。此策略可以避免在处理可能具有内部依赖性的请求集时出现锁。直接提交通常要求无界 maximumPoolSizes以避免拒绝新提交的任务。当命令以超过队列所能处理的平均数连续到达时，此策略允许无界线程具有增长的可能性。</li>
-  <li>无界队列。使用无界队列（例如，不具有预定义容量的 LinkedBlockingQueue）将导致在所有 corePoolSize 线程都忙时新任务在队列中等待。这样，创建的线程就不会超过 corePoolSize。（因此，maximumPoolSize 的值也就无效了。）当每个任务完全独立于其他任务，即任务执行互不影响时，适合于使用无界队列；例如，在 Web 页服务器中。这种排队可用于处理瞬态突发请求，当命令以超过队列所能处理的平均数连续到达时，此策略允许无界线程具有增长的可能性。</li>
-  <li>有界队列。当使用有限的 maximumPoolSizes 时，有界队列（如 ArrayBlockingQueue）有助于防止资源耗尽，但是可能较难调整和控制。队列大小和最大池大小可能需要相互折衷：使用大型队列和小型池可以最大限度地降低 CPU 使用率、操作系统资源和上下文切换开销，但是可能导致人工降低吞吐量。如果任务频繁阻塞（例如，如果它们是 I/O 边界），则系统可能为超过您许可的更多线程安排时间。使用小型队列通常要求较大的池大小，CPU 使用率较高，但是可能遇到不可接受的调度开销，这样也会降低吞吐量。</li>
+  <li>
+    <p><strong>300 转换为二进制：</strong></p>
+
+    <p>300 的二进制表示是 100101100（9 位二进制）。</p>
+  </li>
+  <li>
+    <p><strong>将整数分解成 7 位块：</strong></p>
+
+    <p>第一个 7 位块是 1001011（即 75，也就是 300 除以 128 的商，右移 7 位）。</p>
+
+    <p>第二个 7 位块是 00（即 44，剩下的 44 位）。</p>
+  </li>
+  <li>
+    <p><strong>每个字节的高位：</strong></p>
+
+    <p>对于第一个字节，1001011 后面还有字节，因此最高位是 1。</p>
+
+    <p>对于第二个字节，00 是最后一个字节，最高位是 0。</p>
+  </li>
+  <li>
+    <p><strong>最终编码：</strong></p>
+
+    <p>第一个字节（75）编码为 0x4B，高位为 1。</p>
+
+    <p>第二个字节（44）编码为 0x2C，高位为 0。</p>
+
+    <p>因此，300 被编码为两个字节：0x4B 0x2C。</p>
+  </li>
 </ol>
 
-<hr />
+<h2 id="解码过程">解码过程</h2>
 
-<h2 id="工作队列对比">工作队列对比</h2>
+<p>解码时，Protobuf 会根据高位标记是否为 1 来判断是否继续读取下一个字节。直到遇到高位为 0 的字节，表示所有数据已经读取完毕。</p>
 
-<p>BlockingQueue的插入/移除/检查这些方法，对于不能立即满足但可能在将来某一时刻可以满足的操作，共有4种不同的处理方式：第一种是抛出一个异常，第二种是返回一个特殊值（null 或false，具体取决于操作），第三种是在操作可以成功前，无限期地阻塞当前线程，第四种是在放弃前只在给定的最大时间限制内阻塞。如下表格：</p>
+<ol>
+  <li>从字节流中读取，每次读取一个字节。</li>
+  <li>去掉高位，将每个字节的低 7 位合并到结果中。</li>
+  <li>根据高位判断是否继续读取，如果高位是 1，则继续读取下一个字节；如果高位是 0，表示所有字节都已经读取完毕。</li>
+</ol>
 
-<table>
-  <thead>
-    <tr>
-      <th>操作</th>
-      <th>抛出异常</th>
-      <th>特殊值</th>
-      <th>阻塞</th>
-      <th>超时</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td>插入</td>
-      <td>add(e)</td>
-      <td>offer(e)</td>
-      <td>put(e)</td>
-      <td>offer(e, time, unit)</td>
-    </tr>
-    <tr>
-      <td>移除</td>
-      <td>remove()</td>
-      <td>poll()</td>
-      <td>take()</td>
-      <td>poll(time, unit)</td>
-    </tr>
-    <tr>
-      <td>检查</td>
-      <td>element()</td>
-      <td>peek()</td>
-      <td>不可用</td>
-      <td>不可用</td>
-    </tr>
-  </tbody>
-</table>
+<p>再看一个Google官方文档给出的示例：</p>
 
-<h4 id="实现blockingqueue接口的常见类如下">实现BlockingQueue接口的常见类如下：</h4>
+<blockquote>
+  <p>And here is 150, encoded as <code class="language-plaintext highlighter-rouge">9601</code> – this is a bit more complicated:</p>
+</blockquote>
 
-<ul>
-  <li>ArrayBlockingQueue：基于数组的有界阻塞队列。队列按FIFO原则对元素进行排序，队列头部是在队列中存活时间最长的元素，队尾则是存在时间最短的元素。新元素插入到队列的尾部，队列获取操作则是从队列头部开始获得元素。 这是一个典型的“有界缓存区”，固定大小的数组在其中保持生产者插入的元素和使用者提取的元素。一旦创建了这样的缓存区，就不能再增加其容量。试图向已满队列中放入元素会导致操作受阻塞；试图从空队列中提取元素将导致类似阻塞。ArrayBlockingQueue构造方法可通过设置fairness参数来选择是否采用公平策略，公平性通常会降低吞吐量，但也减少了可变性和避免了“不平衡性”，可根据情况来决策。</li>
-  <li>LinkedBlockingQueue：基于链表的无界阻塞队列。与ArrayBlockingQueue一样采用FIFO原则对元素进行排序。基于链表的队列吞吐量通常要高于基于数组的队列。</li>
-  <li>SynchronousQueue：同步的阻塞队列。其中每个插入操作必须等待另一个线程的对应移除操作，等待过程一直处于阻塞状态，同理，每一个移除操作必须等到另一个线程的对应插入操作。SynchronousQueue没有任何容量。不能在同步队列上进行 peek，因为仅在试图要移除元素时，该元素才存在；除非另一个线程试图移除某个元素，否则也不能（使用任何方法）插入元素；也不能迭代队列，因为其中没有元素可用于迭代。Executors.newCachedThreadPool使用了该队列。</li>
-  <li>PriorityBlockingQueue：基于优先级的无界阻塞队列。优先级队列的元素按照其自然顺序进行排序，或者根据构造队列时提供的 Comparator 进行排序，具体取决于所使用的构造方法。优先级队列不允许使用 null 元素。依靠自然顺序的优先级队列还不允许插入不可比较的对象（这样做可能导致 ClassCastException）。虽然此队列逻辑上是无界的，但是资源被耗尽时试图执行 add 操作也将失败（导致 OutOfMemoryError）。</li>
-</ul>
+<div class="language-proto highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="mi">10010110</span> <span class="mo">00000001</span>
+<span class="err">^</span> <span class="n">msb</span>    <span class="err">^</span> <span class="n">msb</span>
+</code></pre></div></div>
 
-<hr />
+<blockquote>
+  <p>How do you figure out that this is 150? First you drop the MSB from each byte, as this is just there to tell us whether we’ve reached the end of the number (as you can see, it’s set in the first byte as there is more than one byte in the varint). These 7-bit payloads are in little-endian order. Convert to big-endian order, concatenate, and interpret as an unsigned 64-bit integer:</p>
+</blockquote>
 
-<h2 id="线程池关闭">线程池关闭</h2>
+<div class="language-proto highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="mi">10010110</span> <span class="mo">00000001</span>        <span class="c1">// Original inputs.</span>
+ <span class="mo">0010110</span>  <span class="mo">0000001</span>        <span class="c1">// Drop continuation bits.</span>
+ <span class="mo">0000001</span>  <span class="mo">0010110</span>        <span class="c1">// Convert to big-endian.</span>
+   <span class="mo">00000010010110</span>        <span class="c1">// Concatenate.</span>
+ <span class="mi">128</span> <span class="o">+</span> <span class="mi">16</span> <span class="o">+</span> <span class="mi">4</span> <span class="o">+</span> <span class="mi">2</span> <span class="o">=</span> <span class="mi">150</span>  <span class="c1">// Interpret as an unsigned 64-bit integer.</span>
+</code></pre></div></div>
 
-<p>调用线程池的shutdown()或shutdownNow()方法来关闭线程池。</p>
+<h2 id="优势">优势</h2>
 
-<ul>
-  <li>shutdown：按过去执行已提交任务的顺序发起一个有序的关闭，但是不接受新任务。如果已经关闭，则调用没有其他作用。</li>
-  <li>shutdownNow：尝试停止所有的活动执行任务、暂停等待任务的处理，并返回等待执行的任务列表。在从此方法返回的任务队列中排空（移除）这些任务。</li>
-</ul>
+<p>节省空间：由于小数字只需要一个字节，因此在存储小的整数时，Protobuf 比其他固定长度编码方式（如 32 位或 64 位的整数）节省了大量空间。</p>
 
-<p>中断采用interrupt方法，所以无法响应中断的任务可能永远无法终止。但调用上述的两个关闭之一，isShutdown()方法返回值为true，当所有任务都已关闭，表示线程池关闭完成，则isTerminated()方法返回值为true。当需要立刻中断所有的线程，不一定需要执行完任务，可直接调用shutdownNow()方法。</p>
+<p>灵活性：varint 可以动态调整字节数，使得编码更适合不同大小的整数值。</p>
 
-<hr />
+<p>高效：对于大部分常见的数值，Protobuf 的 varint 编码方式相对高效，尤其是在数值较小的时候。</p>
 
-<h2 id="线程池大小设置">线程池大小设置</h2>
+<h2 id="总结">总结</h2>
 
-<p>如何合理地估算线程池大小，这个问题是比较复杂的，比较粗糙的估算方式：</p>
+<p>Protobuf 的 varint 编码 通过将整数拆分为多个 7 位块，使用高位标记（0x80）来指示是否有更多字节，从而实现了压缩存储。</p>
 
-<ul>
-  <li>如果是CPU密集型应用，则线程池大小设置为N+1</li>
-  <li>如果是IO密集型应用，则线程池大小设置为2N+1</li>
-</ul>
+<p>对于较小的整数，varint 格式非常节省空间，只有需要更多字节时才会增加开销。</p>
 
-<p>但是根据我在实际应用场景的经验，这种估算有时并不准确，这里不展开讨论线程池大小的设置，可以看一下这一篇文章的分析：<a href="http://ifeve.com/how-to-calculate-threadpool-size/">如何合理地估算线程池大小</a></p>
+<p>这种编码方式非常适合序列化整数类型，尤其在处理大量小数字时能够显著减少存储空间。</p>
 
-<h2 id="线程池的状态监控">线程池的状态监控</h2>
+<p>参考文档：
+https://protobuf.dev/programming-guides/encoding/</p>
 
-<p>利用线程池提供的参数进行监控，参数如下：</p>
-
-<ul>
-  <li>getTaskCount：返回曾计划执行的近似任务总数。因为在计算期间任务和线程的状态可能动态改变，所以返回值只是一个近似值。</li>
-  <li>getCompletedTaskCount：返回已完成执行的近似任务总数。因为在计算期间任务和线程的状态可能动态改变，所以返回值只是一个近似值，但是该值在整个连续调用过程中不会减少。</li>
-  <li>getLargestPoolSize：线程池曾经创建过的最大线程数量，通过这个数据可以知道线程池是否满过。如等于线程池的最大大小，则表示线程池曾经满了。</li>
-  <li>getPoolSize：线程池的线程数量。</li>
-  <li>getActiveCount：返回主动执行任务的近似线程数。</li>
-</ul>
-
-<p>通过扩展线程池进行监控：继承线程池并重写线程池的beforeExecute()，afterExecute()和terminated()方法，可以在任务执行前、后和线程池关闭前自定义行为。如监控任务的平均执行时间，最大执行时间和最小执行时间等。</p>
-
-<p>使用ThreadPoolExecutor直接创建线程池时，可以使用第三方的ThreadFactory，或者自己实现ThreadFactory接口，拓展更多的属性，例如设置线程名称、执行开始时间、优先级等等。</p>
-
-<h1 id="结语">结语</h1>
-
-<p>本文介绍了Java 线程池的使用，线程池是非常复杂的一种工具，使用好是一种利器，使用不好也会造成很多问题，所以深入研究线程池还是非常有必要的，希望本文能对您有所帮助。如果您有更好的见解或对本文的内容有指正的地方，请留言给我。</p>]]></content><author><name>GitHub User</name></author><category term="Java" /><category term="Java" /><summary type="html"><![CDATA[]]></summary></entry><entry><title type="html">MySQL为什么有了redolog还需要double write buffer</title><link href="http://localhost:4000/mysql/2024/09/25/MySQL%E4%B8%BA%E4%BB%80%E4%B9%88%E6%9C%89%E4%BA%86redolog%E8%BF%98%E9%9C%80%E8%A6%81double-write-buffer.html" rel="alternate" type="text/html" title="MySQL为什么有了redolog还需要double write buffer" /><published>2024-09-25T00:00:00+08:00</published><updated>2024-09-25T00:00:00+08:00</updated><id>http://localhost:4000/mysql/2024/09/25/MySQL%E4%B8%BA%E4%BB%80%E4%B9%88%E6%9C%89%E4%BA%86redolog%E8%BF%98%E9%9C%80%E8%A6%81double%20write%20buffer</id><content type="html" xml:base="http://localhost:4000/mysql/2024/09/25/MySQL%E4%B8%BA%E4%BB%80%E4%B9%88%E6%9C%89%E4%BA%86redolog%E8%BF%98%E9%9C%80%E8%A6%81double-write-buffer.html"><![CDATA[<p><img src="https://github.com/jeffreytse/jekyll-theme-yat/assets/9413601/2ed22d49-90b1-4f7e-8e8f-b77b21dee505" alt="banner" /></p>
+<script src="https://giscus.app/client.js" data-repo="wtopps/wtopps.github.io" data-repo-id="MDEwOlJlcG9zaXRvcnk2NzY3NTA3MA==" data-category="Comments" data-category-id="DIC_kwDOBAijvs4CizS6" data-mapping="pathname" data-strict="0" data-reactions-enabled="1" data-emit-metadata="0" data-input-position="bottom" data-theme="preferred_color_scheme" data-lang="zh-CN" crossorigin="anonymous" async="">
+</script>]]></content><author><name>GitHub User</name></author><category term="Others" /><category term="Serialization" /><summary type="html"><![CDATA[]]></summary></entry><entry><title type="html">MySQL为什么有了redolog还需要double write buffer</title><link href="http://localhost:4000/mysql/2024/09/25/MySQL%E4%B8%BA%E4%BB%80%E4%B9%88%E6%9C%89%E4%BA%86redolog%E8%BF%98%E9%9C%80%E8%A6%81double-write-buffer.html" rel="alternate" type="text/html" title="MySQL为什么有了redolog还需要double write buffer" /><published>2024-09-25T00:00:00+08:00</published><updated>2024-09-25T00:00:00+08:00</updated><id>http://localhost:4000/mysql/2024/09/25/MySQL%E4%B8%BA%E4%BB%80%E4%B9%88%E6%9C%89%E4%BA%86redolog%E8%BF%98%E9%9C%80%E8%A6%81double%20write%20buffer</id><content type="html" xml:base="http://localhost:4000/mysql/2024/09/25/MySQL%E4%B8%BA%E4%BB%80%E4%B9%88%E6%9C%89%E4%BA%86redolog%E8%BF%98%E9%9C%80%E8%A6%81double-write-buffer.html"><![CDATA[<p><img src="https://github.com/jeffreytse/jekyll-theme-yat/assets/9413601/2ed22d49-90b1-4f7e-8e8f-b77b21dee505" alt="banner" /></p>
 
 <h2 id="问题">问题</h2>
 
@@ -2086,4 +1359,870 @@ GET foo
 <p>对于我们普通开发者，希望在生产环境中使用Client-side caching，也许还需要观望后续Java Redis Client社区的支持情况。</p>
 
 <script src="https://giscus.app/client.js" data-repo="wtopps/wtopps.github.io" data-repo-id="MDEwOlJlcG9zaXRvcnk2NzY3NTA3MA==" data-category="Comments" data-category-id="DIC_kwDOBAijvs4CizS6" data-mapping="pathname" data-strict="0" data-reactions-enabled="1" data-emit-metadata="0" data-input-position="bottom" data-theme="preferred_color_scheme" data-lang="zh-CN" crossorigin="anonymous" async="">
-</script>]]></content><author><name>GitHub User</name></author><category term="Redis" /><category term="Redis" /><summary type="html"><![CDATA[前言 Redis在其6.0版本中加入了Client-side caching的支持，开启该功能后，Redis可以将指定的key-value缓存在客户端侧，这样当客户端发起请求时，如果客户端侧存在缓存，则无需请求Redis Server端。 Why Client-side Caching？ +-------------+ +----------+ | | ------- GET user:1234 -------&gt; | | | Application | | Database | | | &lt;---- username = Alice ------- | | +-------------+ +----------+ 一些场景下，Redis的一些热点数据需要高频访问，但是并不会频繁的更新，这种数据存储在Redis中，会对Redis的读有一定的压力，因此，将这种数据存储在客户端侧进行缓存，当需要读取时，直接从客户端侧的内存中读取，可以大幅度减轻Redis的读压力，当数据发生变更时，Redis Server通知Client，更新Client Cache。 +-------------+ +----------+ | | | | | Application | ( No chat needed ) | Database | | | | | +-------------+ +----------+ | Local cache | | | | user:1234 = | | username | | Alice | +-------------+ Why Not Pub/Sub？ 在早期的Redis版本中，一些业务场景，我们一定也会考虑到将一些不常变化的热点数据，存储在本地内存中，使用例如Caffeine Cache等Localcache，定时周期频率读取最新的值，更新Localcache，或者使用Redis Pub/Sub，当key值发生更新时，通知整个集群更新Localcache。 使用Pub/Sub对于旧版本Redis来说，没有实现Client-side caching时，是一种解决方案，但是此种方案存在弊端， 首先Pub/Sub不可靠，如果部分集群中的Client没有收到Pub的通知，Localcache可能没有更新； 其次，对网络压力巨大，当Client Node非常多的时候，网络可能会出现阻塞，CPU压力也会增大，同时Client端需要自行实现Localcache的更新逻辑。 How to use it？ Redis Client-side Caching命令如下： CLIENT TRACKING &lt;ON | OFF&gt; [REDIRECT client-id] [PREFIX prefix [PREFIX prefix ...]] [BCAST] [OPTIN] [OPTOUT] [NOLOOP] 客户端默认不开启 track 模式，我们需要在获取执行指令之前执行开启命令： CLIENT TRACKING ON +OK GET foo "bar" 默认情况下，Client开启Tracking后，Redis Server端会对所有的Client端请求查询的key开启Tracking，当 key的值发现变化时会发送失效信息给客户端 (invalidation message)。 server -&gt; client: Invalidate foo 默认情况下，对所有的请求查询的key开启Tracking，这显然是不合适的，更多的场景下，我们只希望追踪部分热点且不经常变化的key，Redis支持对仅对特定的key开启手动追踪： CLIENT TRACKING ON OPTIN // 开启特定key追踪选项 CLIENT CACHING YES // get请求前加入该命令 +OK GET foo "bar" 手动追踪模式下，需要用户在每次进行get命令之前，执行追踪的命令，这样的好处是非常的精确，但是也有点繁琐，Redis还提供了另一种追踪模式，即广播模式 CLIENT TRACKING ON BCAST PREFIX object: PREFIX user: 广播模式下，需要用户指定需要追踪的key的前缀，当key发生变化时，Redis Server端会发出广播通知全部订阅了该前缀key的客户端。 需要注意的是，在这个模式下，如果用户没有指定PREFIX，那么服务端会给客户端广播所有 key 的失效情况，如果 key 被频繁修改，服务端会发送大量的失效广播消息，这就会消耗大量的网络带宽资源，这是非常危险的一个行为，需要特别注意。 How to implement? 上面的篇幅我们简单介绍了Redis的客户端侧缓存如何开启，本小节我们来看一下Redis是如何实现的，在展开这个问题之前，我们可以思考一下，如果我们是Redis的设计者，我们该如何实现该功能？ 很简单我们会想到，搞一个Array存一下嘛，对吧O(∩_∩)O，把需要追踪的key存一下，当key收到set之类的命令后，看一下Tracking Array中有没有，如果有，通知订阅的Client。 事实上，对于手动追踪模式，Redis的确是这样实现的，Redis内部使用了Invalidation Table存储Tracking Key Data，也可以叫做Tracking Table，其内部使用LRU淘汰机制维护，当Table内的key数量达到最大值，会移除最老的记录，同时触发该记录已过期的通知给客户端。 在Invalidation Table中，Redis存储了Tracking key的指针地址与客户端之间的映射关系，使用了一种基数树(radix tree)的数据结构，因为键对象的指针就是内存地址，也就是长整型数据。客户端缓存的相关操作就是对该数据的增删改查： 对于广播模式，实现的原理也是相似的，不过Redis并不是使用Invalidation Table存储，而是使用Prefixes Table存储key的前缀值与Client之间的关系： Problem 以上，我们简单了解了Redis的Client-side caching的使用方式与实现机制，这是一个非常好的功能，可以帮助我们更加高效的使用Redis，但是其也有对应的问题。 在Redis的官方文档中，Client-side caching功能并未提及Master/Slave 与 Cluster集群模式的特别支持，这意味着，Client端需要对key的Tracking做出特别的适配，而在Redis Cluster集群模式下，连接状态信息是分散在不同的节点上的，难以实现集中管理。 Redis的客户端Jedis、lettuce与Redisson均不提供Client-side caching相关支持，lettuce的committer在Github中关于对Client-side caching问题做出了回复： There are a few challenges to address: Re-apply CLIENT TRACKING settings upon reconnect: While that is primary a resiliency feature, in Master/Replica or Cluster mode that is a must since we don’t get hold easily of cluster connections. We also need to apply tracking settings when creating a new connection Topology changes: Whenever the topology changes, we need to adapt to that. Meaning also that we need to carry over tracking settings. More over, how does the migration path look like when in Redis Cluster a slot assignment gets migrated to a new node? What about the server side, does it carry over also all touched keys? I assume not so reconfiguration can cause dropped notifications since the new server is no longer aware of the key subscriptions from the old server. While this could be done (with a lot of effort) on the client side, I think that is too complex. Finally, I don’t have time to do that in the near future nor I see how I can do that alone in 2021. 有一些挑战需要解决： 重新连接时重新应用客户端跟踪设置：虽然这主要是一个弹性功能，但在主/复制或群集模式下，这是必须的，因为我们不容易掌握群集连接。我们还需要在创建新连接时应用跟踪设置 拓扑变化：每当拓扑结构发生变化时，我们都需要适应这种变化。这也意味着我们需要沿用跟踪设置。此外，当 Redis 集群中的插槽分配迁移到新节点时，迁移路径是怎样的？在服务器端，是否也会继承所有被触及的密钥？我认为不会，因此重新配置可能会导致通知丢失，因为新服务器不再知道旧服务器的密钥订阅。虽然这可以在客户端完成（需要付出很多努力），但我认为这太复杂了。 最后，我近期没有时间去做这件事，我也不知道 2021 年我如何能单独完成这件事。 对于我们普通开发者，希望在生产环境中使用Client-side caching，也许还需要观望后续Java Redis Client社区的支持情况。]]></summary></entry></feed>
+</script>]]></content><author><name>GitHub User</name></author><category term="Redis" /><category term="Redis" /><summary type="html"><![CDATA[前言 Redis在其6.0版本中加入了Client-side caching的支持，开启该功能后，Redis可以将指定的key-value缓存在客户端侧，这样当客户端发起请求时，如果客户端侧存在缓存，则无需请求Redis Server端。 Why Client-side Caching？ +-------------+ +----------+ | | ------- GET user:1234 -------&gt; | | | Application | | Database | | | &lt;---- username = Alice ------- | | +-------------+ +----------+ 一些场景下，Redis的一些热点数据需要高频访问，但是并不会频繁的更新，这种数据存储在Redis中，会对Redis的读有一定的压力，因此，将这种数据存储在客户端侧进行缓存，当需要读取时，直接从客户端侧的内存中读取，可以大幅度减轻Redis的读压力，当数据发生变更时，Redis Server通知Client，更新Client Cache。 +-------------+ +----------+ | | | | | Application | ( No chat needed ) | Database | | | | | +-------------+ +----------+ | Local cache | | | | user:1234 = | | username | | Alice | +-------------+ Why Not Pub/Sub？ 在早期的Redis版本中，一些业务场景，我们一定也会考虑到将一些不常变化的热点数据，存储在本地内存中，使用例如Caffeine Cache等Localcache，定时周期频率读取最新的值，更新Localcache，或者使用Redis Pub/Sub，当key值发生更新时，通知整个集群更新Localcache。 使用Pub/Sub对于旧版本Redis来说，没有实现Client-side caching时，是一种解决方案，但是此种方案存在弊端， 首先Pub/Sub不可靠，如果部分集群中的Client没有收到Pub的通知，Localcache可能没有更新； 其次，对网络压力巨大，当Client Node非常多的时候，网络可能会出现阻塞，CPU压力也会增大，同时Client端需要自行实现Localcache的更新逻辑。 How to use it？ Redis Client-side Caching命令如下： CLIENT TRACKING &lt;ON | OFF&gt; [REDIRECT client-id] [PREFIX prefix [PREFIX prefix ...]] [BCAST] [OPTIN] [OPTOUT] [NOLOOP] 客户端默认不开启 track 模式，我们需要在获取执行指令之前执行开启命令： CLIENT TRACKING ON +OK GET foo "bar" 默认情况下，Client开启Tracking后，Redis Server端会对所有的Client端请求查询的key开启Tracking，当 key的值发现变化时会发送失效信息给客户端 (invalidation message)。 server -&gt; client: Invalidate foo 默认情况下，对所有的请求查询的key开启Tracking，这显然是不合适的，更多的场景下，我们只希望追踪部分热点且不经常变化的key，Redis支持对仅对特定的key开启手动追踪： CLIENT TRACKING ON OPTIN // 开启特定key追踪选项 CLIENT CACHING YES // get请求前加入该命令 +OK GET foo "bar" 手动追踪模式下，需要用户在每次进行get命令之前，执行追踪的命令，这样的好处是非常的精确，但是也有点繁琐，Redis还提供了另一种追踪模式，即广播模式 CLIENT TRACKING ON BCAST PREFIX object: PREFIX user: 广播模式下，需要用户指定需要追踪的key的前缀，当key发生变化时，Redis Server端会发出广播通知全部订阅了该前缀key的客户端。 需要注意的是，在这个模式下，如果用户没有指定PREFIX，那么服务端会给客户端广播所有 key 的失效情况，如果 key 被频繁修改，服务端会发送大量的失效广播消息，这就会消耗大量的网络带宽资源，这是非常危险的一个行为，需要特别注意。 How to implement? 上面的篇幅我们简单介绍了Redis的客户端侧缓存如何开启，本小节我们来看一下Redis是如何实现的，在展开这个问题之前，我们可以思考一下，如果我们是Redis的设计者，我们该如何实现该功能？ 很简单我们会想到，搞一个Array存一下嘛，对吧O(∩_∩)O，把需要追踪的key存一下，当key收到set之类的命令后，看一下Tracking Array中有没有，如果有，通知订阅的Client。 事实上，对于手动追踪模式，Redis的确是这样实现的，Redis内部使用了Invalidation Table存储Tracking Key Data，也可以叫做Tracking Table，其内部使用LRU淘汰机制维护，当Table内的key数量达到最大值，会移除最老的记录，同时触发该记录已过期的通知给客户端。 在Invalidation Table中，Redis存储了Tracking key的指针地址与客户端之间的映射关系，使用了一种基数树(radix tree)的数据结构，因为键对象的指针就是内存地址，也就是长整型数据。客户端缓存的相关操作就是对该数据的增删改查： 对于广播模式，实现的原理也是相似的，不过Redis并不是使用Invalidation Table存储，而是使用Prefixes Table存储key的前缀值与Client之间的关系： Problem 以上，我们简单了解了Redis的Client-side caching的使用方式与实现机制，这是一个非常好的功能，可以帮助我们更加高效的使用Redis，但是其也有对应的问题。 在Redis的官方文档中，Client-side caching功能并未提及Master/Slave 与 Cluster集群模式的特别支持，这意味着，Client端需要对key的Tracking做出特别的适配，而在Redis Cluster集群模式下，连接状态信息是分散在不同的节点上的，难以实现集中管理。 Redis的客户端Jedis、lettuce与Redisson均不提供Client-side caching相关支持，lettuce的committer在Github中关于对Client-side caching问题做出了回复： There are a few challenges to address: Re-apply CLIENT TRACKING settings upon reconnect: While that is primary a resiliency feature, in Master/Replica or Cluster mode that is a must since we don’t get hold easily of cluster connections. We also need to apply tracking settings when creating a new connection Topology changes: Whenever the topology changes, we need to adapt to that. Meaning also that we need to carry over tracking settings. More over, how does the migration path look like when in Redis Cluster a slot assignment gets migrated to a new node? What about the server side, does it carry over also all touched keys? I assume not so reconfiguration can cause dropped notifications since the new server is no longer aware of the key subscriptions from the old server. While this could be done (with a lot of effort) on the client side, I think that is too complex. Finally, I don’t have time to do that in the near future nor I see how I can do that alone in 2021. 有一些挑战需要解决： 重新连接时重新应用客户端跟踪设置：虽然这主要是一个弹性功能，但在主/复制或群集模式下，这是必须的，因为我们不容易掌握群集连接。我们还需要在创建新连接时应用跟踪设置 拓扑变化：每当拓扑结构发生变化时，我们都需要适应这种变化。这也意味着我们需要沿用跟踪设置。此外，当 Redis 集群中的插槽分配迁移到新节点时，迁移路径是怎样的？在服务器端，是否也会继承所有被触及的密钥？我认为不会，因此重新配置可能会导致通知丢失，因为新服务器不再知道旧服务器的密钥订阅。虽然这可以在客户端完成（需要付出很多努力），但我认为这太复杂了。 最后，我近期没有时间去做这件事，我也不知道 2021 年我如何能单独完成这件事。 对于我们普通开发者，希望在生产环境中使用Client-side caching，也许还需要观望后续Java Redis Client社区的支持情况。]]></summary></entry><entry><title type="html">亿级排行榜设计</title><link href="http://localhost:4000/system/design/2024/09/25/%E4%BA%BF%E7%BA%A7%E6%8E%92%E8%A1%8C%E6%A6%9C%E8%AE%BE%E8%AE%A1.html" rel="alternate" type="text/html" title="亿级排行榜设计" /><published>2024-09-25T00:00:00+08:00</published><updated>2024-09-25T00:00:00+08:00</updated><id>http://localhost:4000/system/design/2024/09/25/%E4%BA%BF%E7%BA%A7%E6%8E%92%E8%A1%8C%E6%A6%9C%E8%AE%BE%E8%AE%A1</id><content type="html" xml:base="http://localhost:4000/system/design/2024/09/25/%E4%BA%BF%E7%BA%A7%E6%8E%92%E8%A1%8C%E6%A6%9C%E8%AE%BE%E8%AE%A1.html"><![CDATA[<p><img src="https://github.com/jeffreytse/jekyll-theme-yat/assets/9413601/2ed22d49-90b1-4f7e-8e8f-b77b21dee505" alt="banner" /></p>
+
+<h2 id="问题">问题</h2>
+
+<p>假如有10亿的用户，每个用户有自己的分数(score)，请你设计一个排行榜，可以根据用户的分数进行排名，每个用户可以知道自己在排行榜中的排名情况。</p>
+
+<h2 id="分析">分析</h2>
+
+<p>一说到排行榜，我们的第一反应肯定是使用Redis的ZSET结构实现，那么使用ZSET如何实现对10亿用户进行排序？</p>
+
+<h2 id="zset单key">ZSET单key</h2>
+
+<p>第一种思路，使用ZSET单key，也就是将10亿用户都放入一个ZSET key中，简单明了，这样设计是最简单的，但查询的性能是否可以接受？我们来计算一下：</p>
+
+<p>ZSET结构使用SkipList实现，查询的时间复杂度：ZREVRANK：O(log(N))</p>
+
+<p>查询单个排名的理论时间复杂度：O(log(10^9)) ≈ 30次比较</p>
+
+<p>内存占用分析：</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">public</span> <span class="kd">class</span> <span class="nc">PerformanceAnalysis</span> <span class="o">{</span>
+    <span class="c1">// 1. 内存占用(假设每个成员)</span>
+    <span class="kd">private</span> <span class="kd">static</span> <span class="kd">final</span> <span class="kt">long</span> <span class="no">MEMORY_PER_MEMBER</span> <span class="o">=</span> 
+        <span class="o">+</span> <span class="mi">8</span>    <span class="c1">// score (double)</span>
+        <span class="o">+</span> <span class="mi">20</span>   <span class="c1">// member (假设userId字符串)</span>
+        <span class="o">+</span> <span class="mi">8</span>    <span class="c1">// 指针</span>
+        <span class="o">+</span> <span class="mi">32</span><span class="o">;</span>  <span class="c1">// 跳表节点开销</span>
+    
+    <span class="c1">// 10亿用户预估内存</span>
+    <span class="kd">private</span> <span class="kd">static</span> <span class="kd">final</span> <span class="kt">long</span> <span class="no">TOTAL_MEMORY</span> <span class="o">=</span> 
+        <span class="no">MEMORY_PER_MEMBER</span> <span class="o">*</span> <span class="mi">1_000_000_000L</span><span class="o">;</span> <span class="c1">// 约68GB</span>
+        
+    <span class="c1">// 2. 跳表层数</span>
+    <span class="kd">private</span> <span class="kd">static</span> <span class="kd">final</span> <span class="kt">int</span> <span class="no">SKIP_LIST_LEVELS</span> <span class="o">=</span> 
+        <span class="o">(</span><span class="kt">int</span><span class="o">)</span> <span class="nc">Math</span><span class="o">.</span><span class="na">log</span><span class="o">(</span><span class="mi">1_000_000_000L</span><span class="o">)</span> <span class="o">/</span> <span class="nc">Math</span><span class="o">.</span><span class="na">log</span><span class="o">(</span><span class="mi">2</span><span class="o">);</span> <span class="c1">// 约30层</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<p>假定每个成员对象约68字节，那么10亿用户约需要68GB内存，当然实际场景下，可以考虑对单个成员对象再进行压缩，内存占用可以再小一点。</p>
+
+<p>如果仅从查询的效率考虑，如果仅查询单个成员的排名，Redis的查询耗时是不用担心的，但如果要进行范围查询，那么性能则非常不乐观了。</p>
+
+<p>在实际的生产环境中，如此大的单Key我们一般称为GodKey或者BigKey，是需要极力避免的，我们都知道Redis是纯内存的数据库，执行命令是单线程执行的，对于内存操作是非常的快的，但是如果单个Key值特别大时，容易阻塞线程，影响其他命令的执行，同时对于Redis服务器的网卡也是一个巨大的挑战，试想如果对于68G的 ZSET Key进行范围查询的话，如果1W QPS，Redis怕是直接会被打爆。</p>
+
+<p>如此看来，这个使用单Key存储全部的用户数据，应该行不通的。</p>
+
+<h2 id="zset多key">ZSET多Key</h2>
+
+<p>“一个篱笆三个桩，一个好汉三个帮”，那么既然一个key搞不定，那我们就分多个key就好了吧？那么我们该如何将10亿用户存储到多个key中呢？</p>
+
+<p>正常第一反应，我们就搞10000个key，然后使用userId取模，路由到对应的子key就好了吧？但是我们的需求是，需要可以知道每个用户在排行榜中的排名，显然这种路由的方式，是无法满足需求的。</p>
+
+<p>拆分多个子key，根据某种规则路由的思路是完全没问题的，不能根据userId路由，那我们可否换一种思路，以其他维度进行路由？</p>
+
+<p><img src="https://github.com/wtopps/wtopps.github.io/blob/master/images/WechatIMG35.jpg?raw=true" alt="分片" /></p>
+
+<p>换一个思路，如果以分数作为分桶逻辑，初始化N个分桶，每个分桶的划定范围以分数区间划定，当新用户获得分数后，根据其分数路由到所在的分桶中。</p>
+
+<p>那么，用户的排名该如何计算？</p>
+
+<p><img src="https://github.com/wtopps/wtopps.github.io/blob/master/images/WechatIMG36.jpg?raw=true" alt="get rank" /></p>
+
+<p>计算用户的排名，我们肯定已经知道用户所在的分桶，可以直接获得在当前分桶中的排名，同时比当前分桶分数大的分桶名称我们肯定也可以知道，那么将所有的前面的分桶中的总数量累加，再加上当前分桶的排名，就是该用户的总排名。</p>
+
+<h3 id="问题-1">问题</h3>
+
+<p>综上，多个子key也就是数据分桶的逻辑，基本上是可以满足我们的需求的，但是还有一个问题，就是数据分布不均匀的问题，我们设定的多个分桶，但是每个分桶中的数据量一定不是均匀的，可能会出现数据倾斜的问题，如何解决？</p>
+
+<p>对此，较为简单的处理方式，当某个数据桶的数据量超过一定的阈值后，可以进行拆分，缩小分桶的数值范围，分割成两个子桶，如此循环往复，直到无法再切分为止。</p>
+
+<h1 id="实现demo">实现demo</h1>
+
+<p>下面的Claude给出的代码实现Demo，逻辑可能不严谨，仅作参考：</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="nn">lombok.Data</span><span class="o">;</span>
+<span class="kn">import</span> <span class="nn">org.springframework.data.redis.core.RedisTemplate</span><span class="o">;</span>
+<span class="kn">import</span> <span class="nn">org.springframework.data.redis.core.ZSetOperations</span><span class="o">;</span>
+
+<span class="kn">import</span> <span class="nn">java.util.ArrayList</span><span class="o">;</span>
+<span class="kn">import</span> <span class="nn">java.util.List</span><span class="o">;</span>
+<span class="kn">import</span> <span class="nn">java.util.Set</span><span class="o">;</span>
+<span class="kn">import</span> <span class="nn">java.util.concurrent.ConcurrentHashMap</span><span class="o">;</span>
+
+<span class="kd">public</span> <span class="kd">class</span> <span class="nc">ScoreBucketRankingSystem</span> <span class="o">{</span>
+
+    <span class="nd">@Data</span>
+    <span class="kd">public</span> <span class="kd">class</span> <span class="nc">UserScore</span> <span class="o">{</span>
+        <span class="kd">private</span> <span class="kt">long</span> <span class="n">userId</span><span class="o">;</span>
+        <span class="kd">private</span> <span class="kt">double</span> <span class="n">score</span><span class="o">;</span>
+        <span class="kd">private</span> <span class="kt">long</span> <span class="n">timestamp</span><span class="o">;</span>
+    <span class="o">}</span>
+
+    <span class="nd">@Data</span>
+    <span class="kd">public</span> <span class="kd">class</span> <span class="nc">RankInfo</span> <span class="o">{</span>
+        <span class="kd">private</span> <span class="kt">long</span> <span class="n">userId</span><span class="o">;</span>
+        <span class="kd">private</span> <span class="kt">double</span> <span class="n">score</span><span class="o">;</span>
+        <span class="kd">private</span> <span class="kt">long</span> <span class="n">rank</span><span class="o">;</span>
+        <span class="kd">private</span> <span class="nc">String</span> <span class="n">bucketKey</span><span class="o">;</span>
+    <span class="o">}</span>
+
+    <span class="nd">@Data</span>
+    <span class="kd">public</span> <span class="kd">class</span> <span class="nc">ScoreBucket</span> <span class="o">{</span>
+        <span class="kd">private</span> <span class="nc">String</span> <span class="n">bucketKey</span><span class="o">;</span>
+        <span class="kd">private</span> <span class="kt">double</span> <span class="n">minScore</span><span class="o">;</span>
+        <span class="kd">private</span> <span class="kt">double</span> <span class="n">maxScore</span><span class="o">;</span>
+        <span class="kd">private</span> <span class="kt">long</span> <span class="n">userCount</span><span class="o">;</span>
+    <span class="o">}</span>
+
+    <span class="kd">private</span> <span class="kd">final</span> <span class="nc">RedisTemplate</span><span class="o">&lt;</span><span class="nc">String</span><span class="o">,</span> <span class="nc">String</span><span class="o">&gt;</span> <span class="n">redisTemplate</span><span class="o">;</span>
+    <span class="kd">private</span> <span class="kd">final</span> <span class="nc">String</span> <span class="no">BUCKET_PREFIX</span> <span class="o">=</span> <span class="s">"rank:bucket:"</span><span class="o">;</span>
+    <span class="kd">private</span> <span class="kd">final</span> <span class="nc">String</span> <span class="no">BUCKET_META_KEY</span> <span class="o">=</span> <span class="s">"rank:bucket:meta"</span><span class="o">;</span>
+    
+    <span class="c1">// 缓存分桶信息</span>
+    <span class="kd">private</span> <span class="kd">final</span> <span class="nc">ConcurrentHashMap</span><span class="o">&lt;</span><span class="nc">String</span><span class="o">,</span> <span class="nc">ScoreBucket</span><span class="o">&gt;</span> <span class="n">bucketCache</span> <span class="o">=</span> <span class="k">new</span> <span class="nc">ConcurrentHashMap</span><span class="o">&lt;&gt;();</span>
+    
+    <span class="c1">// 初始化分桶配置</span>
+    <span class="kd">private</span> <span class="kd">final</span> <span class="nc">List</span><span class="o">&lt;</span><span class="nc">ScoreBucket</span><span class="o">&gt;</span> <span class="n">initBuckets</span> <span class="o">=</span> <span class="k">new</span> <span class="nc">ArrayList</span><span class="o">&lt;&gt;()</span> <span class="o">;</span>
+
+    <span class="kd">public</span> <span class="nf">ScoreBucketRankingSystem</span><span class="o">(</span><span class="nc">RedisTemplate</span><span class="o">&lt;</span><span class="nc">String</span><span class="o">,</span> <span class="nc">String</span><span class="o">&gt;</span> <span class="n">redisTemplate</span><span class="o">)</span> <span class="o">{</span>
+        <span class="k">this</span><span class="o">.</span><span class="na">redisTemplate</span> <span class="o">=</span> <span class="n">redisTemplate</span><span class="o">;</span>
+        <span class="n">initBuckets</span><span class="o">();</span>
+    <span class="o">}</span>
+
+    <span class="c1">// 初始化分桶</span>
+    <span class="kd">private</span> <span class="kt">void</span> <span class="nf">initBuckets</span><span class="o">()</span> <span class="o">{</span>
+        <span class="k">for</span> <span class="o">(</span><span class="nc">ScoreBucket</span> <span class="n">bucket</span> <span class="o">:</span> <span class="n">initBuckets</span><span class="o">)</span> <span class="o">{</span>
+            <span class="nc">String</span> <span class="n">bucketKey</span> <span class="o">=</span> <span class="no">BUCKET_PREFIX</span> <span class="o">+</span> <span class="n">bucket</span><span class="o">.</span><span class="na">getBucketKey</span><span class="o">();</span>
+            <span class="n">bucketCache</span><span class="o">.</span><span class="na">put</span><span class="o">(</span><span class="n">bucketKey</span><span class="o">,</span> <span class="n">bucket</span><span class="o">);</span>
+            <span class="c1">// 存储分桶元信息</span>
+            <span class="n">redisTemplate</span><span class="o">.</span><span class="na">opsForHash</span><span class="o">().</span><span class="na">put</span><span class="o">(</span>
+                <span class="no">BUCKET_META_KEY</span><span class="o">,</span>
+                <span class="n">bucketKey</span><span class="o">,</span>
+                <span class="no">JSON</span><span class="o">.</span><span class="na">toJSONString</span><span class="o">(</span><span class="n">bucket</span><span class="o">)</span>
+            <span class="o">);</span>
+        <span class="o">}</span>
+    <span class="o">}</span>
+
+    <span class="c1">// 更新用户分数</span>
+    <span class="kd">public</span> <span class="kt">void</span> <span class="nf">updateScore</span><span class="o">(</span><span class="kt">long</span> <span class="n">userId</span><span class="o">,</span> <span class="kt">double</span> <span class="n">newScore</span><span class="o">)</span> <span class="o">{</span>
+        <span class="c1">// 1. 找到用户当前所在的分桶</span>
+        <span class="nc">String</span> <span class="n">oldBucketKey</span> <span class="o">=</span> <span class="n">findUserCurrentBucket</span><span class="o">(</span><span class="n">userId</span><span class="o">);</span>
+        
+        <span class="c1">// 2. 计算用户应该在的分桶</span>
+        <span class="nc">String</span> <span class="n">newBucketKey</span> <span class="o">=</span> <span class="n">calculateBucketKey</span><span class="o">(</span><span class="n">newScore</span><span class="o">);</span>
+        
+        <span class="c1">// 3. 如果分桶发生变化，需要迁移</span>
+        <span class="k">if</span> <span class="o">(</span><span class="n">oldBucketKey</span> <span class="o">!=</span> <span class="kc">null</span> <span class="o">&amp;&amp;</span> <span class="o">!</span><span class="n">oldBucketKey</span><span class="o">.</span><span class="na">equals</span><span class="o">(</span><span class="n">newBucketKey</span><span class="o">))</span> <span class="o">{</span>
+            <span class="n">moveUserToBucket</span><span class="o">(</span><span class="n">userId</span><span class="o">,</span> <span class="n">oldBucketKey</span><span class="o">,</span> <span class="n">newBucketKey</span><span class="o">,</span> <span class="n">newScore</span><span class="o">);</span>
+        <span class="o">}</span> <span class="k">else</span> <span class="o">{</span>
+            <span class="c1">// 4. 直接更新分数</span>
+            <span class="n">updateUserScore</span><span class="o">(</span><span class="n">userId</span><span class="o">,</span> <span class="n">newBucketKey</span><span class="o">,</span> <span class="n">newScore</span><span class="o">);</span>
+        <span class="o">}</span>
+    <span class="o">}</span>
+
+    <span class="c1">// 查找用户当前所在的分桶</span>
+    <span class="kd">private</span> <span class="nc">String</span> <span class="nf">findUserCurrentBucket</span><span class="o">(</span><span class="kt">long</span> <span class="n">userId</span><span class="o">)</span> <span class="o">{</span>
+        <span class="k">for</span> <span class="o">(</span><span class="nc">String</span> <span class="n">bucketKey</span> <span class="o">:</span> <span class="n">bucketCache</span><span class="o">.</span><span class="na">keySet</span><span class="o">())</span> <span class="o">{</span>
+            <span class="nc">Double</span> <span class="n">score</span> <span class="o">=</span> <span class="n">redisTemplate</span><span class="o">.</span><span class="na">opsForZSet</span><span class="o">().</span><span class="na">score</span><span class="o">(</span><span class="n">bucketKey</span><span class="o">,</span> <span class="nc">String</span><span class="o">.</span><span class="na">valueOf</span><span class="o">(</span><span class="n">userId</span><span class="o">));</span>
+            <span class="k">if</span> <span class="o">(</span><span class="n">score</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+                <span class="k">return</span> <span class="n">bucketKey</span><span class="o">;</span>
+            <span class="o">}</span>
+        <span class="o">}</span>
+        <span class="k">return</span> <span class="kc">null</span><span class="o">;</span>
+    <span class="o">}</span>
+
+    <span class="c1">// 根据分数计算应该所在的分桶</span>
+    <span class="kd">private</span> <span class="nc">String</span> <span class="nf">calculateBucketKey</span><span class="o">(</span><span class="kt">double</span> <span class="n">score</span><span class="o">)</span> <span class="o">{</span>
+        <span class="k">for</span> <span class="o">(</span><span class="nc">ScoreBucket</span> <span class="n">bucket</span> <span class="o">:</span> <span class="n">bucketCache</span><span class="o">.</span><span class="na">values</span><span class="o">())</span> <span class="o">{</span>
+            <span class="k">if</span> <span class="o">(</span><span class="n">score</span> <span class="o">&gt;=</span> <span class="n">bucket</span><span class="o">.</span><span class="na">getMinScore</span><span class="o">()</span> <span class="o">&amp;&amp;</span> <span class="n">score</span> <span class="o">&lt;=</span> <span class="n">bucket</span><span class="o">.</span><span class="na">getMaxScore</span><span class="o">())</span> <span class="o">{</span>
+                <span class="k">return</span> <span class="no">BUCKET_PREFIX</span> <span class="o">+</span> <span class="n">bucket</span><span class="o">.</span><span class="na">getBucketKey</span><span class="o">();</span>
+            <span class="o">}</span>
+        <span class="o">}</span>
+        <span class="k">throw</span> <span class="k">new</span> <span class="nf">IllegalArgumentException</span><span class="o">(</span><span class="s">"Score out of range: "</span> <span class="o">+</span> <span class="n">score</span><span class="o">);</span>
+    <span class="o">}</span>
+
+    <span class="c1">// 将用户从旧分桶移动到新分桶</span>
+    <span class="kd">private</span> <span class="kt">void</span> <span class="nf">moveUserToBucket</span><span class="o">(</span><span class="kt">long</span> <span class="n">userId</span><span class="o">,</span> <span class="nc">String</span> <span class="n">oldBucketKey</span><span class="o">,</span> <span class="nc">String</span> <span class="n">newBucketKey</span><span class="o">,</span> <span class="kt">double</span> <span class="n">newScore</span><span class="o">)</span> <span class="o">{</span>
+        <span class="n">redisTemplate</span><span class="o">.</span><span class="na">execute</span><span class="o">(</span><span class="k">new</span> <span class="nc">SessionCallback</span><span class="o">&lt;</span><span class="nc">List</span><span class="o">&lt;</span><span class="nc">Object</span><span class="o">&gt;&gt;()</span> <span class="o">{</span>
+            <span class="nd">@Override</span>
+            <span class="kd">public</span> <span class="nc">List</span><span class="o">&lt;</span><span class="nc">Object</span><span class="o">&gt;</span> <span class="nf">execute</span><span class="o">(</span><span class="nc">RedisOperations</span> <span class="n">operations</span><span class="o">)</span> <span class="o">{</span>
+                <span class="n">operations</span><span class="o">.</span><span class="na">multi</span><span class="o">();</span>
+                
+                <span class="c1">// 从旧分桶删除</span>
+                <span class="n">operations</span><span class="o">.</span><span class="na">opsForZSet</span><span class="o">().</span><span class="na">remove</span><span class="o">(</span><span class="n">oldBucketKey</span><span class="o">,</span> <span class="nc">String</span><span class="o">.</span><span class="na">valueOf</span><span class="o">(</span><span class="n">userId</span><span class="o">));</span>
+                
+                <span class="c1">// 更新分桶计数</span>
+                <span class="n">operations</span><span class="o">.</span><span class="na">opsForHash</span><span class="o">().</span><span class="na">increment</span><span class="o">(</span><span class="no">BUCKET_META_KEY</span><span class="o">,</span> <span class="n">oldBucketKey</span> <span class="o">+</span> <span class="s">":count"</span><span class="o">,</span> <span class="o">-</span><span class="mi">1</span><span class="o">);</span>
+                <span class="n">operations</span><span class="o">.</span><span class="na">opsForHash</span><span class="o">().</span><span class="na">increment</span><span class="o">(</span><span class="no">BUCKET_META_KEY</span><span class="o">,</span> <span class="n">newBucketKey</span> <span class="o">+</span> <span class="s">":count"</span><span class="o">,</span> <span class="mi">1</span><span class="o">);</span>
+                
+                <span class="c1">// 添加到新分桶</span>
+                <span class="n">operations</span><span class="o">.</span><span class="na">opsForZSet</span><span class="o">().</span><span class="na">add</span><span class="o">(</span><span class="n">newBucketKey</span><span class="o">,</span> <span class="nc">String</span><span class="o">.</span><span class="na">valueOf</span><span class="o">(</span><span class="n">userId</span><span class="o">),</span> <span class="n">newScore</span><span class="o">);</span>
+                
+                <span class="k">return</span> <span class="n">operations</span><span class="o">.</span><span class="na">exec</span><span class="o">();</span>
+            <span class="o">}</span>
+        <span class="o">});</span>
+    <span class="o">}</span>
+
+    <span class="c1">// 更新用户分数</span>
+    <span class="kd">private</span> <span class="kt">void</span> <span class="nf">updateUserScore</span><span class="o">(</span><span class="kt">long</span> <span class="n">userId</span><span class="o">,</span> <span class="nc">String</span> <span class="n">bucketKey</span><span class="o">,</span> <span class="kt">double</span> <span class="n">newScore</span><span class="o">)</span> <span class="o">{</span>
+        <span class="n">redisTemplate</span><span class="o">.</span><span class="na">opsForZSet</span><span class="o">().</span><span class="na">add</span><span class="o">(</span><span class="n">bucketKey</span><span class="o">,</span> <span class="nc">String</span><span class="o">.</span><span class="na">valueOf</span><span class="o">(</span><span class="n">userId</span><span class="o">),</span> <span class="n">newScore</span><span class="o">);</span>
+    <span class="o">}</span>
+
+    <span class="c1">// 获取用户排名信息</span>
+    <span class="kd">public</span> <span class="nc">RankInfo</span> <span class="nf">getUserRankInfo</span><span class="o">(</span><span class="kt">long</span> <span class="n">userId</span><span class="o">)</span> <span class="o">{</span>
+        <span class="nc">String</span> <span class="n">bucketKey</span> <span class="o">=</span> <span class="n">findUserCurrentBucket</span><span class="o">(</span><span class="n">userId</span><span class="o">);</span>
+        <span class="k">if</span> <span class="o">(</span><span class="n">bucketKey</span> <span class="o">==</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+            <span class="k">return</span> <span class="kc">null</span><span class="o">;</span>
+        <span class="o">}</span>
+
+        <span class="nc">Double</span> <span class="n">score</span> <span class="o">=</span> <span class="n">redisTemplate</span><span class="o">.</span><span class="na">opsForZSet</span><span class="o">().</span><span class="na">score</span><span class="o">(</span><span class="n">bucketKey</span><span class="o">,</span> <span class="nc">String</span><span class="o">.</span><span class="na">valueOf</span><span class="o">(</span><span class="n">userId</span><span class="o">));</span>
+        <span class="nc">Long</span> <span class="n">rank</span> <span class="o">=</span> <span class="n">redisTemplate</span><span class="o">.</span><span class="na">opsForZSet</span><span class="o">().</span><span class="na">reverseRank</span><span class="o">(</span><span class="n">bucketKey</span><span class="o">,</span> <span class="nc">String</span><span class="o">.</span><span class="na">valueOf</span><span class="o">(</span><span class="n">userId</span><span class="o">));</span>
+        
+        <span class="k">if</span> <span class="o">(</span><span class="n">score</span> <span class="o">==</span> <span class="kc">null</span> <span class="o">||</span> <span class="n">rank</span> <span class="o">==</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+            <span class="k">return</span> <span class="kc">null</span><span class="o">;</span>
+        <span class="o">}</span>
+
+        <span class="c1">// 计算全局排名</span>
+        <span class="kt">long</span> <span class="n">globalRank</span> <span class="o">=</span> <span class="n">calculateGlobalRank</span><span class="o">(</span><span class="n">bucketKey</span><span class="o">,</span> <span class="n">rank</span><span class="o">);</span>
+
+        <span class="nc">RankInfo</span> <span class="n">rankInfo</span> <span class="o">=</span> <span class="k">new</span> <span class="nc">RankInfo</span><span class="o">();</span>
+        <span class="n">rankInfo</span><span class="o">.</span><span class="na">setUserId</span><span class="o">(</span><span class="n">userId</span><span class="o">);</span>
+        <span class="n">rankInfo</span><span class="o">.</span><span class="na">setScore</span><span class="o">(</span><span class="n">score</span><span class="o">);</span>
+        <span class="n">rankInfo</span><span class="o">.</span><span class="na">setRank</span><span class="o">(</span><span class="n">globalRank</span><span class="o">);</span>
+        <span class="n">rankInfo</span><span class="o">.</span><span class="na">setBucketKey</span><span class="o">(</span><span class="n">bucketKey</span><span class="o">);</span>
+        
+        <span class="k">return</span> <span class="n">rankInfo</span><span class="o">;</span>
+    <span class="o">}</span>
+
+    <span class="c1">// 计算全局排名</span>
+    <span class="kd">private</span> <span class="kt">long</span> <span class="nf">calculateGlobalRank</span><span class="o">(</span><span class="nc">String</span> <span class="n">currentBucketKey</span><span class="o">,</span> <span class="kt">long</span> <span class="n">rankInBucket</span><span class="o">)</span> <span class="o">{</span>
+        <span class="kt">long</span> <span class="n">globalRank</span> <span class="o">=</span> <span class="n">rankInBucket</span><span class="o">;</span>
+        
+        <span class="c1">// 加上更高分数段的用户数</span>
+        <span class="k">for</span> <span class="o">(</span><span class="nc">ScoreBucket</span> <span class="n">bucket</span> <span class="o">:</span> <span class="n">bucketCache</span><span class="o">.</span><span class="na">values</span><span class="o">())</span> <span class="o">{</span>
+            <span class="nc">String</span> <span class="n">bucketKey</span> <span class="o">=</span> <span class="no">BUCKET_PREFIX</span> <span class="o">+</span> <span class="n">bucket</span><span class="o">.</span><span class="na">getBucketKey</span><span class="o">();</span>
+            <span class="k">if</span> <span class="o">(</span><span class="n">bucket</span><span class="o">.</span><span class="na">getMaxScore</span><span class="o">()</span> <span class="o">&gt;</span> <span class="n">bucketCache</span><span class="o">.</span><span class="na">get</span><span class="o">(</span><span class="n">currentBucketKey</span><span class="o">).</span><span class="na">getMaxScore</span><span class="o">())</span> <span class="o">{</span>
+                <span class="n">globalRank</span> <span class="o">+=</span> <span class="n">bucket</span><span class="o">.</span><span class="na">getUserCount</span><span class="o">();</span>
+            <span class="o">}</span>
+        <span class="o">}</span>
+        
+        <span class="k">return</span> <span class="n">globalRank</span><span class="o">;</span>
+    <span class="o">}</span>
+
+    <span class="c1">// 获取排行榜区间</span>
+    <span class="kd">public</span> <span class="nc">List</span><span class="o">&lt;</span><span class="nc">RankInfo</span><span class="o">&gt;</span> <span class="nf">getRankRange</span><span class="o">(</span><span class="kt">int</span> <span class="n">start</span><span class="o">,</span> <span class="kt">int</span> <span class="n">end</span><span class="o">)</span> <span class="o">{</span>
+        <span class="nc">List</span><span class="o">&lt;</span><span class="nc">RankInfo</span><span class="o">&gt;</span> <span class="n">result</span> <span class="o">=</span> <span class="k">new</span> <span class="nc">ArrayList</span><span class="o">&lt;&gt;();</span>
+        <span class="kt">int</span> <span class="n">currentPosition</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span>
+        
+        <span class="c1">// 从高分到低分遍历分桶</span>
+        <span class="k">for</span> <span class="o">(</span><span class="nc">ScoreBucket</span> <span class="n">bucket</span> <span class="o">:</span> <span class="n">bucketCache</span><span class="o">.</span><span class="na">values</span><span class="o">())</span> <span class="o">{</span>
+            <span class="nc">String</span> <span class="n">bucketKey</span> <span class="o">=</span> <span class="no">BUCKET_PREFIX</span> <span class="o">+</span> <span class="n">bucket</span><span class="o">.</span><span class="na">getBucketKey</span><span class="o">();</span>
+            
+            <span class="c1">// 获取分桶内的排名区间</span>
+            <span class="nc">Set</span><span class="o">&lt;</span><span class="nc">ZSetOperations</span><span class="o">.</span><span class="na">TypedTuple</span><span class="o">&lt;</span><span class="nc">String</span><span class="o">&gt;&gt;</span> <span class="n">ranksInBucket</span> <span class="o">=</span> 
+                <span class="n">redisTemplate</span><span class="o">.</span><span class="na">opsForZSet</span><span class="o">().</span><span class="na">reverseRangeWithScores</span><span class="o">(</span>
+                    <span class="n">bucketKey</span><span class="o">,</span> 
+                    <span class="nc">Math</span><span class="o">.</span><span class="na">max</span><span class="o">(</span><span class="mi">0</span><span class="o">,</span> <span class="n">start</span> <span class="o">-</span> <span class="n">currentPosition</span><span class="o">),</span>
+                    <span class="n">end</span> <span class="o">-</span> <span class="n">currentPosition</span>
+                <span class="o">);</span>
+                
+            <span class="k">if</span> <span class="o">(</span><span class="n">ranksInBucket</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+                <span class="k">for</span> <span class="o">(</span><span class="nc">ZSetOperations</span><span class="o">.</span><span class="na">TypedTuple</span><span class="o">&lt;</span><span class="nc">String</span><span class="o">&gt;</span> <span class="n">rank</span> <span class="o">:</span> <span class="n">ranksInBucket</span><span class="o">)</span> <span class="o">{</span>
+                    <span class="k">if</span> <span class="o">(</span><span class="n">currentPosition</span> <span class="o">&gt;=</span> <span class="n">start</span> <span class="o">&amp;&amp;</span> <span class="n">currentPosition</span> <span class="o">&lt;=</span> <span class="n">end</span><span class="o">)</span> <span class="o">{</span>
+                        <span class="nc">RankInfo</span> <span class="n">rankInfo</span> <span class="o">=</span> <span class="k">new</span> <span class="nc">RankInfo</span><span class="o">();</span>
+                        <span class="n">rankInfo</span><span class="o">.</span><span class="na">setUserId</span><span class="o">(</span><span class="nc">Long</span><span class="o">.</span><span class="na">parseLong</span><span class="o">(</span><span class="n">rank</span><span class="o">.</span><span class="na">getValue</span><span class="o">()));</span>
+                        <span class="n">rankInfo</span><span class="o">.</span><span class="na">setScore</span><span class="o">(</span><span class="n">rank</span><span class="o">.</span><span class="na">getScore</span><span class="o">());</span>
+                        <span class="n">rankInfo</span><span class="o">.</span><span class="na">setRank</span><span class="o">(</span><span class="n">currentPosition</span> <span class="o">+</span> <span class="mi">1</span><span class="o">);</span>
+                        <span class="n">rankInfo</span><span class="o">.</span><span class="na">setBucketKey</span><span class="o">(</span><span class="n">bucketKey</span><span class="o">);</span>
+                        <span class="n">result</span><span class="o">.</span><span class="na">add</span><span class="o">(</span><span class="n">rankInfo</span><span class="o">);</span>
+                    <span class="o">}</span>
+                    <span class="n">currentPosition</span><span class="o">++;</span>
+                <span class="o">}</span>
+            <span class="o">}</span>
+            
+            <span class="k">if</span> <span class="o">(</span><span class="n">currentPosition</span> <span class="o">&gt;</span> <span class="n">end</span><span class="o">)</span> <span class="o">{</span>
+                <span class="k">break</span><span class="o">;</span>
+            <span class="o">}</span>
+        <span class="o">}</span>
+        
+        <span class="k">return</span> <span class="n">result</span><span class="o">;</span>
+    <span class="o">}</span>
+
+    <span class="c1">// 获取分桶统计信息</span>
+    <span class="kd">public</span> <span class="nc">List</span><span class="o">&lt;</span><span class="nc">ScoreBucket</span><span class="o">&gt;</span> <span class="nf">getBucketStats</span><span class="o">()</span> <span class="o">{</span>
+        <span class="nc">List</span><span class="o">&lt;</span><span class="nc">ScoreBucket</span><span class="o">&gt;</span> <span class="n">stats</span> <span class="o">=</span> <span class="k">new</span> <span class="nc">ArrayList</span><span class="o">&lt;&gt;();</span>
+        
+        <span class="k">for</span> <span class="o">(</span><span class="nc">ScoreBucket</span> <span class="n">bucket</span> <span class="o">:</span> <span class="n">bucketCache</span><span class="o">.</span><span class="na">values</span><span class="o">())</span> <span class="o">{</span>
+            <span class="nc">String</span> <span class="n">bucketKey</span> <span class="o">=</span> <span class="no">BUCKET_PREFIX</span> <span class="o">+</span> <span class="n">bucket</span><span class="o">.</span><span class="na">getBucketKey</span><span class="o">();</span>
+            <span class="nc">Long</span> <span class="n">count</span> <span class="o">=</span> <span class="n">redisTemplate</span><span class="o">.</span><span class="na">opsForZSet</span><span class="o">().</span><span class="na">zCard</span><span class="o">(</span><span class="n">bucketKey</span><span class="o">);</span>
+            
+            <span class="nc">ScoreBucket</span> <span class="n">stat</span> <span class="o">=</span> <span class="k">new</span> <span class="nc">ScoreBucket</span><span class="o">();</span>
+            <span class="n">stat</span><span class="o">.</span><span class="na">setBucketKey</span><span class="o">(</span><span class="n">bucket</span><span class="o">.</span><span class="na">getBucketKey</span><span class="o">());</span>
+            <span class="n">stat</span><span class="o">.</span><span class="na">setMinScore</span><span class="o">(</span><span class="n">bucket</span><span class="o">.</span><span class="na">getMinScore</span><span class="o">());</span>
+            <span class="n">stat</span><span class="o">.</span><span class="na">setMaxScore</span><span class="o">(</span><span class="n">bucket</span><span class="o">.</span><span class="na">getMaxScore</span><span class="o">());</span>
+            <span class="n">stat</span><span class="o">.</span><span class="na">setUserCount</span><span class="o">(</span><span class="n">count</span> <span class="o">!=</span> <span class="kc">null</span> <span class="o">?</span> <span class="n">count</span> <span class="o">:</span> <span class="mi">0</span><span class="o">);</span>
+            
+            <span class="n">stats</span><span class="o">.</span><span class="na">add</span><span class="o">(</span><span class="n">stat</span><span class="o">);</span>
+        <span class="o">}</span>
+        
+        <span class="k">return</span> <span class="n">stats</span><span class="o">;</span>
+    <span class="o">}</span>
+
+    <span class="c1">// 定期优化分桶</span>
+    <span class="kd">public</span> <span class="kt">void</span> <span class="nf">optimizeBuckets</span><span class="o">()</span> <span class="o">{</span>
+        <span class="nc">List</span><span class="o">&lt;</span><span class="nc">ScoreBucket</span><span class="o">&gt;</span> <span class="n">stats</span> <span class="o">=</span> <span class="n">getBucketStats</span><span class="o">();</span>
+        
+        <span class="c1">// 检查是否需要分裂或合并分桶</span>
+        <span class="k">for</span> <span class="o">(</span><span class="nc">ScoreBucket</span> <span class="n">bucket</span> <span class="o">:</span> <span class="n">stats</span><span class="o">)</span> <span class="o">{</span>
+            <span class="k">if</span> <span class="o">(</span><span class="n">bucket</span><span class="o">.</span><span class="na">getUserCount</span><span class="o">()</span> <span class="o">&gt;</span> <span class="mi">100_000_000</span><span class="o">)</span> <span class="o">{</span> <span class="c1">// 1亿用户</span>
+                <span class="c1">// 分裂分桶</span>
+                <span class="n">splitBucket</span><span class="o">(</span><span class="n">bucket</span><span class="o">);</span>
+            <span class="o">}</span> <span class="k">else</span> <span class="k">if</span> <span class="o">(</span><span class="n">bucket</span><span class="o">.</span><span class="na">getUserCount</span><span class="o">()</span> <span class="o">&lt;</span> <span class="mi">1_000_000</span><span class="o">)</span> <span class="o">{</span> <span class="c1">// 100万用户</span>
+                <span class="c1">// 考虑合并分桶</span>
+                <span class="n">mergeBucket</span><span class="o">(</span><span class="n">bucket</span><span class="o">);</span>
+            <span class="o">}</span>
+        <span class="o">}</span>
+    <span class="o">}</span>
+
+    <span class="c1">// 分裂分桶</span>
+    <span class="kd">private</span> <span class="kt">void</span> <span class="nf">splitBucket</span><span class="o">(</span><span class="nc">ScoreBucket</span> <span class="n">bucket</span><span class="o">)</span> <span class="o">{</span>
+        <span class="kt">double</span> <span class="n">mid</span> <span class="o">=</span> <span class="o">(</span><span class="n">bucket</span><span class="o">.</span><span class="na">getMinScore</span><span class="o">()</span> <span class="o">+</span> <span class="n">bucket</span><span class="o">.</span><span class="na">getMaxScore</span><span class="o">())</span> <span class="o">/</span> <span class="mi">2</span><span class="o">;</span>
+        
+        <span class="nc">ScoreBucket</span> <span class="n">lowerBucket</span> <span class="o">=</span> <span class="k">new</span> <span class="nc">ScoreBucket</span><span class="o">();</span>
+        <span class="n">lowerBucket</span><span class="o">.</span><span class="na">setBucketKey</span><span class="o">(</span><span class="n">bucket</span><span class="o">.</span><span class="na">getBucketKey</span><span class="o">()</span> <span class="o">+</span> <span class="s">"_lower"</span><span class="o">);</span>
+        <span class="n">lowerBucket</span><span class="o">.</span><span class="na">setMinScore</span><span class="o">(</span><span class="n">bucket</span><span class="o">.</span><span class="na">getMinScore</span><span class="o">());</span>
+        <span class="n">lowerBucket</span><span class="o">.</span><span class="na">setMaxScore</span><span class="o">(</span><span class="n">mid</span><span class="o">);</span>
+        
+        <span class="nc">ScoreBucket</span> <span class="n">upperBucket</span> <span class="o">=</span> <span class="k">new</span> <span class="nc">ScoreBucket</span><span class="o">();</span>
+        <span class="n">upperBucket</span><span class="o">.</span><span class="na">setBucketKey</span><span class="o">(</span><span class="n">bucket</span><span class="o">.</span><span class="na">getBucketKey</span><span class="o">()</span> <span class="o">+</span> <span class="s">"_upper"</span><span class="o">);</span>
+        <span class="n">upperBucket</span><span class="o">.</span><span class="na">setMinScore</span><span class="o">(</span><span class="n">mid</span> <span class="o">+</span> <span class="mi">1</span><span class="o">);</span>
+        <span class="n">upperBucket</span><span class="o">.</span><span class="na">setMaxScore</span><span class="o">(</span><span class="n">bucket</span><span class="o">.</span><span class="na">getMaxScore</span><span class="o">());</span>
+        
+        <span class="c1">// 重新分配用户到新分桶</span>
+        <span class="n">redistributeUsers</span><span class="o">(</span><span class="n">bucket</span><span class="o">,</span> <span class="n">lowerBucket</span><span class="o">,</span> <span class="n">upperBucket</span><span class="o">);</span>
+    <span class="o">}</span>
+
+    <span class="c1">// 合并分桶</span>
+    <span class="kd">private</span> <span class="kt">void</span> <span class="nf">mergeBucket</span><span class="o">(</span><span class="nc">ScoreBucket</span> <span class="n">bucket</span><span class="o">)</span> <span class="o">{</span>
+        <span class="c1">// 实现合并逻辑</span>
+    <span class="o">}</span>
+
+    <span class="c1">// 重新分配用户</span>
+    <span class="kd">private</span> <span class="kt">void</span> <span class="nf">redistributeUsers</span><span class="o">(</span><span class="nc">ScoreBucket</span> <span class="n">oldBucket</span><span class="o">,</span> <span class="nc">ScoreBucket</span> <span class="n">lowerBucket</span><span class="o">,</span> <span class="nc">ScoreBucket</span> <span class="n">upperBucket</span><span class="o">)</span> <span class="o">{</span>
+        <span class="nc">String</span> <span class="n">oldBucketKey</span> <span class="o">=</span> <span class="no">BUCKET_PREFIX</span> <span class="o">+</span> <span class="n">oldBucket</span><span class="o">.</span><span class="na">getBucketKey</span><span class="o">();</span>
+        <span class="nc">String</span> <span class="n">lowerBucketKey</span> <span class="o">=</span> <span class="no">BUCKET_PREFIX</span> <span class="o">+</span> <span class="n">lowerBucket</span><span class="o">.</span><span class="na">getBucketKey</span><span class="o">();</span>
+        <span class="nc">String</span> <span class="n">upperBucketKey</span> <span class="o">=</span> <span class="no">BUCKET_PREFIX</span> <span class="o">+</span> <span class="n">upperBucket</span><span class="o">.</span><span class="na">getBucketKey</span><span class="o">();</span>
+        
+        <span class="kt">long</span> <span class="n">cursor</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span>
+        <span class="nc">ScanOptions</span> <span class="n">options</span> <span class="o">=</span> <span class="nc">ScanOptions</span><span class="o">.</span><span class="na">scanOptions</span><span class="o">().</span><span class="na">count</span><span class="o">(</span><span class="mi">1000</span><span class="o">).</span><span class="na">build</span><span class="o">();</span>
+        
+        <span class="k">do</span> <span class="o">{</span>
+            <span class="nc">ScanResult</span><span class="o">&lt;</span><span class="nc">ZSetOperations</span><span class="o">.</span><span class="na">TypedTuple</span><span class="o">&lt;</span><span class="nc">String</span><span class="o">&gt;&gt;</span> <span class="n">scanResult</span> <span class="o">=</span> 
+                <span class="n">redisTemplate</span><span class="o">.</span><span class="na">opsForZSet</span><span class="o">().</span><span class="na">scan</span><span class="o">(</span><span class="n">oldBucketKey</span><span class="o">,</span> <span class="n">options</span><span class="o">);</span>
+                
+            <span class="k">for</span> <span class="o">(</span><span class="nc">ZSetOperations</span><span class="o">.</span><span class="na">TypedTuple</span><span class="o">&lt;</span><span class="nc">String</span><span class="o">&gt;</span> <span class="n">tuple</span> <span class="o">:</span> <span class="n">scanResult</span><span class="o">.</span><span class="na">getContent</span><span class="o">())</span> <span class="o">{</span>
+                <span class="nc">String</span> <span class="n">userId</span> <span class="o">=</span> <span class="n">tuple</span><span class="o">.</span><span class="na">getValue</span><span class="o">();</span>
+                <span class="kt">double</span> <span class="n">score</span> <span class="o">=</span> <span class="n">tuple</span><span class="o">.</span><span class="na">getScore</span><span class="o">();</span>
+                
+                <span class="k">if</span> <span class="o">(</span><span class="n">score</span> <span class="o">&lt;=</span> <span class="n">lowerBucket</span><span class="o">.</span><span class="na">getMaxScore</span><span class="o">())</span> <span class="o">{</span>
+                    <span class="n">redisTemplate</span><span class="o">.</span><span class="na">opsForZSet</span><span class="o">().</span><span class="na">add</span><span class="o">(</span><span class="n">lowerBucketKey</span><span class="o">,</span> <span class="n">userId</span><span class="o">,</span> <span class="n">score</span><span class="o">);</span>
+                <span class="o">}</span> <span class="k">else</span> <span class="o">{</span>
+                    <span class="n">redisTemplate</span><span class="o">.</span><span class="na">opsForZSet</span><span class="o">().</span><span class="na">add</span><span class="o">(</span><span class="n">upperBucketKey</span><span class="o">,</span> <span class="n">userId</span><span class="o">,</span> <span class="n">score</span><span class="o">);</span>
+                <span class="o">}</span>
+            <span class="o">}</span>
+            
+            <span class="n">cursor</span> <span class="o">=</span> <span class="n">scanResult</span><span class="o">.</span><span class="na">getCursor</span><span class="o">();</span>
+        <span class="o">}</span> <span class="k">while</span> <span class="o">(</span><span class="n">cursor</span> <span class="o">!=</span> <span class="mi">0</span><span class="o">);</span>
+        
+        <span class="c1">// 更新分桶缓存</span>
+        <span class="n">bucketCache</span><span class="o">.</span><span class="na">put</span><span class="o">(</span><span class="n">lowerBucketKey</span><span class="o">,</span> <span class="n">lowerBucket</span><span class="o">);</span>
+        <span class="n">bucketCache</span><span class="o">.</span><span class="na">put</span><span class="o">(</span><span class="n">upperBucketKey</span><span class="o">,</span> <span class="n">upperBucket</span><span class="o">);</span>
+        <span class="n">bucketCache</span><span class="o">.</span><span class="na">remove</span><span class="o">(</span><span class="n">oldBucketKey</span><span class="o">);</span>
+        
+        <span class="c1">// 删除旧分桶</span>
+        <span class="n">redisTemplate</span><span class="o">.</span><span class="na">delete</span><span class="o">(</span><span class="n">oldBucketKey</span><span class="o">);</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<script src="https://giscus.app/client.js" data-repo="wtopps/wtopps.github.io" data-repo-id="MDEwOlJlcG9zaXRvcnk2NzY3NTA3MA==" data-category="Comments" data-category-id="DIC_kwDOBAijvs4CizS6" data-mapping="pathname" data-strict="0" data-reactions-enabled="1" data-emit-metadata="0" data-input-position="bottom" data-theme="preferred_color_scheme" data-lang="zh-CN" crossorigin="anonymous" async="">
+</script>]]></content><author><name>GitHub User</name></author><category term="System" /><category term="Design" /><category term="System Design" /><summary type="html"><![CDATA[]]></summary></entry><entry><title type="html">Java ThreadPoolExecutor线程池概述</title><link href="http://localhost:4000/java/2024/09/25/Java-ThreadPoolExecutor%E7%BA%BF%E7%A8%8B%E6%B1%A0%E6%A6%82%E8%BF%B0.html" rel="alternate" type="text/html" title="Java ThreadPoolExecutor线程池概述" /><published>2024-09-25T00:00:00+08:00</published><updated>2024-09-25T00:00:00+08:00</updated><id>http://localhost:4000/java/2024/09/25/Java%20ThreadPoolExecutor%E7%BA%BF%E7%A8%8B%E6%B1%A0%E6%A6%82%E8%BF%B0</id><content type="html" xml:base="http://localhost:4000/java/2024/09/25/Java-ThreadPoolExecutor%E7%BA%BF%E7%A8%8B%E6%B1%A0%E6%A6%82%E8%BF%B0.html"><![CDATA[<p><img src="https://github.com/jeffreytse/jekyll-theme-yat/assets/9413601/2ed22d49-90b1-4f7e-8e8f-b77b21dee505" alt="banner" /></p>
+
+<h1 id="导航">导航</h1>
+
+<ol>
+  <li><a href="#前言">前言</a></li>
+  <li><a href="#为什么要使用线程池">为什么要使用线程池</a></li>
+  <li><a href="#线程池使用方式">线程池使用方式</a></li>
+  <li><a href="##Executors创建线程池">Executors创建线程池</a>
+    <ol>
+      <li><a href="#newCachedThreadPool">newCachedThreadPool</a></li>
+      <li><a href="#newFixedThreadPool">newFixedThreadPool</a></li>
+      <li><a href="#newScheduledThreadPool">newScheduledThreadPool</a></li>
+      <li><a href="#newSingleThreadExecutor">newSingleThreadExecutor</a></li>
+    </ol>
+  </li>
+  <li><a href="#四种线程池对比">四种线程池对比</a></li>
+  <li><a href="#ThreadPoolExecutor创建线程池">ThreadPoolExecutor创建线程池</a></li>
+  <li><a href="#排队策略">排队策略</a></li>
+  <li><a href="#工作队列对比">工作队列对比</a></li>
+  <li><a href="#线程池关闭">线程池关闭</a></li>
+  <li><a href="#线程池大小设置">线程池大小设置</a></li>
+  <li><a href="#线程池的状态监控">线程池的状态监控</a></li>
+  <li><a href="#结语">结语</a></li>
+</ol>
+
+<h2 id="前言">前言</h2>
+
+<p>在互联网的开发场景下，很多业务场景下我们需要使用到多线程的技术，从 Java 5 开始，Java 提供了自己的线程池，线程池就是一个线程的容器，每次只执行额定数量的线程。java.util.concurrent包中提供了ThreadPoolExecutor类来管理线程，本文将介绍一下ThreadPoolExecutor类的使用。</p>
+
+<h2 id="为什么要使用线程池">为什么要使用线程池？</h2>
+
+<p>在执行一个异步任务或并发任务时，往往是通过直接new Thread()方法来创建新的线程，这样做弊端较多，更好的解决方案是合理地利用线程池，线程池的优势很明显，如下：</p>
+
+<ul>
+  <li>降低系统资源消耗，通过重用已存在的线程，降低线程创建和销毁造成的消耗；</li>
+  <li>提高系统响应速度，当有任务到达时，无需等待新线程的创建便能立即执行；</li>
+  <li>方便线程并发数的管控，线程若是无限制的创建，不仅会额外消耗大量系统资源，更是占用过多资源而阻塞系统或oom等状况，从而降低系统的稳定性。线程池能有效管控线程，统一分配、调优，提供资源使用率；</li>
+  <li>更强大的功能，线程池提供了定时、定期以及可控线程数等功能的线程池，使用方便简单。</li>
+</ul>
+
+<h2 id="线程池使用方式">线程池使用方式</h2>
+
+<p>java.util.concurrent包中提供了多种线程池的创建方式，我们可以直接使用ThreadPoolExecutor类直接创建一个线程池，也可以使用Executors类创建，下面我们分别说一下这几种创建的方式。</p>
+
+<hr />
+
+<h2 id="executors创建线程池">Executors创建线程池</h2>
+
+<p>Executors类是java.util.concurrent提供的一个创建线程池的工厂类，使用该类可以方便的创建线程池，此类提供的几种方法，支持创建四种类型的线程池，分别是：newCachedThreadPool、newFixedThreadPool、newScheduledThreadPool、newSingleThreadExecutor。</p>
+
+<h3 id="newcachedthreadpool">newCachedThreadPool</h3>
+
+<p>创建一个可缓存的无界线程池，该方法无参数。当线程池中的线程空闲时间超过60s则会自动回收该线程，当任务超过线程池的线程数则创建新线程。线程池的大小上限为Integer.MAX_VALUE，可看做是无限大。</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>/**
+     * 创建无边界大小的线程池
+     */
+    public static void createCachedThreadPool() {
+        ExecutorService cachedThreadPool = Executors.newCachedThreadPool();
+        final CountDownLatch countDownLatch = new CountDownLatch(10);
+        for (int i = 0; i &lt; 10; i++) {
+            final int currentIndex = i;
+            cachedThreadPool.execute(() -&gt; {
+                System.out.println(Thread.currentThread().getName() + ", currentIndex is : " + currentIndex);
+                countDownLatch.countDown();
+            });
+        }
+        try {
+            countDownLatch.await();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        System.out.println("全部线程执行完毕");
+    }
+</code></pre></div></div>
+<p>上面的Demo中创建了一个无边界限制的线程池，同时使用了一个多线程辅助类CountDownLatch，关于该类的使用，后面会有介绍。<br />
+执行结果：</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>public static void main(String[] args) {
+        createCachedThreadPool();
+    }
+</code></pre></div></div>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>pool-1-thread-1, currentIndex is : 0
+pool-1-thread-5, currentIndex is : 4
+pool-1-thread-4, currentIndex is : 3
+pool-1-thread-3, currentIndex is : 2
+pool-1-thread-2, currentIndex is : 1
+pool-1-thread-9, currentIndex is : 8
+pool-1-thread-8, currentIndex is : 7
+pool-1-thread-7, currentIndex is : 6
+pool-1-thread-6, currentIndex is : 5
+pool-1-thread-5, currentIndex is : 9
+全部线程执行完毕
+</code></pre></div></div>
+
+<h3 id="newfixedthreadpool">newFixedThreadPool</h3>
+
+<p>创建一个可重用固定线程数的线程池，以共享的无界队列方式来运行这些线程。在任意点，在大多数 nThreads 线程会处于处理任务的活动状态。如果在所有线程处于活动状态时提交附加任务，则在有可用线程之前，附加任务将在队列中等待。</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>/**
+     * 创建固定大小的线程池
+     */
+    public static void createFixedThreadPool() {
+        ExecutorService fixedThreadPool = Executors.newFixedThreadPool(5);
+        final CountDownLatch countDownLatch = new CountDownLatch(5);
+        for (int i = 0; i &lt; 5; i++) {
+            final int currentIndex = i;
+            fixedThreadPool.execute(() -&gt; {
+                System.out.println(Thread.currentThread().getName() + ", currentIndex is : " + currentIndex);
+                countDownLatch.countDown();
+            });
+        }
+        try {
+            countDownLatch.await();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        System.out.println("全部线程执行完毕");
+    }
+</code></pre></div></div>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>public static void main(String[] args) {
+        createFixedThreadPool();
+    }
+</code></pre></div></div>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>pool-1-thread-4, currentIndex is : 3
+pool-1-thread-5, currentIndex is : 4
+pool-1-thread-2, currentIndex is : 1
+pool-1-thread-1, currentIndex is : 0
+pool-1-thread-3, currentIndex is : 2
+全部线程执行完毕
+</code></pre></div></div>
+
+<h3 id="newscheduledthreadpool">newScheduledThreadPool</h3>
+
+<p>创建一个线程池，它可安排在给定延迟后运行命令或者定期地执行。</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    /**
+     * 创建给定延迟后运行命令或者定期地执行的线程池
+     */
+    public static void createScheduledThreadPool() {
+        ScheduledExecutorService scheduledThreadPool = Executors.newScheduledThreadPool(5);
+        final CountDownLatch countDownLatch = new CountDownLatch(5);
+        for (int i = 0; i &lt; 5; i++) {
+            final int currentIndex = i;
+            //定时执行一次的任务，延迟1s后执行
+            scheduledThreadPool.schedule(() -&gt; {
+                System.out.println(Thread.currentThread().getName() + ", currentIndex is : " + currentIndex);
+                countDownLatch.countDown();
+            }, 1, TimeUnit.SECONDS);
+            //周期性地执行任务，延迟2s后，每3s一次地周期性执行任务
+            scheduledThreadPool.scheduleAtFixedRate(() -&gt; System.out.println(Thread.currentThread().getName() + "every 3s"), 2, 3, TimeUnit.SECONDS);
+        }
+    }
+</code></pre></div></div>
+<p>这里创建了一个调度的线程池，执行两个任务，第一个任务延迟1秒后执行，第二个任务为周期性任务，延迟2秒后，每三秒执行一次
+<br />
+执行结果：</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>public static void main(String[] args) {
+        createScheduledThreadPool();
+    }
+</code></pre></div></div>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>pool-1-thread-1, currentIndex is : 0
+pool-1-thread-2, currentIndex is : 1
+pool-1-thread-3, currentIndex is : 2
+pool-1-thread-2, currentIndex is : 3
+pool-1-thread-4, currentIndex is : 4
+pool-1-thread-5every 3s
+pool-1-thread-2every 3s
+pool-1-thread-3every 3s
+pool-1-thread-1every 3s
+pool-1-thread-5every 3s
+pool-1-thread-2every 3s
+pool-1-thread-4every 3s
+pool-1-thread-4every 3s
+pool-1-thread-3every 3s
+pool-1-thread-2every 3s
+</code></pre></div></div>
+<p>可以看到，第一个任务执行完毕后，开始执行定时调度型任务</p>
+
+<p>该线程池提供了多个方法：</p>
+
+<ul>
+  <li>schedule(Runnable command, long delay, TimeUnit unit)，延迟一定时间后执行Runnable任务；</li>
+  <li>schedule(Callable callable, long delay, TimeUnit unit)，延迟一定时间后执行Callable任务；</li>
+  <li>scheduleAtFixedRate(Runnable command, long initialDelay, long period, TimeUnit unit)，延迟一定时间后，以间隔period时间的频率周期性地执行任务；</li>
+  <li>scheduleWithFixedDelay(Runnable command, long initialDelay, long delay,TimeUnit unit)，与scheduleAtFixedRate()方法很类似，但是不同的是scheduleWithFixedDelay()方法的周期时间间隔是以上一个任务执行结束到下一个任务开始执行的间隔，而scheduleAtFixedRate()方法的周期时间间隔是以上一个任务开始执行到下一个任务开始执行的间隔，也就是这一些任务系列的触发时间都是可预知的。</li>
+</ul>
+
+<h3 id="newsinglethreadexecutor">newSingleThreadExecutor</h3>
+
+<p>创建一个单线程的线程池，以无界队列方式来运行该线程。当多个任务提交到单线程线程池中，线程池将逐个去进行执行，未执行的任务将放入无界队列进行等待。</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>/**
+     * 创建单线程的线程池
+     */
+    public static void createSingleThreadPool() {
+        ExecutorService singleThreadPool = Executors.newSingleThreadExecutor();
+        singleThreadPool.execute(()-&gt; System.out.println(Thread.currentThread().getName()));
+    }
+</code></pre></div></div>
+<p>执行结果：</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>public static void main(String[] args) {
+        createSingleThreadPool();
+    }
+</code></pre></div></div>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>pool-1-thread-1
+</code></pre></div></div>
+
+<h3 id="四种线程池对比">四种线程池对比</h3>
+
+<table>
+  <thead>
+    <tr>
+      <th>线程池方法</th>
+      <th>初始化线程池数</th>
+      <th>最大线程池数</th>
+      <th>线程池中线程存活时间</th>
+      <th>时间单位</th>
+      <th>工作队列</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>newCachedThreadPool</td>
+      <td>0</td>
+      <td>Integer.MAX_VALUE</td>
+      <td>60</td>
+      <td>秒</td>
+      <td>SynchronousQueue</td>
+    </tr>
+    <tr>
+      <td>newFixedThreadPool</td>
+      <td>入参指定大小</td>
+      <td>入参指定大小</td>
+      <td>0</td>
+      <td>毫秒</td>
+      <td>LinkedBlockingQueue</td>
+    </tr>
+    <tr>
+      <td>newScheduledThreadPool</td>
+      <td>入参指定大小</td>
+      <td>Integer.MAX_VALUE</td>
+      <td>0</td>
+      <td>微秒</td>
+      <td>DelayedWorkQueue</td>
+    </tr>
+    <tr>
+      <td>newSingleThreadExecutor</td>
+      <td>1</td>
+      <td>1</td>
+      <td>0</td>
+      <td>毫秒</td>
+      <td>LinkedBlockingQueue</td>
+    </tr>
+  </tbody>
+</table>
+
+<hr />
+
+<h2 id="threadpoolexecutor创建线程池">ThreadPoolExecutor创建线程池</h2>
+
+<p>Executors类提供4个静态工厂方法：newCachedThreadPool()、newFixedThreadPool(int)、newSingleThreadExecutor和newScheduledThreadPool(int)。这些方法最终都是通过ThreadPoolExecutor类来完成的，当有一些场景需要更细粒度的控制的线程池，可以使用ThreadPoolExecutor方法创建线程池。</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>/**
+     * 使用ThreadPoolExecutor创建线程池
+     */
+    public void createThreadPoolExecutor() {
+
+        ThreadPoolExecutor threadPoolExecutor = new ThreadPoolExecutor(5, 10, 10L, TimeUnit.SECONDS,
+                new LinkedBlockingDeque&lt;&gt;(1000),
+                new ThreadPoolExecutor.AbortPolicy());
+
+        final CountDownLatch countDownLatch = new CountDownLatch(8);
+        for (int i = 0; i &lt; 8; i++) {
+            final int currentIndex = i;
+            System.out.println("提交第" + i + "个线程");
+            threadPoolExecutor.execute(() -&gt; {
+                System.out.println(Thread.currentThread().getName() + ", currentIndex is : " + currentIndex);
+                countDownLatch.countDown();
+            });
+        }
+        System.out.println("全部提交完毕");
+        try {
+            System.out.println("准备等待线程池任务执行完毕");
+            countDownLatch.await();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        System.out.println("全部线程执行完毕");
+    }
+</code></pre></div></div>
+
+<p>执行结果：</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>提交第0个线程
+提交第1个线程
+提交第2个线程
+提交第3个线程
+提交第4个线程
+pool-1-thread-2, currentIndex is : 1
+提交第5个线程
+pool-1-thread-4, currentIndex is : 3
+pool-1-thread-3, currentIndex is : 2
+pool-1-thread-1, currentIndex is : 0
+pool-1-thread-3, currentIndex is : 5
+pool-1-thread-5, currentIndex is : 4
+提交第6个线程
+提交第7个线程
+pool-1-thread-2, currentIndex is : 6
+pool-1-thread-2, currentIndex is : 7
+全部提交完毕
+准备等待线程池任务执行完毕
+全部线程执行完毕
+</code></pre></div></div>
+
+<p><b>接下来看一下ThreadPoolExecutor的中的各个参数的含义。</b></p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>public ThreadPoolExecutor(int corePoolSize,
+                              int maximumPoolSize,
+                              long keepAliveTime,
+                              TimeUnit unit,
+                              BlockingQueue&lt;Runnable&gt; workQueue,
+                              ThreadFactory threadFactory,
+                              RejectedExecutionHandler handler) {
+        if (corePoolSize &lt; 0 ||
+            maximumPoolSize &lt;= 0 ||
+            maximumPoolSize &lt; corePoolSize ||
+            keepAliveTime &lt; 0)
+            throw new IllegalArgumentException();
+        if (workQueue == null || threadFactory == null || handler == null)
+            throw new NullPointerException();
+        this.corePoolSize = corePoolSize;
+        this.maximumPoolSize = maximumPoolSize;
+        this.workQueue = workQueue;
+        this.keepAliveTime = unit.toNanos(keepAliveTime);
+        this.threadFactory = threadFactory;
+        this.handler = handler;
+    }
+</code></pre></div></div>
+
+<h4 id="各个参数含义">各个参数含义：</h4>
+<ul>
+  <li>corePoolSize - 池中所保存的线程数，包括空闲线程，必须大于或等于0。</li>
+  <li>maximumPoolSize - 池中允许的最大线程数，必须大于或等于corePoolSize。</li>
+  <li>keepAliveTime - 线程存活时间，当线程数大于核心时，此为终止前多余的空闲线程等待新任务的最长时间。</li>
+  <li>unit - keepAliveTime 参数的时间单位，必须大于或等于0。</li>
+  <li>workQueue - 工作队列，执行前用于保持任务的队列。此队列仅保持由 execute 方法提交的 Runnable 任务。</li>
+  <li>threadFactory - 执行程序创建新线程时使用的工厂，默认为DefaultThreadFactory类。</li>
+  <li>handler - 拒绝策略，由于超出线程范围和队列容量而使执行被阻塞时所使用的处理程序，默认策略为ThreadPoolExecutor.AbortPolicy。</li>
+</ul>
+
+<h4 id="各个参数详细解释">各个参数详细解释：</h4>
+
+<ol>
+  <li>corePoolSize（线程池基本大小）：当向线程池提交一个任务时，若线程池已创建的线程数小于corePoolSize，即便此时存在空闲线程，也会通过创建一个新线程来执行该任务，直到已创建的线程数大于或等于corePoolSize时，才会根据是否存在空闲线程，来决定是否需要创建新的线程。除了利用提交新任务来创建和启动线程（按需构造），也可以通过 prestartCoreThread() 或 prestartAllCoreThreads() 方法来提前启动线程池中的基本线程。</li>
+  <li>maximumPoolSize（线程池最大大小）：线程池所允许的最大线程个数。当队列满了，且已创建的线程数小于maximumPoolSize，则线程池会创建新的线程来执行任务。另外，对于无界队列，可忽略该参数。</li>
+  <li>keepAliveTime（线程存活保持时间）：默认情况下，当线程池的线程个数多于corePoolSize时，线程的空闲时间超过keepAliveTime则会终止。但只要keepAliveTime大于0，allowCoreThreadTimeOut(boolean) 方法也可将此超时策略应用于核心线程。另外，也可以使用setKeepAliveTime()动态地更改参数。</li>
+  <li>unit（存活时间的单位）：时间单位，分为7类，从细到粗顺序：NANOSECONDS（纳秒），MICROSECONDS（微妙），MILLISECONDS（毫秒），SECONDS（秒），MINUTES（分），HOURS（小时），DAYS（天）；</li>
+  <li>workQueue（任务队列）：用于传输和保存等待执行任务的阻塞队列。可以使用此队列与线程池进行交互：
+    <ul>
+      <li>如果运行的线程数少于 corePoolSize，则 Executor 始终首选添加新的线程，而不进行排队。</li>
+      <li>如果运行的线程数等于或多于 corePoolSize，则 Executor 始终首选将请求加入队列，而不添加新的线程。</li>
+      <li>如果无法将请求加入队列，则创建新的线程，除非创建此线程超出maximumPoolSize，在这种情况下，任务将被拒绝。</li>
+    </ul>
+  </li>
+  <li>threadFactory（线程工厂）：用于创建新线程。由同一个threadFactory创建的线程，属于同一个ThreadGroup，创建的线程优先级都为Thread.NORM_PRIORITY，以及是非守护进程状态。threadFactory创建的线程也是采用new Thread()方式，threadFactory创建的线程名都具有统一的风格：pool-m-thread-n（m为线程池的编号，n为线程池内的线程编号）；</li>
+  <li>handler（线程饱和策略）：当线程池和队列都满了，则表明该线程池已达饱和状态。
+    <ul>
+      <li>ThreadPoolExecutor.AbortPolicy：处理程序遭到拒绝，则直接抛出运行时异常RejectedExecutionException。(默认策略)</li>
+      <li>ThreadPoolExecutor.CallerRunsPolicy：调用者所在线程来运行该任务，此策略提供简单的反馈控制机制，能够减缓新任务的提交速度。</li>
+      <li>ThreadPoolExecutor.DiscardPolicy：无法执行的任务将被删除。</li>
+      <li>ThreadPoolExecutor.DiscardOldestPolicy：如果执行程序尚未关闭，则位于工作队列头部的任务将被删除，然后重新尝试执行任务（如果再次失败，则重复此过程）。</li>
+    </ul>
+  </li>
+</ol>
+
+<h4 id="排队策略">排队策略：</h4>
+
+<ol>
+  <li>直接提交。工作队列的默认选项是SynchronousQueue，它将任务直接提交给线程而不保持它们。在此，如果不存在可用于立即运行任务的线程，则试图把任务加入队列将失败，因此会构造一个新的线程。此策略可以避免在处理可能具有内部依赖性的请求集时出现锁。直接提交通常要求无界 maximumPoolSizes以避免拒绝新提交的任务。当命令以超过队列所能处理的平均数连续到达时，此策略允许无界线程具有增长的可能性。</li>
+  <li>无界队列。使用无界队列（例如，不具有预定义容量的 LinkedBlockingQueue）将导致在所有 corePoolSize 线程都忙时新任务在队列中等待。这样，创建的线程就不会超过 corePoolSize。（因此，maximumPoolSize 的值也就无效了。）当每个任务完全独立于其他任务，即任务执行互不影响时，适合于使用无界队列；例如，在 Web 页服务器中。这种排队可用于处理瞬态突发请求，当命令以超过队列所能处理的平均数连续到达时，此策略允许无界线程具有增长的可能性。</li>
+  <li>有界队列。当使用有限的 maximumPoolSizes 时，有界队列（如 ArrayBlockingQueue）有助于防止资源耗尽，但是可能较难调整和控制。队列大小和最大池大小可能需要相互折衷：使用大型队列和小型池可以最大限度地降低 CPU 使用率、操作系统资源和上下文切换开销，但是可能导致人工降低吞吐量。如果任务频繁阻塞（例如，如果它们是 I/O 边界），则系统可能为超过您许可的更多线程安排时间。使用小型队列通常要求较大的池大小，CPU 使用率较高，但是可能遇到不可接受的调度开销，这样也会降低吞吐量。</li>
+</ol>
+
+<hr />
+
+<h2 id="工作队列对比">工作队列对比</h2>
+
+<p>BlockingQueue的插入/移除/检查这些方法，对于不能立即满足但可能在将来某一时刻可以满足的操作，共有4种不同的处理方式：第一种是抛出一个异常，第二种是返回一个特殊值（null 或false，具体取决于操作），第三种是在操作可以成功前，无限期地阻塞当前线程，第四种是在放弃前只在给定的最大时间限制内阻塞。如下表格：</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>操作</th>
+      <th>抛出异常</th>
+      <th>特殊值</th>
+      <th>阻塞</th>
+      <th>超时</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>插入</td>
+      <td>add(e)</td>
+      <td>offer(e)</td>
+      <td>put(e)</td>
+      <td>offer(e, time, unit)</td>
+    </tr>
+    <tr>
+      <td>移除</td>
+      <td>remove()</td>
+      <td>poll()</td>
+      <td>take()</td>
+      <td>poll(time, unit)</td>
+    </tr>
+    <tr>
+      <td>检查</td>
+      <td>element()</td>
+      <td>peek()</td>
+      <td>不可用</td>
+      <td>不可用</td>
+    </tr>
+  </tbody>
+</table>
+
+<h4 id="实现blockingqueue接口的常见类如下">实现BlockingQueue接口的常见类如下：</h4>
+
+<ul>
+  <li>ArrayBlockingQueue：基于数组的有界阻塞队列。队列按FIFO原则对元素进行排序，队列头部是在队列中存活时间最长的元素，队尾则是存在时间最短的元素。新元素插入到队列的尾部，队列获取操作则是从队列头部开始获得元素。 这是一个典型的“有界缓存区”，固定大小的数组在其中保持生产者插入的元素和使用者提取的元素。一旦创建了这样的缓存区，就不能再增加其容量。试图向已满队列中放入元素会导致操作受阻塞；试图从空队列中提取元素将导致类似阻塞。ArrayBlockingQueue构造方法可通过设置fairness参数来选择是否采用公平策略，公平性通常会降低吞吐量，但也减少了可变性和避免了“不平衡性”，可根据情况来决策。</li>
+  <li>LinkedBlockingQueue：基于链表的无界阻塞队列。与ArrayBlockingQueue一样采用FIFO原则对元素进行排序。基于链表的队列吞吐量通常要高于基于数组的队列。</li>
+  <li>SynchronousQueue：同步的阻塞队列。其中每个插入操作必须等待另一个线程的对应移除操作，等待过程一直处于阻塞状态，同理，每一个移除操作必须等到另一个线程的对应插入操作。SynchronousQueue没有任何容量。不能在同步队列上进行 peek，因为仅在试图要移除元素时，该元素才存在；除非另一个线程试图移除某个元素，否则也不能（使用任何方法）插入元素；也不能迭代队列，因为其中没有元素可用于迭代。Executors.newCachedThreadPool使用了该队列。</li>
+  <li>PriorityBlockingQueue：基于优先级的无界阻塞队列。优先级队列的元素按照其自然顺序进行排序，或者根据构造队列时提供的 Comparator 进行排序，具体取决于所使用的构造方法。优先级队列不允许使用 null 元素。依靠自然顺序的优先级队列还不允许插入不可比较的对象（这样做可能导致 ClassCastException）。虽然此队列逻辑上是无界的，但是资源被耗尽时试图执行 add 操作也将失败（导致 OutOfMemoryError）。</li>
+</ul>
+
+<hr />
+
+<h2 id="线程池关闭">线程池关闭</h2>
+
+<p>调用线程池的shutdown()或shutdownNow()方法来关闭线程池。</p>
+
+<ul>
+  <li>shutdown：按过去执行已提交任务的顺序发起一个有序的关闭，但是不接受新任务。如果已经关闭，则调用没有其他作用。</li>
+  <li>shutdownNow：尝试停止所有的活动执行任务、暂停等待任务的处理，并返回等待执行的任务列表。在从此方法返回的任务队列中排空（移除）这些任务。</li>
+</ul>
+
+<p>中断采用interrupt方法，所以无法响应中断的任务可能永远无法终止。但调用上述的两个关闭之一，isShutdown()方法返回值为true，当所有任务都已关闭，表示线程池关闭完成，则isTerminated()方法返回值为true。当需要立刻中断所有的线程，不一定需要执行完任务，可直接调用shutdownNow()方法。</p>
+
+<hr />
+
+<h2 id="线程池大小设置">线程池大小设置</h2>
+
+<p>如何合理地估算线程池大小，这个问题是比较复杂的，比较粗糙的估算方式：</p>
+
+<ul>
+  <li>如果是CPU密集型应用，则线程池大小设置为N+1</li>
+  <li>如果是IO密集型应用，则线程池大小设置为2N+1</li>
+</ul>
+
+<p>但是根据我在实际应用场景的经验，这种估算有时并不准确，这里不展开讨论线程池大小的设置，可以看一下这一篇文章的分析：<a href="http://ifeve.com/how-to-calculate-threadpool-size/">如何合理地估算线程池大小</a></p>
+
+<h2 id="线程池的状态监控">线程池的状态监控</h2>
+
+<p>利用线程池提供的参数进行监控，参数如下：</p>
+
+<ul>
+  <li>getTaskCount：返回曾计划执行的近似任务总数。因为在计算期间任务和线程的状态可能动态改变，所以返回值只是一个近似值。</li>
+  <li>getCompletedTaskCount：返回已完成执行的近似任务总数。因为在计算期间任务和线程的状态可能动态改变，所以返回值只是一个近似值，但是该值在整个连续调用过程中不会减少。</li>
+  <li>getLargestPoolSize：线程池曾经创建过的最大线程数量，通过这个数据可以知道线程池是否满过。如等于线程池的最大大小，则表示线程池曾经满了。</li>
+  <li>getPoolSize：线程池的线程数量。</li>
+  <li>getActiveCount：返回主动执行任务的近似线程数。</li>
+</ul>
+
+<p>通过扩展线程池进行监控：继承线程池并重写线程池的beforeExecute()，afterExecute()和terminated()方法，可以在任务执行前、后和线程池关闭前自定义行为。如监控任务的平均执行时间，最大执行时间和最小执行时间等。</p>
+
+<p>使用ThreadPoolExecutor直接创建线程池时，可以使用第三方的ThreadFactory，或者自己实现ThreadFactory接口，拓展更多的属性，例如设置线程名称、执行开始时间、优先级等等。</p>
+
+<h1 id="结语">结语</h1>
+
+<p>本文介绍了Java 线程池的使用，线程池是非常复杂的一种工具，使用好是一种利器，使用不好也会造成很多问题，所以深入研究线程池还是非常有必要的，希望本文能对您有所帮助。如果您有更好的见解或对本文的内容有指正的地方，请留言给我。</p>]]></content><author><name>GitHub User</name></author><category term="Java" /><category term="Java" /><summary type="html"><![CDATA[]]></summary></entry></feed>
