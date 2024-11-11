@@ -84,6 +84,8 @@ Varint是一种能够根据实际需要动态调整所占位数的数据表示�
 2. 去掉高位，将每个字节的低 7 位合并到结果中。
 3. 根据高位判断是否继续读取，如果高位是 1，则继续读取下一个字节；如果高位是 0，表示所有字节都已经读取完毕。
 
+![serialize demo](https://github.com/wtopps/wtopps.github.io/blob/master/images/protobuf%20varint%20process.png?raw=true)
+
 
 
 再看一个Google官方文档给出的示例：
