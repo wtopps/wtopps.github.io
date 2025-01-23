@@ -1,0 +1,1982 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="google-translate-customization" content="108d9124921d80c3-80e20d618ff053c8-g4f02ec6f3dba68b7-c">
+<!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>Redis分布式锁实现指北 | wtopps</title>
+<meta name="generator" content="Jekyll v4.3.4">
+<meta property="og:title" content="Redis分布式锁实现指北">
+<meta name="author" content="GitHub User">
+<meta property="og:locale" content="en_US">
+<meta name="description" content="Write an awesome description for your new site here. You can edit this line in _config.yml. It will appear in your document head meta (for Google search results) and in your feed.xml site description.">
+<meta property="og:description" content="Write an awesome description for your new site here. You can edit this line in _config.yml. It will appear in your document head meta (for Google search results) and in your feed.xml site description.">
+<link rel="canonical" href="http://localhost:4000/others/2025/01/23/Redis%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81%E5%AE%9E%E7%8E%B0%E6%8C%87%E5%8C%97.html">
+<meta property="og:url" content="http://localhost:4000/others/2025/01/23/Redis%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81%E5%AE%9E%E7%8E%B0%E6%8C%87%E5%8C%97.html">
+<meta property="og:site_name" content="wtopps">
+<meta property="og:type" content="article">
+<meta property="article:published_time" content="2025-01-23T00:00:00+08:00">
+<meta name="twitter:card" content="summary">
+<meta property="twitter:title" content="Redis分布式锁实现指北">
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"GitHub User"},"dateModified":"2025-01-23T00:00:00+08:00","datePublished":"2025-01-23T00:00:00+08:00","description":"Write an awesome description for your new site here. You can edit this line in _config.yml. It will appear in your document head meta (for Google search results) and in your feed.xml site description.","headline":"Redis分布式锁实现指北","mainEntityOfPage":{"@type":"WebPage","@id":"http://localhost:4000/others/2025/01/23/Redis%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81%E5%AE%9E%E7%8E%B0%E6%8C%87%E5%8C%97.html"},"url":"http://localhost:4000/others/2025/01/23/Redis%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81%E5%AE%9E%E7%8E%B0%E6%8C%87%E5%8C%97.html"}</script>
+<!-- End Jekyll SEO tag -->
+<link rel="icon" href="">
+  <link rel="canonical" href="http://localhost:4000">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/typeface-noto-sans@0.0.72/index.min.css">
+  <link rel="stylesheet" href="/assets/css/main.css">
+  <script src="/assets/js/main.js"></script><link type="application/atom+xml" rel="alternate" href="http://localhost:4000/feed.xml" title="wtopps">
+<link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/styles/default.min.css">
+<script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/highlight.min.js"></script>
+<!-- and it's easy to individually load additional languages -->
+<script charset="UTF-8" src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/languages/go.min.js" async></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<script>
+// Init highlight js
+document.addEventListener('DOMContentLoaded', function(event) {
+  var els = document.querySelectorAll('pre code')
+
+  function addLangData(block) {
+    var outer = block.parentElement.parentElement.parentElement;
+    var lang = block.getAttribute('data-lang');
+    for (var i = 0; i < outer.classList.length; i++) {
+      var cls = outer.classList[i];
+      if (cls.startsWith('language-')) {
+        lang = cls;
+        break;
+      }
+    }
+    if (!lang) {
+      cls = block.getAttribute('class');
+      lang = cls ? cls.replace('hljs ', '') : '';
+    }
+    if (lang.startsWith('language-')) {
+      lang = lang.substr(9);
+    }
+    block.setAttribute('class', 'hljs ' + lang);
+    block.parentNode.setAttribute('data-lang', lang);
+  }
+
+  function addBadge(block) {
+    var enabled = ('true' || 'true').toLowerCase();
+    if (enabled == 'true') {
+      var pre = block.parentElement;
+      pre.classList.add('badge');
+    }
+  }
+
+  function handle(block) {
+    addLangData(block);
+    addBadge(block)
+    hljs.highlightBlock(block);
+  }
+
+  for (var i = 0; i < els.length; i++) {
+    var el = els[i];
+    handle(el);
+  }
+});
+</script>
+
+<style>
+  /* code language badge */
+  pre.badge::before {
+    content: attr(data-lang);
+    color: #fff;
+    background-color: #ff4e00;
+    padding: 0 .5em;
+    border-radius: 0 2px;
+    text-transform: uppercase;
+    text-align: center;
+    min-width: 32px;
+    display: inline-block;
+    position: absolute;
+    right: 0;
+  }
+
+  /* fix wrong badge display for firefox browser */
+  code > table pre::before {
+    display: none;
+  }
+</style>
+<script src="//cdnjs.cloudflare.com/ajax/libs/photoswipe/5.3.7/umd/photoswipe-lightbox.umd.min.js" async></script>
+<script src="//cdnjs.cloudflare.com/ajax/libs/photoswipe/5.3.7/umd/photoswipe.umd.min.js" async></script>
+<link href="//cdnjs.cloudflare.com/ajax/libs/photoswipe/5.3.7/photoswipe.min.css" rel="stylesheet">
+<style>
+  .pswp .pswp__container .pswp__img {
+    background-color: white;
+  }
+</style>
+
+<script>
+  function initPhotoSwipe() {
+    let customOptions = {};
+
+    try {
+      const data = ``.replaceAll("=>", ":");
+      customOptions = JSON.parse(data);
+    } catch (e) {
+      console.info("Invalid custom photo previewer options! " + e.message);
+    }
+
+    // Define object and gallery options
+    const options = Object.assign(
+      {
+        gallery: "section.main",
+        children: "a.photo-swipe",
+        photo_scale: 2,
+        // dynamic import is not supported in UMD version
+        pswpModule: PhotoSwipe,
+      },
+      customOptions
+    );
+
+    const galleryEl = document.querySelector(options.gallery);
+    if (!galleryEl) {
+      return;
+    }
+
+    const imgEls = [];
+    const els = galleryEl.querySelectorAll("img:not(.emoji)");
+    els.forEach((el) => {
+      if (el.src.trim() == "") {
+        return;
+      }
+      if (!imgEls.includes(el)) {
+        imgEls.push(el);
+      }
+    });
+
+    if (imgEls.length === 0) {
+      return;
+    }
+
+    imgEls.forEach((imgEl) => {
+      imgEl.outerHTML = `
+      <a class="photo-swipe"
+        href="${imgEl.src}"
+        data-pswp-width="${
+          Math.max(imgEl.naturalWidth, imgEl.width) * options.photo_scale
+        }"
+        data-pswp-height="${
+          Math.max(imgEl.naturalHeight, imgEl.height) * options.photo_scale
+        }"
+        data-pswp-caption="${imgEl.getAttribute("caption") || imgEl.alt}"
+        target="_blank">
+        ${imgEl.outerHTML}
+      </a>`;
+    });
+
+    // Initialize PhotoSwipe 5
+    var lightbox = new PhotoSwipeLightbox(options);
+
+    lightbox.init();
+  }
+
+  window.addEventListener("load", initPhotoSwipe);
+</script>
+</head>
+<body>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<header class="site-header " role="banner">
+
+  <div class="wrapper">
+    <div class="site-header-inner">
+<span class="site-brand"><a class="site-brand-inner" rel="author" href="/">
+  <img class="site-favicon" title="wtopps" src="" onerror="this.style.display='none'">
+  wtopps
+</a>
+</span><nav class="site-nav">
+          <input type="checkbox" id="nav-trigger" class="nav-trigger">
+          <label for="nav-trigger">
+            <span class="menu-icon">
+              <svg viewbox="0 0 18 15" width="18px" height="15px">
+                <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"></path>
+              </svg>
+            </span>
+          </label>
+
+          <div class="trigger">
+<a class="page-link" href="/about.html">ABOUT</a><a class="page-link" href="/archives.html">ARCHIVES</a><a class="page-link" href="/categories.html">CATEGORIES</a><a class="page-link" href="/">HOME</a><a class="page-link" href="/tags.html">TAGS</a>
+
+
+
+
+
+
+
+
+
+<div class="page-link" style="display: inline;">
+
+
+
+<div id="google_translate_element" style="display: none;">
+</div>
+
+<div class="ct-language">
+  <ul class="list-unstyled ct-language-dropdown">
+    
+      <li>
+        <a href="#" class="lang-select" data-lang="en">
+          
+          <img src="https://cdn.countryflags.com/thumbs/united-states-of-america/flag-400.png" title="English">
+          
+        </a>
+      </li>
+    
+      <li>
+        <a href="#" class="lang-select" data-lang="fr">
+          
+          <img src="https://cdn.countryflags.com/thumbs/france/flag-400.png" title="French">
+          
+        </a>
+      </li>
+    
+      <li>
+        <a href="#" class="lang-select" data-lang="zh-CN">
+          
+          <img src="https://cdn.countryflags.com/thumbs/china/flag-400.png" title="Chinese(Simple)">
+          
+        </a>
+      </li>
+    
+      <li>
+        <a href="#" class="lang-select" data-lang="ja">
+          
+          <img src="https://cdn.countryflags.com/thumbs/japan/flag-400.png" title="Japanese">
+          
+        </a>
+      </li>
+    
+      <li>
+        <a href="#" class="lang-select" data-lang="ko">
+          
+          <img src="https://cdn.countryflags.com/thumbs/south-korea/flag-400.png" title="Korean">
+          
+        </a>
+      </li>
+    
+      <li>
+        <a href="#" class="lang-select" data-lang="ru">
+          
+          <img src="https://cdn.countryflags.com/thumbs/russia/flag-400.png" title="Russian">
+          
+        </a>
+      </li>
+    
+  </ul>
+</div>
+
+<script type="text/javascript">
+function googleTranslateElementInit() {
+  new google.translate.TranslateElement({
+    pageLanguage: 'en',
+    autoDisplay: false,
+    layout: google.translate.TranslateElement.InlineLayout.VERTICAL
+  }, 'google_translate_element');
+
+  // Links to cross-origin destinations are unsafe
+  var gll = document.getElementsByClassName('goog-logo-link')[0];
+  if (gll) {
+    gll.setAttribute('rel', 'noopener');
+  }
+
+  function restoreLang() {
+    var iframe = document.getElementsByClassName('goog-te-banner-frame')[0];
+    if (!iframe) return;
+
+    var innerDoc = iframe.contentDocument || iframe.contentWindow.document;
+    var restore_el = innerDoc.getElementsByTagName("button");
+
+    for (var i = 0; i < restore_el.length; i++) {
+      if (restore_el[i].id.indexOf("restore") >= 0) {
+        restore_el[i].click();
+        var close_el = innerDoc.getElementsByClassName("goog-close-link");
+        close_el[0].click();
+        return;
+      }
+    }
+  }
+
+  function triggerHtmlEvent(element, eventName) {
+    var event;
+    if (document.createEvent) {
+      event = document.createEvent('HTMLEvents');
+      event.initEvent(eventName, true, true);
+      element.dispatchEvent(event);
+    } else {
+      event = document.createEventObject();
+      event.eventType = eventName;
+      element.fireEvent('on' + event.eventType, event);
+    }
+  }
+
+  var googleCombo = document.querySelector("select.goog-te-combo");
+  var langSelect = document.querySelector('.ct-language');
+  langSelect.addEventListener('click', function(event) {
+    if (!event.target) {
+      return;
+    }
+
+    var selected = document.querySelector('.ct-language .ct-language-selected');
+    if (selected) {
+      selected.classList.remove('ct-language-selected');
+    }
+
+    var target = event.target;
+    while (target && target !== langSelect ) {
+      if (target.matches('.lang-select')) {
+        break;
+      }
+      target = target.parentElement;
+    }
+
+    if (target && target.matches('.lang-select')) {
+      var lang = target.getAttribute('data-lang');
+      if (googleCombo.value == lang) {
+        restoreLang();
+      } else {
+        target.parentElement.classList.add('ct-language-selected');
+        googleCombo.value = lang;
+        triggerHtmlEvent(googleCombo, 'change');
+      }
+    }
+
+    event.preventDefault();
+  });
+}
+</script>
+
+<script type="text/javascript" src="https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit" async></script>
+</div>
+</div>
+        </nav>
+</div>
+  </div>
+</header>
+
+<script>
+  function initHeader() {
+    var lastScrollY = getScrollPos().y;
+    var documentElement = document.documentElement;
+
+    function storeScrollData() {
+      var y = getScrollPos().y;var scrollStatus = "";
+
+      if (y <= 0) {
+        scrollStatus = "top";
+      } else if ((window.innerHeight + y) >= document.body.offsetHeight) {
+        scrollStatus = "bottom";
+      } else {
+        var isScrollDown = (y - lastScrollY > 0) ? true : false;
+        scrollStatus = isScrollDown ? "down" : "up";
+      }
+
+      lastScrollY = y;
+      documentElement.setAttribute("data-scroll-status", scrollStatus);
+    }
+
+    window.addEventListener('scroll', function(e) {
+      storeScrollData();
+    });
+
+    storeScrollData();
+  }
+  document.addEventListener('DOMContentLoaded', initHeader);
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<script>
+  function hashLocate(hashValue) {
+    hashValue = hashValue.replace(/^.*#h-/, '');
+    hashValue = decodeURIComponent(hashValue);
+    var element = document.getElementById(hashValue);
+
+    if (!element) {
+      return;
+    }
+
+    var header = document.querySelector('header.site-header');
+    var headerRect = header.getBoundingClientRect();
+    var headerTop = Math.floor(headerRect.top);
+    var headerHeight = Math.floor(headerRect.height);
+    var scrollPos = getScrollPos();
+    var offsetY = element.offsetTop - (headerTop + headerHeight + 20);
+
+    if (offsetY == scrollPos.y) {
+      return;
+    }
+
+    if (headerTop == 0  && offsetY > scrollPos.y) {
+      offsetY += headerHeight + 2;
+    } else if (headerTop < 0  && offsetY < scrollPos.y) {
+      offsetY -= headerHeight - 2;
+    }
+
+    smoothScrollTo(offsetY);
+  }
+
+  // The first event occurred
+  window.addEventListener('load', function(event) {
+    if (window.location.hash) {
+      hashLocate(window.location.hash);
+    }
+  });
+
+  // The first event occurred
+  window.addEventListener('click', function(event) {
+    if (event.target.tagName.toLowerCase() == 'a') {
+      hashLocate(event.target.getAttribute('href'));
+    }
+  });
+</script>
+<div class="theme-toggle">
+  <input type="checkbox" id="theme-switch">
+  <label for="theme-switch">
+    <div class="toggle"></div>
+    <div class="names">
+      <p class="light">Light</p>
+      <p class="dark">Dark</p>
+    </div>
+  </label>
+</div>
+
+
+
+
+<script>
+  (function() {
+    var sw = document.getElementById('theme-switch');
+    var html = document.getElementsByTagName('html')[0];
+    var nightModeOption = ('auto' || 'auto').toLowerCase();
+    var storage = nightModeOption === 'manual'
+        ? localStorage
+        : sessionStorage;
+    var themeData = loadThemeData();
+
+    function saveThemeData(data) {
+      storage.setItem('theme', JSON.stringify(data));
+    }
+
+    function loadThemeData() {
+      var data = storage.getItem('theme');
+      try {
+        data = JSON.parse(data ? data : '');
+      } catch(e) {
+        data = { nightShift: undefined, autoToggleAt: 0 };
+        saveThemeData(data);
+      }
+      return data;
+    }
+
+    function handleThemeToggle(nightShift) {
+      themeData.nightShift = nightShift;
+      saveThemeData(themeData);
+      html.dataset.theme = nightShift ? 'dark' : 'light';
+      setTimeout(function() {
+        sw.checked = nightShift ? true : false;
+      }, 50);
+    }
+
+    function autoThemeToggle() {
+      // Next time point of theme toggle
+      var now = new Date();
+      var toggleAt = new Date();
+      var hours = now.getHours();
+      var nightShift = hours >= 19 || hours <=7;
+
+      if (nightShift) {
+        if (hours > 7) {
+          toggleAt.setDate(toggleAt.getDate() + 1);
+        }
+        toggleAt.setHours(7);
+      } else {
+        toggleAt.setHours(19);
+      }
+
+      toggleAt.setMinutes(0);
+      toggleAt.setSeconds(0);
+      toggleAt.setMilliseconds(0)
+
+      var delay = toggleAt.getTime() - now.getTime();
+
+      // auto toggle theme mode
+      setTimeout(function() {
+        handleThemeToggle(!nightShift);
+      }, delay);
+
+      return {
+        nightShift: nightShift,
+        toggleAt: toggleAt.getTime()
+      };
+    }
+
+    // Listen the theme toggle event
+    sw.addEventListener('change', function(event) {
+      handleThemeToggle(event.target.checked);
+    });
+
+    if (nightModeOption == 'auto') {
+      var data = autoThemeToggle();
+
+      // Toggle theme by local setting
+      if (data.toggleAt > themeData.autoToggleAt) {
+        themeData.autoToggleAt = data.toggleAt;
+        handleThemeToggle(data.nightShift);
+      } else {
+        handleThemeToggle(themeData.nightShift);
+      }
+    } else if (nightModeOption == 'manual') {
+      handleThemeToggle(themeData.nightShift);
+    } else {
+      var nightShift = themeData.nightShift;
+      if (nightShift === undefined) {
+        nightShift = nightModeOption === 'on';
+      }
+      handleThemeToggle(nightShift);
+    }
+  })();
+</script>
+<div id="click-to-top" class="click-to-top">
+  <i class="fa fa-arrow-up"></i>
+</div>
+<script>
+  (function () {
+    const clickToTop = document.getElementById('click-to-top');
+    window.addEventListener('scroll', () => {
+      if (window.scrollY > 100) {
+        clickToTop.classList.add('show')
+      }else {
+        clickToTop.classList.remove('show')
+      }
+    });
+    clickToTop.addEventListener('click', () => {
+      window.smoothScrollTo(0);
+    });
+  })();
+</script>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <div class="framework">
+  <section class="main">
+
+     <div class="post">
+  <section>
+
+
+
+
+
+
+
+
+
+<header class="post-header">
+  <h1 class="post-title p-name" itemprop="name headline">Redis分布式锁实现指北</h1>
+  <h2 class="post-subtitle">Redis分布式锁实现指北</h2>
+
+  <div class="post-meta">
+    <time class="dt-published" datetime="2025-01-23T00:00:00+08:00" itemprop="datePublished"><i class="fa fa-calendar"></i> Jan 23, 2025
+    </time>
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <span class="post-reading-time left-vsplit"><i class="fa fa-clock-o"></i> About 36 mins</span>
+  </div>
+<div class="post-tags"><a class="post-tag" href="/tags.html#Redis">#Redis</a></div></header>
+<article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+
+    <div class="post-content e-content" itemprop="articleBody">
+
+      <p><img src="https://raw.githubusercontent.com/wtopps/wtopps.github.io/refs/heads/master/images/image1.webp" alt="banner"></p>
+
+<h2 id="背景">背景</h2>
+
+<p>分布式锁在业务场景中的应用十分广泛，当你的服务部署在分布式的多节点集群中，在执行某一个方法时，需要控制并发的情况，保证同一时间只有一个请求可以执行，你一定需要分布式锁来实现。</p>
+
+<p>最常见的分布式锁，一般就是Redis和ZK（亦或者MySQL的for update也可以充当），当然也有很多其他的实现，本篇的主角，就是Redis，我们来逐步使用实现一个简单易用的Redis分布式锁。</p>
+
+<h2 id="redislock">RedisLock</h2>
+
+<p>首先，我们先来回忆一下Java的Lock是怎么玩的：</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nc">ReentrantLock</span> <span class="n">lock</span> <span class="o">=</span> <span class="k">new</span> <span class="nc">ReentrantLock</span><span class="o">();</span>
+<span class="k">try</span> <span class="o">{</span>
+    <span class="n">lock</span><span class="o">.</span><span class="na">lock</span><span class="o">();</span>
+    <span class="c1">// do something...</span>
+<span class="o">}</span> <span class="k">finally</span> <span class="o">{</span>
+    <span class="n">lock</span><span class="o">.</span><span class="na">unlock</span><span class="o">();</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<p>很简单，很优雅，那么我们就仿照Java的API来实现我们的Redis Lock。</p>
+
+<p>最直观的实现方式，就是使用Redis String的setnx方法，如果key存在就放弃，如果key不存在就set一个值，并指定过期时间，释放锁时，就把key删除，非常easy。</p>
+
+<p>Version1：</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nd">@Component</span>
+<span class="kd">public</span> <span class="kd">class</span> <span class="nc">RedisLockUtil</span> <span class="o">{</span>
+  	<span class="nd">@Autowired</span>
+    <span class="kd">private</span> <span class="nc">JedisClient</span> <span class="n">jedisClient</span><span class="o">;</span>
+
+    <span class="kd">public</span> <span class="kt">boolean</span> <span class="nf">lock</span><span class="o">(</span><span class="nc">String</span> <span class="n">key</span><span class="o">,</span> <span class="kt">long</span> <span class="n">lockTimeout</span><span class="o">)</span> <span class="o">{</span>
+        <span class="n">key</span> <span class="o">=</span> <span class="n">key</span> <span class="o">+</span> <span class="s">".lock"</span><span class="o">;</span>
+        <span class="no">UUID</span> <span class="n">uuid</span> <span class="o">=</span> <span class="no">UUID</span><span class="o">.</span><span class="na">randomUUID</span><span class="o">();</span>
+        <span class="nc">String</span> <span class="n">res</span> <span class="o">=</span> <span class="n">jedisClient</span><span class="o">.</span><span class="na">set</span><span class="o">(</span><span class="n">key</span><span class="o">,</span> <span class="n">uuid</span><span class="o">.</span><span class="na">toString</span><span class="o">(),</span> <span class="s">"nx"</span><span class="o">,</span> <span class="s">"px"</span><span class="o">,</span> <span class="n">lockTimeout</span><span class="o">);</span>
+        <span class="k">if</span> <span class="o">(</span><span class="nc">Objects</span><span class="o">.</span><span class="na">equals</span><span class="o">(</span><span class="s">"OK"</span><span class="o">,</span> <span class="n">res</span><span class="o">))</span> <span class="o">{</span>
+            <span class="k">return</span> <span class="kc">true</span><span class="o">;</span>
+        <span class="o">}</span>
+        <span class="k">return</span> <span class="kc">false</span><span class="o">;</span>
+    <span class="o">}</span>
+
+    <span class="kd">public</span> <span class="kt">boolean</span> <span class="nf">unlock</span><span class="o">(</span><span class="nc">String</span> <span class="n">key</span><span class="o">)</span> <span class="o">{</span>
+        <span class="n">key</span> <span class="o">=</span> <span class="n">key</span> <span class="o">+</span> <span class="s">".lock"</span><span class="o">;</span>
+        <span class="nc">Long</span> <span class="n">res</span> <span class="o">=</span> <span class="n">jedisClient</span><span class="o">.</span><span class="na">del</span><span class="o">(</span><span class="n">key</span><span class="o">);</span>
+        <span class="k">return</span> <span class="nc">Objects</span><span class="o">.</span><span class="na">equals</span><span class="o">(</span><span class="n">res</span><span class="o">,</span> <span class="mi">1L</span><span class="o">);</span>
+    <span class="o">}</span>
+<span class="o">}</span>  
+</code></pre></div></div>
+
+<p>Version1的实现非常简单，也可以满足基本的需求，但是有一个问题，任何线程，只要知道lockkey的名称，都可以调用unlock方法，这显然不是我们所希望的，所以我们在此基础上，进行一点优化，只有加锁的人，才可以释放锁，因此，我们需要保存一些额外的信息。</p>
+
+<p>Version2:</p>
+
+<p>我们新建一个Bean，存储RedisLock的相关信息，改造后我们的实现如下：</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">public</span> <span class="kd">class</span> <span class="nc">RedisLock</span> <span class="o">{</span>
+    <span class="kd">private</span> <span class="nc">String</span> <span class="n">key</span><span class="o">;</span>
+    <span class="kd">private</span> <span class="kd">final</span> <span class="no">UUID</span> <span class="n">uuid</span><span class="o">;</span>
+    <span class="kd">private</span> <span class="kt">long</span> <span class="n">lockTimeout</span><span class="o">;</span>
+    <span class="kd">private</span> <span class="kt">long</span> <span class="n">startLockTimeMillis</span><span class="o">;</span>
+    <span class="kd">private</span> <span class="kt">long</span> <span class="n">getLockTimeMillis</span><span class="o">;</span>
+
+    <span class="kd">public</span> <span class="nf">RedisLock</span><span class="o">(</span><span class="nc">String</span> <span class="n">key</span><span class="o">,</span> <span class="no">UUID</span> <span class="n">uuid</span><span class="o">,</span> <span class="kt">long</span> <span class="n">lockTimeout</span><span class="o">,</span> <span class="kt">long</span> <span class="n">startLockTimeMillis</span><span class="o">,</span> <span class="kt">long</span> <span class="n">getLockTimeMillis</span><span class="o">)</span> <span class="o">{</span>
+        <span class="k">this</span><span class="o">.</span><span class="na">key</span> <span class="o">=</span> <span class="n">key</span><span class="o">;</span>
+        <span class="k">this</span><span class="o">.</span><span class="na">uuid</span> <span class="o">=</span> <span class="n">uuid</span><span class="o">;</span>
+        <span class="k">this</span><span class="o">.</span><span class="na">lockTimeout</span> <span class="o">=</span> <span class="n">lockTimeout</span><span class="o">;</span>
+        <span class="k">this</span><span class="o">.</span><span class="na">startLockTimeMillis</span> <span class="o">=</span> <span class="n">startLockTimeMillis</span><span class="o">;</span>
+        <span class="k">this</span><span class="o">.</span><span class="na">getLockTimeMillis</span> <span class="o">=</span> <span class="n">getLockTimeMillis</span><span class="o">;</span>
+    <span class="o">}</span>
+
+    <span class="kd">public</span> <span class="nc">String</span> <span class="nf">getKey</span><span class="o">()</span> <span class="o">{</span>
+        <span class="k">return</span> <span class="n">key</span><span class="o">;</span>
+    <span class="o">}</span>
+
+    <span class="kd">public</span> <span class="kt">void</span> <span class="nf">setKey</span><span class="o">(</span><span class="nc">String</span> <span class="n">key</span><span class="o">)</span> <span class="o">{</span>
+        <span class="k">this</span><span class="o">.</span><span class="na">key</span> <span class="o">=</span> <span class="n">key</span><span class="o">;</span>
+    <span class="o">}</span>
+
+    <span class="kd">public</span> <span class="no">UUID</span> <span class="nf">getUuid</span><span class="o">()</span> <span class="o">{</span>
+        <span class="k">return</span> <span class="n">uuid</span><span class="o">;</span>
+    <span class="o">}</span>
+
+    <span class="kd">public</span> <span class="kt">long</span> <span class="nf">getLockTimeout</span><span class="o">()</span> <span class="o">{</span>
+        <span class="k">return</span> <span class="n">lockTimeout</span><span class="o">;</span>
+    <span class="o">}</span>
+
+    <span class="kd">public</span> <span class="kt">void</span> <span class="nf">setLockTimeout</span><span class="o">(</span><span class="kt">long</span> <span class="n">lockTimeout</span><span class="o">)</span> <span class="o">{</span>
+        <span class="k">this</span><span class="o">.</span><span class="na">lockTimeout</span> <span class="o">=</span> <span class="n">lockTimeout</span><span class="o">;</span>
+    <span class="o">}</span>
+
+    <span class="kd">public</span> <span class="kt">long</span> <span class="nf">getGetLockTimeMillis</span><span class="o">()</span> <span class="o">{</span>
+        <span class="k">return</span> <span class="n">getLockTimeMillis</span><span class="o">;</span>
+    <span class="o">}</span>
+
+    <span class="kd">public</span> <span class="kt">void</span> <span class="nf">setGetLockTimeMillis</span><span class="o">(</span><span class="kt">long</span> <span class="n">getLockTimeMillis</span><span class="o">)</span> <span class="o">{</span>
+        <span class="k">this</span><span class="o">.</span><span class="na">getLockTimeMillis</span> <span class="o">=</span> <span class="n">getLockTimeMillis</span><span class="o">;</span>
+    <span class="o">}</span>
+
+    <span class="kd">public</span> <span class="kt">long</span> <span class="nf">getStartLockTimeMillis</span><span class="o">()</span> <span class="o">{</span>
+        <span class="k">return</span> <span class="n">startLockTimeMillis</span><span class="o">;</span>
+    <span class="o">}</span>
+
+    <span class="kd">public</span> <span class="kt">void</span> <span class="nf">setStartLockTimeMillis</span><span class="o">(</span><span class="kt">long</span> <span class="n">startLockTimeMillis</span><span class="o">)</span> <span class="o">{</span>
+        <span class="k">this</span><span class="o">.</span><span class="na">startLockTimeMillis</span> <span class="o">=</span> <span class="n">startLockTimeMillis</span><span class="o">;</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nd">@Component</span>
+<span class="kd">public</span> <span class="kd">class</span> <span class="nc">RedisLockUtil</span> <span class="o">{</span>
+
+    <span class="nd">@Autowired</span>
+    <span class="kd">private</span> <span class="nc">JedisClient</span> <span class="n">jedisClient</span><span class="o">;</span>
+
+    <span class="c1">// 释放锁的Lua脚本</span>
+    <span class="kd">private</span> <span class="kd">static</span> <span class="kd">final</span> <span class="nc">String</span> <span class="no">LUA_SCRIPT_UNLOCK</span> <span class="o">=</span>
+            <span class="s">"if redis.call('get', KEYS[1]) == ARGV[1] then "</span> <span class="o">+</span>
+                    <span class="s">"    redis.call('del', KEYS[1]); "</span> <span class="o">+</span>
+                    <span class="s">"    return 'suc' "</span> <span class="o">+</span>
+                    <span class="s">"else "</span> <span class="o">+</span>
+                    <span class="s">"    return 'fail' "</span> <span class="o">+</span>
+                    <span class="s">"end"</span><span class="o">;</span>
+
+    <span class="kd">public</span> <span class="nc">RedisLock</span> <span class="nf">lock</span><span class="o">(</span><span class="nc">String</span> <span class="n">key</span><span class="o">,</span> <span class="kt">long</span> <span class="n">lockTimeout</span><span class="o">)</span> <span class="o">{</span>
+        <span class="n">key</span> <span class="o">=</span> <span class="n">key</span> <span class="o">+</span> <span class="s">".lock"</span><span class="o">;</span>
+        <span class="no">UUID</span> <span class="n">uuid</span> <span class="o">=</span> <span class="no">UUID</span><span class="o">.</span><span class="na">randomUUID</span><span class="o">();</span>
+        <span class="nc">String</span> <span class="n">res</span> <span class="o">=</span> <span class="n">jedisClient</span><span class="o">.</span><span class="na">set</span><span class="o">(</span><span class="n">key</span><span class="o">,</span> <span class="n">uuid</span><span class="o">.</span><span class="na">toString</span><span class="o">(),</span> <span class="s">"nx"</span><span class="o">,</span> <span class="s">"px"</span><span class="o">,</span> <span class="n">lockTimeout</span><span class="o">);</span>
+        <span class="k">if</span> <span class="o">(</span><span class="nc">Objects</span><span class="o">.</span><span class="na">equals</span><span class="o">(</span><span class="s">"OK"</span><span class="o">,</span> <span class="n">res</span><span class="o">))</span> <span class="o">{</span>
+            <span class="k">return</span> <span class="k">new</span> <span class="nf">RedisLock</span><span class="o">(</span><span class="n">key</span><span class="o">,</span> <span class="n">uuid</span><span class="o">,</span> <span class="n">lockTimeout</span><span class="o">,</span> <span class="nc">System</span><span class="o">.</span><span class="na">currentTimeMillis</span><span class="o">());</span>
+        <span class="o">}</span>
+        <span class="k">return</span> <span class="kc">null</span><span class="o">;</span>
+    <span class="o">}</span>
+
+    <span class="kd">public</span> <span class="kt">boolean</span> <span class="nf">unlock</span><span class="o">(</span><span class="nc">RedisLock</span> <span class="n">lock</span><span class="o">)</span> <span class="o">{</span>
+        <span class="k">if</span> <span class="o">(</span><span class="n">lock</span> <span class="o">==</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+            <span class="k">return</span> <span class="kc">false</span><span class="o">;</span>
+        <span class="o">}</span>
+
+        <span class="k">try</span> <span class="o">{</span>
+            <span class="nc">String</span> <span class="n">lockValue</span> <span class="o">=</span> <span class="n">lock</span><span class="o">.</span><span class="na">getUuid</span><span class="o">().</span><span class="na">toString</span><span class="o">();</span>
+            <span class="nc">JedisClusterPipeline</span> <span class="n">pipeline</span> <span class="o">=</span> <span class="n">jedisClient</span><span class="o">.</span><span class="na">getPipelined</span><span class="o">();</span>
+            <span class="nc">Response</span><span class="o">&lt;</span><span class="nc">String</span><span class="o">&gt;</span> <span class="n">response</span> <span class="o">=</span> <span class="n">pipeline</span><span class="o">.</span><span class="na">eval</span><span class="o">(</span><span class="no">LUA_SCRIPT_UNLOCK</span><span class="o">,</span>
+                    <span class="nc">Collections</span><span class="o">.</span><span class="na">singletonList</span><span class="o">(</span><span class="n">lock</span><span class="o">.</span><span class="na">getKey</span><span class="o">()),</span>
+                    <span class="nc">Collections</span><span class="o">.</span><span class="na">singletonList</span><span class="o">(</span><span class="n">lockValue</span><span class="o">)</span>
+            <span class="o">);</span>
+            <span class="n">pipeline</span><span class="o">.</span><span class="na">sync</span><span class="o">();</span>
+            <span class="k">return</span> <span class="n">response</span> <span class="o">!=</span> <span class="kc">null</span> <span class="o">&amp;&amp;</span> <span class="nc">Objects</span><span class="o">.</span><span class="na">equals</span><span class="o">(</span><span class="n">response</span><span class="o">.</span><span class="na">get</span><span class="o">(),</span> <span class="s">"suc"</span><span class="o">);</span>
+        <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="nc">Exception</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
+            <span class="k">return</span> <span class="kc">false</span><span class="o">;</span>
+        <span class="o">}</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<p>Well，改造后的方法，好像比Version1复杂了一些，别着急，其实并不复杂，为了保证原子性，删除lockkey部分我们采用了Lua脚本的方式实现，只有当lockkey的value校验一致时，才可以对key进行删除，这样就解决了Version1中出现的问题。</p>
+
+<p>Version2基本可以运行的很好了，但是还有一个问题，我们知道Java的synchronized和ReentrantLock的实现，都是带有自旋抢锁功能的，当第一次没有获取到锁后，会尝试自旋等待，再次尝试抢锁，而我们的实现，好像并不具备这个功能，这怎么可以呢？那我们也要加入自旋。</p>
+
+<p>Version3：</p>
+
+<p>在RedisLock Bean中加入一些额外的信息：</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">public</span> <span class="kd">class</span> <span class="nc">RedisLock</span> <span class="o">{</span>
+    <span class="kd">private</span> <span class="nc">String</span> <span class="n">key</span><span class="o">;</span>
+    <span class="kd">private</span> <span class="kd">final</span> <span class="no">UUID</span> <span class="n">uuid</span><span class="o">;</span>
+    <span class="kd">private</span> <span class="kt">long</span> <span class="n">lockTimeout</span><span class="o">;</span>
+    <span class="kd">private</span> <span class="kt">long</span> <span class="n">startLockTimeMillis</span><span class="o">;</span>
+    <span class="kd">private</span> <span class="kt">long</span> <span class="n">getLockTimeMillis</span><span class="o">;</span>
+    <span class="kd">private</span> <span class="kt">int</span> <span class="n">tryCount</span><span class="o">;</span>
+
+    <span class="kd">public</span> <span class="nf">RedisLock</span><span class="o">(</span><span class="nc">String</span> <span class="n">key</span><span class="o">,</span> <span class="no">UUID</span> <span class="n">uuid</span><span class="o">,</span> <span class="kt">long</span> <span class="n">lockTimeout</span><span class="o">,</span> <span class="kt">long</span> <span class="n">startLockTimeMillis</span><span class="o">,</span> <span class="kt">long</span> <span class="n">getLockTimeMillis</span><span class="o">,</span> <span class="kt">int</span> <span class="n">tryCount</span><span class="o">)</span> <span class="o">{</span>
+        <span class="k">this</span><span class="o">.</span><span class="na">key</span> <span class="o">=</span> <span class="n">key</span><span class="o">;</span>
+        <span class="k">this</span><span class="o">.</span><span class="na">uuid</span> <span class="o">=</span> <span class="n">uuid</span><span class="o">;</span>
+        <span class="k">this</span><span class="o">.</span><span class="na">lockTimeout</span> <span class="o">=</span> <span class="n">lockTimeout</span><span class="o">;</span>
+        <span class="k">this</span><span class="o">.</span><span class="na">startLockTimeMillis</span> <span class="o">=</span> <span class="n">startLockTimeMillis</span><span class="o">;</span>
+        <span class="k">this</span><span class="o">.</span><span class="na">getLockTimeMillis</span> <span class="o">=</span> <span class="n">getLockTimeMillis</span><span class="o">;</span>
+        <span class="k">this</span><span class="o">.</span><span class="na">tryCount</span> <span class="o">=</span> <span class="n">tryCount</span><span class="o">;</span>
+    <span class="o">}</span>
+
+    <span class="kd">public</span> <span class="nc">String</span> <span class="nf">getKey</span><span class="o">()</span> <span class="o">{</span>
+        <span class="k">return</span> <span class="n">key</span><span class="o">;</span>
+    <span class="o">}</span>
+
+    <span class="kd">public</span> <span class="kt">void</span> <span class="nf">setKey</span><span class="o">(</span><span class="nc">String</span> <span class="n">key</span><span class="o">)</span> <span class="o">{</span>
+        <span class="k">this</span><span class="o">.</span><span class="na">key</span> <span class="o">=</span> <span class="n">key</span><span class="o">;</span>
+    <span class="o">}</span>
+
+    <span class="kd">public</span> <span class="no">UUID</span> <span class="nf">getUuid</span><span class="o">()</span> <span class="o">{</span>
+        <span class="k">return</span> <span class="n">uuid</span><span class="o">;</span>
+    <span class="o">}</span>
+
+    <span class="kd">public</span> <span class="kt">long</span> <span class="nf">getLockTimeout</span><span class="o">()</span> <span class="o">{</span>
+        <span class="k">return</span> <span class="n">lockTimeout</span><span class="o">;</span>
+    <span class="o">}</span>
+
+    <span class="kd">public</span> <span class="kt">void</span> <span class="nf">setLockTimeout</span><span class="o">(</span><span class="kt">long</span> <span class="n">lockTimeout</span><span class="o">)</span> <span class="o">{</span>
+        <span class="k">this</span><span class="o">.</span><span class="na">lockTimeout</span> <span class="o">=</span> <span class="n">lockTimeout</span><span class="o">;</span>
+    <span class="o">}</span>
+
+    <span class="kd">public</span> <span class="kt">long</span> <span class="nf">getGetLockTimeMillis</span><span class="o">()</span> <span class="o">{</span>
+        <span class="k">return</span> <span class="n">getLockTimeMillis</span><span class="o">;</span>
+    <span class="o">}</span>
+
+    <span class="kd">public</span> <span class="kt">void</span> <span class="nf">setGetLockTimeMillis</span><span class="o">(</span><span class="kt">long</span> <span class="n">getLockTimeMillis</span><span class="o">)</span> <span class="o">{</span>
+        <span class="k">this</span><span class="o">.</span><span class="na">getLockTimeMillis</span> <span class="o">=</span> <span class="n">getLockTimeMillis</span><span class="o">;</span>
+    <span class="o">}</span>
+
+    <span class="kd">public</span> <span class="kt">long</span> <span class="nf">getStartLockTimeMillis</span><span class="o">()</span> <span class="o">{</span>
+        <span class="k">return</span> <span class="n">startLockTimeMillis</span><span class="o">;</span>
+    <span class="o">}</span>
+
+    <span class="kd">public</span> <span class="kt">void</span> <span class="nf">setStartLockTimeMillis</span><span class="o">(</span><span class="kt">long</span> <span class="n">startLockTimeMillis</span><span class="o">)</span> <span class="o">{</span>
+        <span class="k">this</span><span class="o">.</span><span class="na">startLockTimeMillis</span> <span class="o">=</span> <span class="n">startLockTimeMillis</span><span class="o">;</span>
+    <span class="o">}</span>
+
+    <span class="kd">public</span> <span class="kt">int</span> <span class="nf">getTryCount</span><span class="o">()</span> <span class="o">{</span>
+        <span class="k">return</span> <span class="n">tryCount</span><span class="o">;</span>
+    <span class="o">}</span>
+
+    <span class="kd">public</span> <span class="kt">void</span> <span class="nf">setTryCount</span><span class="o">(</span><span class="kt">int</span> <span class="n">tryCount</span><span class="o">)</span> <span class="o">{</span>
+        <span class="k">this</span><span class="o">.</span><span class="na">tryCount</span> <span class="o">=</span> <span class="n">tryCount</span><span class="o">;</span>
+    <span class="o">}</span>
+<span class="o">}</span>  
+</code></pre></div></div>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nd">@Component</span>
+<span class="kd">public</span> <span class="kd">class</span> <span class="nc">RedisLockUtil</span> <span class="o">{</span>
+
+    <span class="kd">private</span> <span class="kd">static</span> <span class="kd">final</span> <span class="nc">Logger</span> <span class="n">logger</span> <span class="o">=</span> <span class="nc">LoggerFactory</span><span class="o">.</span><span class="na">getLogger</span><span class="o">(</span><span class="nc">RedisDemo</span><span class="o">.</span><span class="na">class</span><span class="o">);</span>
+
+    <span class="nd">@Autowired</span>
+    <span class="kd">private</span> <span class="nc">JedisClient</span> <span class="n">jedisClient</span><span class="o">;</span>
+
+    <span class="c1">//拿锁的EVAL函数</span>
+    <span class="kd">private</span> <span class="kd">static</span> <span class="kd">final</span> <span class="nc">String</span> <span class="no">LUA_SCRIPT_LOCK</span> <span class="o">=</span> <span class="s">"return redis.call('SET', KEYS[1], ARGV[1], 'NX', 'PX', ARGV[2]) "</span><span class="o">;</span>
+
+    <span class="c1">// 释放锁的Lua脚本</span>
+    <span class="kd">private</span> <span class="kd">static</span> <span class="kd">final</span> <span class="nc">String</span> <span class="no">LUA_SCRIPT_UNLOCK</span> <span class="o">=</span>
+            <span class="s">"if redis.call('get', KEYS[1]) == ARGV[1] then "</span> <span class="o">+</span>
+                    <span class="s">"    redis.call('del', KEYS[1]); "</span> <span class="o">+</span>
+                    <span class="s">"    return 'suc' "</span> <span class="o">+</span>
+                    <span class="s">"else "</span> <span class="o">+</span>
+                    <span class="s">"    return 'fail' "</span> <span class="o">+</span>
+                    <span class="s">"end"</span><span class="o">;</span>
+
+    <span class="kd">public</span> <span class="nc">RedisLock</span> <span class="nf">lock</span><span class="o">(</span><span class="nc">String</span> <span class="n">key</span><span class="o">,</span> <span class="kt">long</span> <span class="n">lockTimeout</span><span class="o">,</span> <span class="kt">long</span> <span class="n">tryLockTimeout</span><span class="o">)</span> <span class="o">{</span>
+        <span class="kt">long</span> <span class="n">timestamp</span> <span class="o">=</span> <span class="nc">System</span><span class="o">.</span><span class="na">currentTimeMillis</span><span class="o">();</span>
+        <span class="k">try</span> <span class="o">{</span>
+            <span class="n">key</span> <span class="o">=</span> <span class="n">key</span> <span class="o">+</span> <span class="s">".lock"</span><span class="o">;</span>
+            <span class="no">UUID</span> <span class="n">uuid</span> <span class="o">=</span> <span class="no">UUID</span><span class="o">.</span><span class="na">randomUUID</span><span class="o">();</span>
+            <span class="nc">String</span> <span class="n">lockValue</span> <span class="o">=</span> <span class="n">uuid</span><span class="o">.</span><span class="na">toString</span><span class="o">();</span>
+            <span class="kt">int</span> <span class="n">tryCount</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span>
+
+            <span class="k">while</span> <span class="o">(</span><span class="n">tryLockTimeout</span> <span class="o">==</span> <span class="mi">0</span> <span class="o">||</span> <span class="o">(</span><span class="nc">System</span><span class="o">.</span><span class="na">currentTimeMillis</span><span class="o">()</span> <span class="o">-</span> <span class="n">timestamp</span><span class="o">)</span> <span class="o">&lt;</span> <span class="n">tryLockTimeout</span><span class="o">)</span> <span class="o">{</span>
+                <span class="nc">JedisClusterPipeline</span> <span class="n">pipeline</span> <span class="o">=</span> <span class="n">jedisClient</span><span class="o">.</span><span class="na">getPipelined</span><span class="o">();</span>
+                <span class="nc">Response</span><span class="o">&lt;</span><span class="nc">String</span><span class="o">&gt;</span> <span class="n">result</span> <span class="o">=</span> <span class="n">pipeline</span><span class="o">.</span><span class="na">eval</span><span class="o">(</span><span class="no">LUA_SCRIPT_LOCK</span><span class="o">,</span>
+                        <span class="nc">Collections</span><span class="o">.</span><span class="na">singletonList</span><span class="o">(</span><span class="n">key</span><span class="o">),</span>
+                        <span class="nc">Arrays</span><span class="o">.</span><span class="na">asList</span><span class="o">(</span><span class="n">lockValue</span><span class="o">,</span> <span class="nc">String</span><span class="o">.</span><span class="na">valueOf</span><span class="o">(</span><span class="n">lockTimeout</span><span class="o">))</span>
+                <span class="o">);</span>
+                <span class="n">pipeline</span><span class="o">.</span><span class="na">sync</span><span class="o">();</span>
+                <span class="n">tryCount</span><span class="o">++;</span>
+                <span class="k">if</span> <span class="o">(</span><span class="n">result</span> <span class="o">!=</span> <span class="kc">null</span> <span class="o">&amp;&amp;</span> <span class="s">"OK"</span><span class="o">.</span><span class="na">equals</span><span class="o">(</span><span class="n">result</span><span class="o">.</span><span class="na">get</span><span class="o">()))</span> <span class="o">{</span>
+                    <span class="k">return</span> <span class="k">new</span> <span class="nf">RedisLock</span><span class="o">(</span><span class="n">key</span><span class="o">,</span> <span class="n">uuid</span><span class="o">,</span> <span class="n">lockTimeout</span><span class="o">,</span> <span class="n">timestamp</span><span class="o">,</span> <span class="nc">System</span><span class="o">.</span><span class="na">currentTimeMillis</span><span class="o">(),</span> <span class="n">tryCount</span><span class="o">);</span>
+                <span class="o">}</span> <span class="k">else</span> <span class="o">{</span>
+                    <span class="k">try</span> <span class="o">{</span>
+                        <span class="nc">Thread</span><span class="o">.</span><span class="na">sleep</span><span class="o">(</span><span class="mi">50</span><span class="o">);</span>
+                    <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="nc">InterruptedException</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
+                        <span class="n">e</span><span class="o">.</span><span class="na">printStackTrace</span><span class="o">();</span>
+                    <span class="o">}</span>
+                <span class="o">}</span>
+            <span class="o">}</span>
+        <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="nc">Exception</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
+            <span class="n">logger</span><span class="o">.</span><span class="na">error</span><span class="o">(</span><span class="s">"Fail to get lock key: {}"</span><span class="o">,</span> <span class="n">key</span><span class="o">,</span> <span class="n">e</span><span class="o">);</span>
+        <span class="o">}</span>
+        <span class="k">return</span> <span class="kc">null</span><span class="o">;</span>
+    <span class="o">}</span>
+
+    <span class="kd">public</span> <span class="kt">boolean</span> <span class="nf">unlock</span><span class="o">(</span><span class="nc">RedisLock</span> <span class="n">lock</span><span class="o">)</span> <span class="o">{</span>
+        <span class="k">if</span> <span class="o">(</span><span class="n">lock</span> <span class="o">==</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+            <span class="k">return</span> <span class="kc">false</span><span class="o">;</span>
+        <span class="o">}</span>
+
+        <span class="k">try</span> <span class="o">{</span>
+            <span class="nc">String</span> <span class="n">lockValue</span> <span class="o">=</span> <span class="n">lock</span><span class="o">.</span><span class="na">getUuid</span><span class="o">().</span><span class="na">toString</span><span class="o">();</span>
+            <span class="nc">JedisClusterPipeline</span> <span class="n">pipeline</span> <span class="o">=</span> <span class="n">jedisClient</span><span class="o">.</span><span class="na">getPipelined</span><span class="o">();</span>
+            <span class="nc">Response</span><span class="o">&lt;</span><span class="nc">String</span><span class="o">&gt;</span> <span class="n">response</span> <span class="o">=</span> <span class="n">pipeline</span><span class="o">.</span><span class="na">eval</span><span class="o">(</span><span class="no">LUA_SCRIPT_UNLOCK</span><span class="o">,</span>
+                    <span class="nc">Collections</span><span class="o">.</span><span class="na">singletonList</span><span class="o">(</span><span class="n">lock</span><span class="o">.</span><span class="na">getKey</span><span class="o">()),</span>
+                    <span class="nc">Collections</span><span class="o">.</span><span class="na">singletonList</span><span class="o">(</span><span class="n">lockValue</span><span class="o">)</span>
+            <span class="o">);</span>
+            <span class="n">pipeline</span><span class="o">.</span><span class="na">sync</span><span class="o">();</span>
+            <span class="k">return</span> <span class="n">response</span> <span class="o">!=</span> <span class="kc">null</span> <span class="o">&amp;&amp;</span> <span class="nc">Objects</span><span class="o">.</span><span class="na">equals</span><span class="o">(</span><span class="n">response</span><span class="o">.</span><span class="na">get</span><span class="o">(),</span> <span class="s">"suc"</span><span class="o">);</span>
+        <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="nc">Exception</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
+          	<span class="n">logger</span><span class="o">.</span><span class="na">error</span><span class="o">(</span><span class="s">"Fail to unlock key: {}"</span><span class="o">,</span> <span class="n">key</span><span class="o">,</span> <span class="n">e</span><span class="o">);</span>
+            <span class="k">return</span> <span class="kc">false</span><span class="o">;</span>
+        <span class="o">}</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<p>Well，Version3版本可以算是一个里程碑的版本，我们在获取锁的方法中，加入了自旋抢锁的功能，可以指定抢锁的超时时间，在此之前，当前线程会一直自旋尝试获取锁，在这个版本中，我们将加锁的方式，也换成了LUA脚本，由于老旧版本的Redis还不支持setnx指定过期时间，为了兼容性考虑，我们这里采用LUA的方式。</p>
+
+<p>Version3已经是一个非常可用的版本了，但是如果我们有更高的要求，还是有一点问题的，就是线程安全问题，假如线程A获取锁成功，并拿到了RedisLock对象，而线程B拿着该对象，调用解锁的方法，是可以解锁成功的，虽然这是一种极端场景，但是也确实有可能发生，为了避免这个问题，我们需要考虑线程一致性的问题，即加锁和解锁的线程，必须是同一线程。</p>
+
+<p>Version4：</p>
+
+<p>在RedisLock Bean中加入一些额外的信息：</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">public</span> <span class="kd">class</span> <span class="nc">RedisLock</span> <span class="o">{</span>
+    <span class="kd">private</span> <span class="nc">String</span> <span class="n">key</span><span class="o">;</span>
+    <span class="kd">private</span> <span class="kd">final</span> <span class="no">UUID</span> <span class="n">uuid</span><span class="o">;</span>
+    <span class="kd">private</span> <span class="kd">final</span> <span class="kt">long</span> <span class="n">threadId</span><span class="o">;</span>  <span class="c1">// 新增线程ID字段</span>
+  	<span class="o">.....</span><span class="na">省略其他代码</span><span class="o">.....</span>
+      
+    
+</code></pre></div></div>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nd">@Component</span>
+<span class="kd">public</span> <span class="kd">class</span> <span class="nc">RedisLockUtil</span> <span class="o">{</span>
+
+    <span class="kd">private</span> <span class="kd">static</span> <span class="kd">final</span> <span class="nc">Logger</span> <span class="n">logger</span> <span class="o">=</span> <span class="nc">LoggerFactory</span><span class="o">.</span><span class="na">getLogger</span><span class="o">(</span><span class="nc">RedisDemo</span><span class="o">.</span><span class="na">class</span><span class="o">);</span>
+
+    <span class="nd">@Autowired</span>
+    <span class="kd">private</span> <span class="nc">JedisClient</span> <span class="n">jedisClient</span><span class="o">;</span>
+
+    <span class="c1">//拿锁的EVAL函数</span>
+    <span class="kd">private</span> <span class="kd">static</span> <span class="kd">final</span> <span class="nc">String</span> <span class="no">LUA_SCRIPT_LOCK</span> <span class="o">=</span> <span class="s">"return redis.call('SET', KEYS[1], ARGV[1], 'NX', 'PX', ARGV[2]) "</span><span class="o">;</span>
+
+    <span class="c1">// 释放锁的Lua脚本</span>
+    <span class="kd">private</span> <span class="kd">static</span> <span class="kd">final</span> <span class="nc">String</span> <span class="no">LUA_SCRIPT_UNLOCK</span> <span class="o">=</span>
+            <span class="s">"if redis.call('get', KEYS[1]) == ARGV[1] then "</span> <span class="o">+</span>
+                    <span class="s">"    redis.call('del', KEYS[1]); "</span> <span class="o">+</span>
+                    <span class="s">"    return 'suc' "</span> <span class="o">+</span>
+                    <span class="s">"else "</span> <span class="o">+</span>
+                    <span class="s">"    return 'fail' "</span> <span class="o">+</span>
+                    <span class="s">"end"</span><span class="o">;</span>
+
+    <span class="kd">public</span> <span class="nc">RedisLock</span> <span class="nf">lock</span><span class="o">(</span><span class="nc">String</span> <span class="n">key</span><span class="o">,</span> <span class="kt">long</span> <span class="n">lockTimeout</span><span class="o">,</span> <span class="kt">long</span> <span class="n">tryLockTimeout</span><span class="o">)</span> <span class="o">{</span>
+        <span class="kt">long</span> <span class="n">timestamp</span> <span class="o">=</span> <span class="nc">System</span><span class="o">.</span><span class="na">currentTimeMillis</span><span class="o">();</span>
+        <span class="k">try</span> <span class="o">{</span>
+            <span class="n">key</span> <span class="o">=</span> <span class="n">key</span> <span class="o">+</span> <span class="s">".lock"</span><span class="o">;</span>
+            <span class="no">UUID</span> <span class="n">uuid</span> <span class="o">=</span> <span class="no">UUID</span><span class="o">.</span><span class="na">randomUUID</span><span class="o">();</span>
+            <span class="c1">// 获取当前线程ID</span>
+            <span class="nc">String</span> <span class="n">lockValue</span> <span class="o">=</span> <span class="n">uuid</span> <span class="o">+</span> <span class="s">":"</span> <span class="o">+</span> <span class="nc">Thread</span><span class="o">.</span><span class="na">currentThread</span><span class="o">().</span><span class="na">getId</span><span class="o">();</span>
+            <span class="kt">int</span> <span class="n">tryCount</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span>
+
+            <span class="k">while</span> <span class="o">(</span><span class="n">tryLockTimeout</span> <span class="o">==</span> <span class="mi">0</span> <span class="o">||</span> <span class="o">(</span><span class="nc">System</span><span class="o">.</span><span class="na">currentTimeMillis</span><span class="o">()</span> <span class="o">-</span> <span class="n">timestamp</span><span class="o">)</span> <span class="o">&lt;</span> <span class="n">tryLockTimeout</span><span class="o">)</span> <span class="o">{</span>
+                <span class="nc">JedisClusterPipeline</span> <span class="n">pipeline</span> <span class="o">=</span> <span class="n">jedisClient</span><span class="o">.</span><span class="na">getPipelined</span><span class="o">();</span>
+                <span class="nc">Response</span><span class="o">&lt;</span><span class="nc">String</span><span class="o">&gt;</span> <span class="n">result</span> <span class="o">=</span> <span class="n">pipeline</span><span class="o">.</span><span class="na">eval</span><span class="o">(</span><span class="no">LUA_SCRIPT_LOCK</span><span class="o">,</span>
+                        <span class="nc">Collections</span><span class="o">.</span><span class="na">singletonList</span><span class="o">(</span><span class="n">key</span><span class="o">),</span>
+                        <span class="nc">Arrays</span><span class="o">.</span><span class="na">asList</span><span class="o">(</span><span class="n">lockValue</span><span class="o">,</span> <span class="nc">String</span><span class="o">.</span><span class="na">valueOf</span><span class="o">(</span><span class="n">lockTimeout</span><span class="o">))</span>  <span class="c1">// 使用包含线程ID的lockValue</span>
+                <span class="o">);</span>
+                <span class="n">pipeline</span><span class="o">.</span><span class="na">sync</span><span class="o">();</span>
+                <span class="n">tryCount</span><span class="o">++;</span>
+                <span class="k">if</span> <span class="o">(</span><span class="n">result</span> <span class="o">!=</span> <span class="kc">null</span> <span class="o">&amp;&amp;</span> <span class="s">"OK"</span><span class="o">.</span><span class="na">equals</span><span class="o">(</span><span class="n">result</span><span class="o">.</span><span class="na">get</span><span class="o">()))</span> <span class="o">{</span>
+                    <span class="k">return</span> <span class="k">new</span> <span class="nf">RedisLock</span><span class="o">(</span><span class="n">key</span><span class="o">,</span> <span class="n">uuid</span><span class="o">,</span> <span class="nc">Thread</span><span class="o">.</span><span class="na">currentThread</span><span class="o">().</span><span class="na">getId</span><span class="o">(),</span> <span class="n">lockTimeout</span><span class="o">,</span> <span class="n">timestamp</span><span class="o">,</span> <span class="nc">System</span><span class="o">.</span><span class="na">currentTimeMillis</span><span class="o">(),</span> <span class="n">tryCount</span><span class="o">);</span>
+                <span class="o">}</span> <span class="k">else</span> <span class="o">{</span>
+                    <span class="k">try</span> <span class="o">{</span>
+                        <span class="nc">Thread</span><span class="o">.</span><span class="na">sleep</span><span class="o">(</span><span class="mi">50</span><span class="o">);</span>
+                    <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="nc">InterruptedException</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
+                        <span class="n">e</span><span class="o">.</span><span class="na">printStackTrace</span><span class="o">();</span>
+                    <span class="o">}</span>
+                <span class="o">}</span>
+            <span class="o">}</span>
+        <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="nc">Exception</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
+            <span class="n">logger</span><span class="o">.</span><span class="na">error</span><span class="o">(</span><span class="s">"Fail to get lock key: {}"</span><span class="o">,</span> <span class="n">key</span><span class="o">,</span> <span class="n">e</span><span class="o">);</span>
+        <span class="o">}</span>
+        <span class="k">return</span> <span class="kc">null</span><span class="o">;</span>
+    <span class="o">}</span>
+
+    <span class="kd">public</span> <span class="kt">boolean</span> <span class="nf">unlock</span><span class="o">(</span><span class="nc">RedisLock</span> <span class="n">lock</span><span class="o">)</span> <span class="o">{</span>
+        <span class="k">if</span> <span class="o">(</span><span class="n">lock</span> <span class="o">==</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+            <span class="k">return</span> <span class="kc">false</span><span class="o">;</span>
+        <span class="o">}</span>
+
+        <span class="c1">// 验证当前线程是否为加锁线程</span>
+        <span class="k">if</span> <span class="o">(</span><span class="n">lock</span><span class="o">.</span><span class="na">getThreadId</span><span class="o">()</span> <span class="o">!=</span> <span class="nc">Thread</span><span class="o">.</span><span class="na">currentThread</span><span class="o">().</span><span class="na">getId</span><span class="o">())</span> <span class="o">{</span>
+            <span class="n">logger</span><span class="o">.</span><span class="na">warn</span><span class="o">(</span><span class="s">"Current thread[{}] is not the lock owner[{}], will not unlock"</span><span class="o">,</span>
+                    <span class="nc">Thread</span><span class="o">.</span><span class="na">currentThread</span><span class="o">().</span><span class="na">getId</span><span class="o">(),</span> <span class="n">lock</span><span class="o">.</span><span class="na">getThreadId</span><span class="o">());</span>
+            <span class="k">return</span> <span class="kc">false</span><span class="o">;</span>
+        <span class="o">}</span>
+
+        <span class="k">try</span> <span class="o">{</span>
+            <span class="nc">String</span> <span class="n">lockValue</span> <span class="o">=</span> <span class="n">lock</span><span class="o">.</span><span class="na">getUuid</span><span class="o">().</span><span class="na">toString</span><span class="o">()</span> <span class="o">+</span> <span class="s">":"</span> <span class="o">+</span> <span class="n">lock</span><span class="o">.</span><span class="na">getThreadId</span><span class="o">();</span>
+            <span class="nc">JedisClusterPipeline</span> <span class="n">pipeline</span> <span class="o">=</span> <span class="n">jedisClient</span><span class="o">.</span><span class="na">getPipelined</span><span class="o">();</span>
+            <span class="nc">Response</span><span class="o">&lt;</span><span class="nc">String</span><span class="o">&gt;</span> <span class="n">response</span> <span class="o">=</span> <span class="n">pipeline</span><span class="o">.</span><span class="na">eval</span><span class="o">(</span><span class="no">LUA_SCRIPT_UNLOCK</span><span class="o">,</span>
+                    <span class="nc">Collections</span><span class="o">.</span><span class="na">singletonList</span><span class="o">(</span><span class="n">lock</span><span class="o">.</span><span class="na">getKey</span><span class="o">()),</span>
+                    <span class="nc">Collections</span><span class="o">.</span><span class="na">singletonList</span><span class="o">(</span><span class="n">lockValue</span><span class="o">)</span>  <span class="c1">// 使用包含线程ID的lockValue</span>
+            <span class="o">);</span>
+            <span class="n">pipeline</span><span class="o">.</span><span class="na">sync</span><span class="o">();</span>
+            <span class="k">return</span> <span class="n">response</span> <span class="o">!=</span> <span class="kc">null</span> <span class="o">&amp;&amp;</span> <span class="nc">Objects</span><span class="o">.</span><span class="na">equals</span><span class="o">(</span><span class="n">response</span><span class="o">.</span><span class="na">get</span><span class="o">(),</span> <span class="s">"suc"</span><span class="o">);</span>
+        <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="nc">Exception</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
+            <span class="n">logger</span><span class="o">.</span><span class="na">error</span><span class="o">(</span><span class="s">"Failed to release lock: {}"</span><span class="o">,</span> <span class="n">lock</span><span class="o">.</span><span class="na">getKey</span><span class="o">(),</span> <span class="n">e</span><span class="o">);</span>
+            <span class="k">return</span> <span class="kc">false</span><span class="o">;</span>
+        <span class="o">}</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<p>在Version4版本中，我们中RedisLock中加入了ThreadId字段，表示当前获取锁的线程ID，在加锁和解锁时，分别加入当前线程的ID标识，保证解锁的线程必须和加锁的线程一致。</p>
+
+<p>至此，我们基本上完成了Redis分布式锁的实现，最后的Version4已经是一个生产环境可用的版本，足以应对绝对大部分的业务场景使用。</p>
+
+<h3 id="think-more">Think More</h3>
+
+<p>But，我们是追求完美主义的程序员（Doge），Version4已经足够可用，但是再想想，可否继续优化呢？</p>
+
+<p>设想一个场景，加入线程A获取到锁资源，将锁的过期时间设定为3秒，然后线程A就去执行业务逻辑代码了，但是业务代码中，存在一个调用外部API的方法，这个方法出了点意外，耗时超过了3秒，此时锁已经过期，但是业务逻辑并没有执行完毕，此时等待抢锁的线程B，正好就拿到了锁，执行相同的业务代码，这显然不是我们所期望的，那么该如何解决？</p>
+
+<p>如果使用过Redisson的童鞋想必已经猜到了，我们需要一个锁（Lock）的看门狗（Watch Dog），来检查锁是否需要进行续期操作。</p>
+
+<p>Version5：</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nd">@Component</span>
+<span class="kd">public</span> <span class="kd">class</span> <span class="nc">RedisLockUtil</span> <span class="o">{</span>
+
+    <span class="kd">private</span> <span class="kd">static</span> <span class="kd">final</span> <span class="nc">Logger</span> <span class="n">logger</span> <span class="o">=</span> <span class="nc">LoggerFactory</span><span class="o">.</span><span class="na">getLogger</span><span class="o">(</span><span class="nc">RedisLockUtil</span><span class="o">.</span><span class="na">class</span><span class="o">);</span>
+
+    <span class="nd">@Autowired</span>
+    <span class="kd">private</span> <span class="nc">JedisClient</span> <span class="n">jedisClient</span><span class="o">;</span>
+
+    <span class="c1">// 锁的过期时间，单位毫秒</span>
+    <span class="kd">private</span> <span class="kd">static</span> <span class="kd">final</span> <span class="kt">long</span> <span class="no">DEFAULT_LOCK_TIMEOUT</span> <span class="o">=</span> <span class="mi">3000</span><span class="o">;</span>
+
+    <span class="c1">// 争抢锁的超时时间，单位毫秒，0代表永不超时（一直抢到锁为止）</span>
+    <span class="kd">private</span> <span class="kd">static</span> <span class="kd">final</span> <span class="kt">long</span> <span class="no">DEFAULT_TRY_LOCK_TIMEOUT</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span>
+
+    <span class="c1">//拿锁的EVAL函数</span>
+    <span class="kd">private</span> <span class="kd">static</span> <span class="kd">final</span> <span class="nc">String</span> <span class="no">LUA_SCRIPT_LOCK</span> <span class="o">=</span> <span class="s">"return redis.call('SET', KEYS[1], ARGV[1], 'NX', 'PX', ARGV[2]) "</span><span class="o">;</span>
+
+    <span class="c1">// 释放锁的Lua脚本</span>
+    <span class="kd">private</span> <span class="kd">static</span> <span class="kd">final</span> <span class="nc">String</span> <span class="no">LUA_SCRIPT_UNLOCK</span> <span class="o">=</span>
+            <span class="s">"if redis.call('get', KEYS[1]) == ARGV[1] then "</span> <span class="o">+</span>
+                    <span class="s">"    redis.call('del', KEYS[1]); "</span> <span class="o">+</span>
+                    <span class="s">"    return 'suc' "</span> <span class="o">+</span>
+                    <span class="s">"else "</span> <span class="o">+</span>
+                    <span class="s">"    return 'fail' "</span> <span class="o">+</span>
+                    <span class="s">"end"</span><span class="o">;</span>
+
+    <span class="c1">// 添加续期相关的常量</span>
+    <span class="kd">private</span> <span class="kd">static</span> <span class="kd">final</span> <span class="nc">String</span> <span class="no">LUA_SCRIPT_RENEW</span> <span class="o">=</span>
+            <span class="s">"if redis.call('get', KEYS[1]) == ARGV[1] then "</span> <span class="o">+</span>
+                    <span class="s">"    redis.call('pexpire', KEYS[1], ARGV[2]); "</span> <span class="o">+</span>
+                    <span class="s">"    return 'suc' "</span> <span class="o">+</span>
+                    <span class="s">"else "</span> <span class="o">+</span>
+                    <span class="s">"    return 'fail' "</span> <span class="o">+</span>
+                    <span class="s">"end"</span><span class="o">;</span>
+
+    <span class="c1">// 续期时间点（锁过期时间的2/3处开始续期）</span>
+    <span class="kd">private</span> <span class="kd">static</span> <span class="kd">final</span> <span class="kt">double</span> <span class="no">RENEW_FACTOR</span> <span class="o">=</span> <span class="mf">2.0</span><span class="o">/</span><span class="mi">3</span><span class="o">;</span>
+
+    <span class="kd">public</span> <span class="nc">RedisLock</span> <span class="nf">lock</span><span class="o">(</span><span class="nc">String</span> <span class="n">key</span><span class="o">)</span> <span class="o">{</span>
+        <span class="k">return</span> <span class="nf">lock</span><span class="o">(</span><span class="n">key</span><span class="o">,</span> <span class="no">DEFAULT_LOCK_TIMEOUT</span><span class="o">,</span> <span class="no">DEFAULT_TRY_LOCK_TIMEOUT</span><span class="o">);</span>
+    <span class="o">}</span>
+
+    <span class="kd">public</span> <span class="o">&lt;</span><span class="no">T</span><span class="o">&gt;</span> <span class="no">T</span> <span class="nf">lockAndExecute</span><span class="o">(</span><span class="nc">String</span> <span class="n">key</span><span class="o">,</span> <span class="nc">Supplier</span><span class="o">&lt;</span><span class="no">T</span><span class="o">&gt;</span> <span class="n">supplier</span><span class="o">)</span> <span class="o">{</span>
+        <span class="k">return</span> <span class="nf">lockAndExecute</span><span class="o">(</span><span class="n">key</span><span class="o">,</span> <span class="no">DEFAULT_LOCK_TIMEOUT</span><span class="o">,</span> <span class="no">DEFAULT_TRY_LOCK_TIMEOUT</span><span class="o">,</span> <span class="n">supplier</span><span class="o">);</span>
+    <span class="o">}</span>
+
+    <span class="kd">public</span> <span class="kt">void</span> <span class="nf">lockAndExecute</span><span class="o">(</span><span class="nc">String</span> <span class="n">key</span><span class="o">,</span> <span class="nc">Runnable</span> <span class="n">runnable</span><span class="o">)</span> <span class="o">{</span>
+        <span class="n">lockAndExecute</span><span class="o">(</span><span class="n">key</span><span class="o">,</span> <span class="no">DEFAULT_LOCK_TIMEOUT</span><span class="o">,</span> <span class="no">DEFAULT_TRY_LOCK_TIMEOUT</span><span class="o">,</span> <span class="n">runnable</span><span class="o">);</span>
+    <span class="o">}</span>
+
+    <span class="cm">/**
+     * 获取分布式锁
+     *
+     * @param key   redis key名称
+     * @param lockTimeout   锁时长
+     * @param tryLockTimeout   尝试获取锁等待时间
+     * @return
+     */</span>
+    <span class="kd">public</span> <span class="nc">RedisLock</span> <span class="nf">lock</span><span class="o">(</span><span class="nc">String</span> <span class="n">key</span><span class="o">,</span> <span class="kt">long</span> <span class="n">lockTimeout</span><span class="o">,</span> <span class="kt">long</span> <span class="n">tryLockTimeout</span><span class="o">)</span> <span class="o">{</span>
+        <span class="kt">long</span> <span class="n">timestamp</span> <span class="o">=</span> <span class="nc">System</span><span class="o">.</span><span class="na">currentTimeMillis</span><span class="o">();</span>
+        <span class="k">try</span> <span class="o">{</span>
+            <span class="n">key</span> <span class="o">=</span> <span class="n">key</span> <span class="o">+</span> <span class="s">".lock"</span><span class="o">;</span>
+            <span class="no">UUID</span> <span class="n">uuid</span> <span class="o">=</span> <span class="no">UUID</span><span class="o">.</span><span class="na">randomUUID</span><span class="o">();</span>
+            <span class="nc">String</span> <span class="n">lockValue</span> <span class="o">=</span> <span class="n">uuid</span> <span class="o">+</span> <span class="s">":"</span> <span class="o">+</span> <span class="nc">Thread</span><span class="o">.</span><span class="na">currentThread</span><span class="o">().</span><span class="na">getId</span><span class="o">();</span>
+            <span class="kt">int</span> <span class="n">tryCount</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span>
+
+            <span class="k">while</span> <span class="o">(</span><span class="n">tryLockTimeout</span> <span class="o">==</span> <span class="mi">0</span> <span class="o">||</span> <span class="o">(</span><span class="nc">System</span><span class="o">.</span><span class="na">currentTimeMillis</span><span class="o">()</span> <span class="o">-</span> <span class="n">timestamp</span><span class="o">)</span> <span class="o">&lt;</span> <span class="n">tryLockTimeout</span><span class="o">)</span> <span class="o">{</span>
+                <span class="nc">JedisClusterPipeline</span> <span class="n">pipeline</span> <span class="o">=</span> <span class="n">jedisClient</span><span class="o">.</span><span class="na">getPipelined</span><span class="o">();</span>
+                <span class="nc">Response</span><span class="o">&lt;</span><span class="nc">String</span><span class="o">&gt;</span> <span class="n">result</span> <span class="o">=</span> <span class="n">pipeline</span><span class="o">.</span><span class="na">eval</span><span class="o">(</span><span class="no">LUA_SCRIPT_LOCK</span><span class="o">,</span>
+                        <span class="nc">Collections</span><span class="o">.</span><span class="na">singletonList</span><span class="o">(</span><span class="n">key</span><span class="o">),</span>
+                        <span class="nc">Arrays</span><span class="o">.</span><span class="na">asList</span><span class="o">(</span><span class="n">lockValue</span><span class="o">,</span> <span class="nc">String</span><span class="o">.</span><span class="na">valueOf</span><span class="o">(</span><span class="n">lockTimeout</span><span class="o">))</span>
+                <span class="o">);</span>
+                <span class="n">pipeline</span><span class="o">.</span><span class="na">sync</span><span class="o">();</span>
+                <span class="n">tryCount</span><span class="o">++;</span>
+                <span class="k">if</span> <span class="o">(</span><span class="n">result</span> <span class="o">!=</span> <span class="kc">null</span> <span class="o">&amp;&amp;</span> <span class="s">"OK"</span><span class="o">.</span><span class="na">equals</span><span class="o">(</span><span class="n">result</span><span class="o">.</span><span class="na">get</span><span class="o">()))</span> <span class="o">{</span>
+                    <span class="nc">RedisLock</span> <span class="n">lock</span> <span class="o">=</span> <span class="k">new</span> <span class="nc">RedisLock</span><span class="o">(</span><span class="n">key</span><span class="o">,</span> <span class="n">uuid</span><span class="o">,</span> <span class="nc">Thread</span><span class="o">.</span><span class="na">currentThread</span><span class="o">().</span><span class="na">getId</span><span class="o">(),</span> 
+                            <span class="n">lockTimeout</span><span class="o">,</span> <span class="n">timestamp</span><span class="o">,</span> <span class="nc">System</span><span class="o">.</span><span class="na">currentTimeMillis</span><span class="o">(),</span> <span class="n">tryCount</span><span class="o">);</span>
+                    <span class="c1">// 启动续期守护线程</span>
+                    <span class="n">startRenewThread</span><span class="o">(</span><span class="n">lock</span><span class="o">);</span>
+                    <span class="k">return</span> <span class="n">lock</span><span class="o">;</span>
+                <span class="o">}</span> <span class="k">else</span> <span class="o">{</span>
+                    <span class="k">try</span> <span class="o">{</span>
+                        <span class="nc">Thread</span><span class="o">.</span><span class="na">sleep</span><span class="o">(</span><span class="mi">50</span><span class="o">);</span>
+                    <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="nc">InterruptedException</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
+                        <span class="n">e</span><span class="o">.</span><span class="na">printStackTrace</span><span class="o">();</span>
+                    <span class="o">}</span>
+                <span class="o">}</span>
+            <span class="o">}</span>
+        <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="nc">Exception</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
+            <span class="n">logger</span><span class="o">.</span><span class="na">error</span><span class="o">(</span><span class="s">"Fail to get lock key: {}"</span><span class="o">,</span> <span class="n">key</span><span class="o">,</span> <span class="n">e</span><span class="o">);</span>
+        <span class="o">}</span>
+        <span class="k">return</span> <span class="kc">null</span><span class="o">;</span>
+    <span class="o">}</span>
+
+    <span class="cm">/**
+     * 启动续期守护线程
+     */</span>
+    <span class="kd">private</span> <span class="kt">void</span> <span class="nf">startRenewThread</span><span class="o">(</span><span class="nc">RedisLock</span> <span class="n">lock</span><span class="o">)</span> <span class="o">{</span>
+        <span class="nc">Thread</span> <span class="n">renewThread</span> <span class="o">=</span> <span class="k">new</span> <span class="nc">Thread</span><span class="o">(()</span> <span class="o">-&gt;</span> <span class="o">{</span>
+            <span class="kt">long</span> <span class="n">renewInterval</span> <span class="o">=</span> <span class="o">(</span><span class="kt">long</span><span class="o">)</span> <span class="o">(</span><span class="n">lock</span><span class="o">.</span><span class="na">getLockTimeout</span><span class="o">()</span> <span class="o">*</span> <span class="no">RENEW_FACTOR</span><span class="o">);</span>
+            <span class="k">while</span> <span class="o">(!</span><span class="nc">Thread</span><span class="o">.</span><span class="na">currentThread</span><span class="o">().</span><span class="na">isInterrupted</span><span class="o">())</span> <span class="o">{</span>
+                <span class="k">try</span> <span class="o">{</span>
+                    <span class="nc">Thread</span><span class="o">.</span><span class="na">sleep</span><span class="o">(</span><span class="n">renewInterval</span><span class="o">);</span>
+                    <span class="kt">boolean</span> <span class="n">renewed</span> <span class="o">=</span> <span class="n">renewLock</span><span class="o">(</span><span class="n">lock</span><span class="o">);</span>
+                    <span class="k">if</span> <span class="o">(!</span><span class="n">renewed</span><span class="o">)</span> <span class="o">{</span>
+                        <span class="k">break</span><span class="o">;</span>
+                    <span class="o">}</span>
+                <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="nc">InterruptedException</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
+                    <span class="k">break</span><span class="o">;</span>
+                <span class="o">}</span>
+            <span class="o">}</span>
+        <span class="o">});</span>
+        <span class="n">renewThread</span><span class="o">.</span><span class="na">setDaemon</span><span class="o">(</span><span class="kc">true</span><span class="o">);</span>
+        <span class="n">renewThread</span><span class="o">.</span><span class="na">start</span><span class="o">();</span>
+        <span class="n">lock</span><span class="o">.</span><span class="na">setRenewThread</span><span class="o">(</span><span class="n">renewThread</span><span class="o">);</span>  <span class="c1">// 需要在RedisLock类中添加renewThread字段</span>
+    <span class="o">}</span>
+
+    <span class="cm">/**
+     * 续期锁
+     */</span>
+    <span class="kd">private</span> <span class="kt">boolean</span> <span class="nf">renewLock</span><span class="o">(</span><span class="nc">RedisLock</span> <span class="n">lock</span><span class="o">)</span> <span class="o">{</span>
+        <span class="k">try</span> <span class="o">{</span>
+            <span class="nc">String</span> <span class="n">lockValue</span> <span class="o">=</span> <span class="n">lock</span><span class="o">.</span><span class="na">getUuid</span><span class="o">().</span><span class="na">toString</span><span class="o">()</span> <span class="o">+</span> <span class="s">":"</span> <span class="o">+</span> <span class="n">lock</span><span class="o">.</span><span class="na">getThreadId</span><span class="o">();</span>
+            <span class="nc">JedisClusterPipeline</span> <span class="n">pipeline</span> <span class="o">=</span> <span class="n">jedisClient</span><span class="o">.</span><span class="na">getPipelined</span><span class="o">();</span>
+            <span class="nc">Response</span><span class="o">&lt;</span><span class="nc">String</span><span class="o">&gt;</span> <span class="n">response</span> <span class="o">=</span> <span class="n">pipeline</span><span class="o">.</span><span class="na">eval</span><span class="o">(</span><span class="no">LUA_SCRIPT_RENEW</span><span class="o">,</span>
+                    <span class="nc">Collections</span><span class="o">.</span><span class="na">singletonList</span><span class="o">(</span><span class="n">lock</span><span class="o">.</span><span class="na">getKey</span><span class="o">()),</span>
+                    <span class="nc">Arrays</span><span class="o">.</span><span class="na">asList</span><span class="o">(</span><span class="n">lockValue</span><span class="o">,</span> <span class="nc">String</span><span class="o">.</span><span class="na">valueOf</span><span class="o">(</span><span class="n">lock</span><span class="o">.</span><span class="na">getLockTimeout</span><span class="o">()))</span>
+            <span class="o">);</span>
+            <span class="n">pipeline</span><span class="o">.</span><span class="na">sync</span><span class="o">();</span>
+            <span class="kt">boolean</span> <span class="n">success</span> <span class="o">=</span> <span class="n">response</span> <span class="o">!=</span> <span class="kc">null</span> <span class="o">&amp;&amp;</span> <span class="nc">Objects</span><span class="o">.</span><span class="na">equals</span><span class="o">(</span><span class="n">response</span><span class="o">.</span><span class="na">get</span><span class="o">(),</span> <span class="s">"suc"</span><span class="o">);</span>
+            <span class="k">if</span> <span class="o">(</span><span class="n">success</span><span class="o">)</span> <span class="o">{</span>
+                <span class="n">logger</span><span class="o">.</span><span class="na">debug</span><span class="o">(</span><span class="s">"Successfully renewed lock: {}"</span><span class="o">,</span> <span class="n">lock</span><span class="o">.</span><span class="na">getKey</span><span class="o">());</span>
+            <span class="o">}</span> <span class="k">else</span> <span class="o">{</span>
+                <span class="n">logger</span><span class="o">.</span><span class="na">warn</span><span class="o">(</span><span class="s">"Failed to renew lock: {}"</span><span class="o">,</span> <span class="n">lock</span><span class="o">.</span><span class="na">getKey</span><span class="o">());</span>
+            <span class="o">}</span>
+            <span class="k">return</span> <span class="n">success</span><span class="o">;</span>
+        <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="nc">Exception</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
+            <span class="n">logger</span><span class="o">.</span><span class="na">error</span><span class="o">(</span><span class="s">"Error while renewing lock: {}"</span><span class="o">,</span> <span class="n">lock</span><span class="o">.</span><span class="na">getKey</span><span class="o">(),</span> <span class="n">e</span><span class="o">);</span>
+            <span class="k">return</span> <span class="kc">false</span><span class="o">;</span>
+        <span class="o">}</span>
+    <span class="o">}</span>
+
+    <span class="cm">/**
+     * 加锁执行业务逻辑，执行完成后自动释放锁
+     *
+     * @param key      锁的key
+     * @param supplier 需要执行的业务逻辑
+     * @param &lt;T&gt;      返回值类型
+     * @return 业务逻辑的执行结果
+     */</span>
+    <span class="kd">public</span> <span class="o">&lt;</span><span class="no">T</span><span class="o">&gt;</span> <span class="no">T</span> <span class="nf">lockAndExecute</span><span class="o">(</span><span class="nc">String</span> <span class="n">key</span><span class="o">,</span> <span class="kt">long</span> <span class="n">lockTimeout</span><span class="o">,</span> <span class="kt">long</span> <span class="n">tryLockTimeout</span><span class="o">,</span> <span class="nc">Supplier</span><span class="o">&lt;</span><span class="no">T</span><span class="o">&gt;</span> <span class="n">supplier</span><span class="o">)</span> <span class="o">{</span>
+        <span class="nc">RedisLock</span> <span class="n">lock</span> <span class="o">=</span> <span class="kc">null</span><span class="o">;</span>
+        <span class="k">try</span> <span class="o">{</span>
+            <span class="n">lock</span> <span class="o">=</span> <span class="n">lock</span><span class="o">(</span><span class="n">key</span><span class="o">,</span> <span class="n">lockTimeout</span><span class="o">,</span> <span class="n">tryLockTimeout</span><span class="o">);</span>
+            <span class="k">if</span> <span class="o">(</span><span class="nc">Objects</span><span class="o">.</span><span class="na">nonNull</span><span class="o">(</span><span class="n">lock</span><span class="o">))</span> <span class="o">{</span>
+                <span class="k">return</span> <span class="n">supplier</span><span class="o">.</span><span class="na">get</span><span class="o">();</span>
+            <span class="o">}</span>
+            <span class="k">throw</span> <span class="k">new</span> <span class="nf">RuntimeException</span><span class="o">(</span><span class="s">"获取锁失败: "</span> <span class="o">+</span> <span class="n">key</span><span class="o">);</span>
+        <span class="o">}</span> <span class="k">finally</span> <span class="o">{</span>
+            <span class="k">if</span> <span class="o">(</span><span class="nc">Objects</span><span class="o">.</span><span class="na">nonNull</span><span class="o">(</span><span class="n">lock</span><span class="o">))</span> <span class="o">{</span>
+                <span class="n">unlock</span><span class="o">(</span><span class="n">lock</span><span class="o">);</span>
+            <span class="o">}</span>
+        <span class="o">}</span>
+    <span class="o">}</span>
+
+    <span class="cm">/**
+     * 加锁执行无返回值的业务逻辑，执行完成后自动释放锁
+     *
+     * @param key      锁的key
+     * @param runnable 需要执行的业务逻辑
+     */</span>
+    <span class="kd">public</span> <span class="kt">void</span> <span class="nf">lockAndExecute</span><span class="o">(</span><span class="nc">String</span> <span class="n">key</span><span class="o">,</span> <span class="kt">long</span> <span class="n">lockTimeout</span><span class="o">,</span> <span class="kt">long</span> <span class="n">tryLockTimeout</span><span class="o">,</span> <span class="nc">Runnable</span> <span class="n">runnable</span><span class="o">)</span> <span class="o">{</span>
+        <span class="nc">RedisLock</span> <span class="n">lock</span> <span class="o">=</span> <span class="kc">null</span><span class="o">;</span>
+        <span class="k">try</span> <span class="o">{</span>
+            <span class="n">lock</span> <span class="o">=</span> <span class="n">lock</span><span class="o">(</span><span class="n">key</span><span class="o">,</span> <span class="n">lockTimeout</span><span class="o">,</span> <span class="n">tryLockTimeout</span><span class="o">);</span>
+            <span class="k">if</span> <span class="o">(</span><span class="nc">Objects</span><span class="o">.</span><span class="na">nonNull</span><span class="o">(</span><span class="n">lock</span><span class="o">))</span> <span class="o">{</span>
+                <span class="n">runnable</span><span class="o">.</span><span class="na">run</span><span class="o">();</span>
+                <span class="k">return</span><span class="o">;</span>
+            <span class="o">}</span>
+            <span class="k">throw</span> <span class="k">new</span> <span class="nf">RuntimeException</span><span class="o">(</span><span class="s">"获取锁失败: "</span> <span class="o">+</span> <span class="n">key</span><span class="o">);</span>
+        <span class="o">}</span> <span class="k">finally</span> <span class="o">{</span>
+            <span class="k">if</span> <span class="o">(</span><span class="nc">Objects</span><span class="o">.</span><span class="na">nonNull</span><span class="o">(</span><span class="n">lock</span><span class="o">))</span> <span class="o">{</span>
+                <span class="n">unlock</span><span class="o">(</span><span class="n">lock</span><span class="o">);</span>
+            <span class="o">}</span>
+        <span class="o">}</span>
+    <span class="o">}</span>
+    <span class="kd">public</span> <span class="kt">boolean</span> <span class="nf">unlock</span><span class="o">(</span><span class="nc">RedisLock</span> <span class="n">lock</span><span class="o">)</span> <span class="o">{</span>
+        <span class="k">if</span> <span class="o">(</span><span class="n">lock</span> <span class="o">==</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+            <span class="k">return</span> <span class="kc">false</span><span class="o">;</span>
+        <span class="o">}</span>
+        
+        <span class="c1">// 验证当前线程是否为加锁线程</span>
+        <span class="k">if</span> <span class="o">(</span><span class="n">lock</span><span class="o">.</span><span class="na">getThreadId</span><span class="o">()</span> <span class="o">!=</span> <span class="nc">Thread</span><span class="o">.</span><span class="na">currentThread</span><span class="o">().</span><span class="na">getId</span><span class="o">())</span> <span class="o">{</span>
+            <span class="n">logger</span><span class="o">.</span><span class="na">warn</span><span class="o">(</span><span class="s">"Current thread[{}] is not the lock owner[{}], will not unlock"</span><span class="o">,</span> 
+                <span class="nc">Thread</span><span class="o">.</span><span class="na">currentThread</span><span class="o">().</span><span class="na">getId</span><span class="o">(),</span> <span class="n">lock</span><span class="o">.</span><span class="na">getThreadId</span><span class="o">());</span>
+            <span class="k">return</span> <span class="kc">false</span><span class="o">;</span>
+        <span class="o">}</span>
+        
+        <span class="k">try</span> <span class="o">{</span>
+            <span class="c1">// 停止续期线程</span>
+            <span class="k">if</span> <span class="o">(</span><span class="n">lock</span><span class="o">.</span><span class="na">getRenewThread</span><span class="o">()</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+                <span class="n">lock</span><span class="o">.</span><span class="na">getRenewThread</span><span class="o">().</span><span class="na">interrupt</span><span class="o">();</span>
+            <span class="o">}</span>
+
+            <span class="nc">String</span> <span class="n">lockValue</span> <span class="o">=</span> <span class="n">lock</span><span class="o">.</span><span class="na">getUuid</span><span class="o">().</span><span class="na">toString</span><span class="o">()</span> <span class="o">+</span> <span class="s">":"</span> <span class="o">+</span> <span class="n">lock</span><span class="o">.</span><span class="na">getThreadId</span><span class="o">();</span>
+            <span class="nc">JedisClusterPipeline</span> <span class="n">pipeline</span> <span class="o">=</span> <span class="n">jedisClient</span><span class="o">.</span><span class="na">getPipelined</span><span class="o">();</span>
+            <span class="nc">Response</span><span class="o">&lt;</span><span class="nc">String</span><span class="o">&gt;</span> <span class="n">response</span> <span class="o">=</span> <span class="n">pipeline</span><span class="o">.</span><span class="na">eval</span><span class="o">(</span><span class="no">LUA_SCRIPT_UNLOCK</span><span class="o">,</span>
+                    <span class="nc">Collections</span><span class="o">.</span><span class="na">singletonList</span><span class="o">(</span><span class="n">lock</span><span class="o">.</span><span class="na">getKey</span><span class="o">()),</span>
+                    <span class="nc">Collections</span><span class="o">.</span><span class="na">singletonList</span><span class="o">(</span><span class="n">lockValue</span><span class="o">)</span>  <span class="c1">// 使用包含线程ID的lockValue</span>
+            <span class="o">);</span>
+            <span class="n">pipeline</span><span class="o">.</span><span class="na">sync</span><span class="o">();</span>
+            <span class="k">return</span> <span class="n">response</span> <span class="o">!=</span> <span class="kc">null</span> <span class="o">&amp;&amp;</span> <span class="nc">Objects</span><span class="o">.</span><span class="na">equals</span><span class="o">(</span><span class="n">response</span><span class="o">.</span><span class="na">get</span><span class="o">(),</span> <span class="s">"suc"</span><span class="o">);</span>
+        <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="nc">Exception</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
+            <span class="n">logger</span><span class="o">.</span><span class="na">error</span><span class="o">(</span><span class="s">"Failed to release lock: {}"</span><span class="o">,</span> <span class="n">lock</span><span class="o">.</span><span class="na">getKey</span><span class="o">(),</span> <span class="n">e</span><span class="o">);</span>
+            <span class="k">return</span> <span class="kc">false</span><span class="o">;</span>
+        <span class="o">}</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<p>在这个版本中，我们加入了看门狗的锁续期逻辑，在锁的过期时间达到我们指定的阈值时，会触发锁续期的线程，执行锁续期逻辑，同时我们还加入了一些门面方法，将RedisLockUtil更加易用，就此，我们基本完成了一个非常优秀的分布式锁实现。</p>
+
+<h3 id="something-else">Something Else…</h3>
+
+<p>关于RedisLock的完整实现基本完成，如果了解过Java的ReentrantLock的同学应该知道，concurrent package中的锁的实现，基本都是基于AQS队列实现的，如果您对AQS不太了解，可以点击这里：</p>
+
+<p><a href="https://blog.csdn.net/wtopps/article/details/82054186">聊聊并发：（七）concurrent包之AbstractQueuedSynchronizer分析 </a></p>
+
+<p>那么我们的RedisLock是否也可以与AQS结合呢？这是个有意思的问题，我们来一起尝试一下：</p>
+
+<p>Version6：</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">public</span> <span class="kd">class</span> <span class="nc">RedisLock</span> <span class="o">{</span>
+    <span class="kd">private</span> <span class="nc">String</span> <span class="n">key</span><span class="o">;</span>
+    <span class="kd">private</span> <span class="kd">final</span> <span class="no">UUID</span> <span class="n">uuid</span><span class="o">;</span>
+    <span class="kd">private</span> <span class="kd">final</span> <span class="kt">long</span> <span class="n">threadId</span><span class="o">;</span>
+    <span class="kd">private</span> <span class="kt">long</span> <span class="n">lockTimeout</span><span class="o">;</span>
+    <span class="kd">private</span> <span class="kt">long</span> <span class="n">startLockTimeMillis</span><span class="o">;</span>
+    <span class="kd">private</span> <span class="kt">long</span> <span class="n">getLockTimeMillis</span><span class="o">;</span>
+    <span class="kd">private</span> <span class="kt">int</span> <span class="n">tryCount</span><span class="o">;</span>
+    <span class="kd">private</span> <span class="nc">Thread</span> <span class="n">renewThread</span><span class="o">;</span>
+    <span class="kd">private</span> <span class="kd">final</span> <span class="nc">RedisLockUtil</span><span class="o">.</span><span class="na">Sync</span> <span class="n">sync</span><span class="o">;</span>  <span class="c1">// 添加sync字段</span>
+
+    <span class="kd">public</span> <span class="nf">RedisLock</span><span class="o">(</span><span class="nc">String</span> <span class="n">key</span><span class="o">,</span> <span class="no">UUID</span> <span class="n">uuid</span><span class="o">,</span> <span class="kt">long</span> <span class="n">threadId</span><span class="o">,</span> <span class="kt">long</span> <span class="n">lockTimeout</span><span class="o">,</span> <span class="kt">long</span> <span class="n">startLockTimeMillis</span><span class="o">,</span> <span class="kt">long</span> <span class="n">getLockTimeMillis</span><span class="o">,</span> <span class="kt">int</span> <span class="n">tryCount</span><span class="o">,</span> <span class="nc">RedisLockUtil</span><span class="o">.</span><span class="na">Sync</span> <span class="n">sync</span><span class="o">)</span> <span class="o">{</span>
+        <span class="k">this</span><span class="o">.</span><span class="na">key</span> <span class="o">=</span> <span class="n">key</span><span class="o">;</span>
+        <span class="k">this</span><span class="o">.</span><span class="na">uuid</span> <span class="o">=</span> <span class="n">uuid</span><span class="o">;</span>
+        <span class="k">this</span><span class="o">.</span><span class="na">threadId</span> <span class="o">=</span> <span class="n">threadId</span><span class="o">;</span>
+        <span class="k">this</span><span class="o">.</span><span class="na">lockTimeout</span> <span class="o">=</span> <span class="n">lockTimeout</span><span class="o">;</span>
+        <span class="k">this</span><span class="o">.</span><span class="na">startLockTimeMillis</span> <span class="o">=</span> <span class="n">startLockTimeMillis</span><span class="o">;</span>
+        <span class="k">this</span><span class="o">.</span><span class="na">getLockTimeMillis</span> <span class="o">=</span> <span class="n">getLockTimeMillis</span><span class="o">;</span>
+        <span class="k">this</span><span class="o">.</span><span class="na">tryCount</span> <span class="o">=</span> <span class="n">tryCount</span><span class="o">;</span>
+        <span class="k">this</span><span class="o">.</span><span class="na">sync</span> <span class="o">=</span> <span class="n">sync</span><span class="o">;</span>
+    <span class="o">}</span>
+  <span class="o">.....</span><span class="na">省略部分代码</span><span class="o">.....</span>
+</code></pre></div></div>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nd">@Component</span>
+<span class="kd">public</span> <span class="kd">class</span> <span class="nc">RedisLockUtil</span> <span class="o">{</span>
+
+    <span class="kd">private</span> <span class="kd">static</span> <span class="kd">final</span> <span class="nc">Logger</span> <span class="n">logger</span> <span class="o">=</span> <span class="nc">LoggerFactory</span><span class="o">.</span><span class="na">getLogger</span><span class="o">(</span><span class="nc">RedisLockUtil</span><span class="o">.</span><span class="na">class</span><span class="o">);</span>
+
+    <span class="nd">@Autowired</span>
+    <span class="kd">private</span> <span class="nc">JedisClient</span> <span class="n">jedisClient</span><span class="o">;</span>
+
+    <span class="c1">//拿锁的EVAL函数</span>
+    <span class="kd">private</span> <span class="kd">static</span> <span class="kd">final</span> <span class="nc">String</span> <span class="no">LUA_SCRIPT_LOCK</span> <span class="o">=</span> <span class="s">"return redis.call('SET', KEYS[1], ARGV[1], 'NX', 'PX', ARGV[2]) "</span><span class="o">;</span>
+
+    <span class="c1">// 释放锁的Lua脚本</span>
+    <span class="kd">private</span> <span class="kd">static</span> <span class="kd">final</span> <span class="nc">String</span> <span class="no">LUA_SCRIPT_UNLOCK</span> <span class="o">=</span>
+            <span class="s">"if redis.call('get', KEYS[1]) == ARGV[1] then "</span> <span class="o">+</span>
+                    <span class="s">"    redis.call('del', KEYS[1]); "</span> <span class="o">+</span>
+                    <span class="s">"    return 'suc' "</span> <span class="o">+</span>
+                    <span class="s">"else "</span> <span class="o">+</span>
+                    <span class="s">"    return 'fail' "</span> <span class="o">+</span>
+                    <span class="s">"end"</span><span class="o">;</span>
+
+    <span class="c1">// 添加续期相关的常量</span>
+    <span class="kd">private</span> <span class="kd">static</span> <span class="kd">final</span> <span class="nc">String</span> <span class="no">LUA_SCRIPT_RENEW</span> <span class="o">=</span>
+            <span class="s">"if redis.call('get', KEYS[1]) == ARGV[1] then "</span> <span class="o">+</span>
+                    <span class="s">"    redis.call('pexpire', KEYS[1], ARGV[2]); "</span> <span class="o">+</span>
+                    <span class="s">"    return 'suc' "</span> <span class="o">+</span>
+                    <span class="s">"else "</span> <span class="o">+</span>
+                    <span class="s">"    return 'fail' "</span> <span class="o">+</span>
+                    <span class="s">"end"</span><span class="o">;</span>
+
+    <span class="c1">// 续期时间点（锁过期时间的2/3处开始续期）</span>
+    <span class="kd">private</span> <span class="kd">static</span> <span class="kd">final</span> <span class="kt">double</span> <span class="no">RENEW_FACTOR</span> <span class="o">=</span> <span class="mf">2.0</span><span class="o">/</span><span class="mi">3</span><span class="o">;</span>
+
+
+    <span class="cm">/**
+     * 基于AQS的同步器实现
+     */</span>
+    <span class="kd">static</span> <span class="kd">class</span> <span class="nc">Sync</span> <span class="kd">extends</span> <span class="nc">AbstractQueuedSynchronizer</span> <span class="o">{</span>
+        <span class="kd">private</span> <span class="kd">final</span> <span class="nc">Redis1</span> <span class="n">lockUtil</span><span class="o">;</span>
+        <span class="kd">private</span> <span class="kd">final</span> <span class="nc">String</span> <span class="n">key</span><span class="o">;</span>
+        <span class="kd">private</span> <span class="kd">final</span> <span class="kt">long</span> <span class="n">lockTimeout</span><span class="o">;</span>
+        <span class="kd">private</span> <span class="nc">RedisLock</span> <span class="n">redisLock</span><span class="o">;</span>
+
+        <span class="kd">public</span> <span class="nf">Sync</span><span class="o">(</span><span class="nc">Redis1</span> <span class="n">lockUtil</span><span class="o">,</span> <span class="nc">String</span> <span class="n">key</span><span class="o">,</span> <span class="kt">long</span> <span class="n">lockTimeout</span><span class="o">)</span> <span class="o">{</span>
+            <span class="k">this</span><span class="o">.</span><span class="na">lockUtil</span> <span class="o">=</span> <span class="n">lockUtil</span><span class="o">;</span>
+            <span class="k">this</span><span class="o">.</span><span class="na">key</span> <span class="o">=</span> <span class="n">key</span><span class="o">;</span>
+            <span class="k">this</span><span class="o">.</span><span class="na">lockTimeout</span> <span class="o">=</span> <span class="n">lockTimeout</span><span class="o">;</span>
+        <span class="o">}</span>
+
+        <span class="nd">@Override</span>
+        <span class="kd">protected</span> <span class="kt">boolean</span> <span class="nf">tryAcquire</span><span class="o">(</span><span class="kt">int</span> <span class="n">acquires</span><span class="o">)</span> <span class="o">{</span>
+            <span class="c1">// 尝试获取Redis锁</span>
+            <span class="n">redisLock</span> <span class="o">=</span> <span class="n">lockUtil</span><span class="o">.</span><span class="na">tryLock</span><span class="o">(</span><span class="n">key</span><span class="o">,</span> <span class="n">lockTimeout</span><span class="o">,</span> <span class="k">this</span><span class="o">);</span>
+            <span class="k">if</span> <span class="o">(</span><span class="n">redisLock</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+                <span class="k">return</span> <span class="kc">true</span><span class="o">;</span>
+            <span class="o">}</span>
+            <span class="k">return</span> <span class="kc">false</span><span class="o">;</span>
+        <span class="o">}</span>
+
+        <span class="nd">@Override</span>
+        <span class="kd">protected</span> <span class="kt">boolean</span> <span class="nf">tryRelease</span><span class="o">(</span><span class="kt">int</span> <span class="n">releases</span><span class="o">)</span> <span class="o">{</span>
+            <span class="k">if</span> <span class="o">(</span><span class="n">redisLock</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+                <span class="k">return</span> <span class="n">lockUtil</span><span class="o">.</span><span class="na">unlock</span><span class="o">(</span><span class="n">redisLock</span><span class="o">);</span>
+            <span class="o">}</span>
+            <span class="k">return</span> <span class="kc">false</span><span class="o">;</span>
+        <span class="o">}</span>
+
+        <span class="kd">public</span> <span class="nc">RedisLock</span> <span class="nf">getRedisLock</span><span class="o">()</span> <span class="o">{</span>
+            <span class="k">return</span> <span class="n">redisLock</span><span class="o">;</span>
+        <span class="o">}</span>
+    <span class="o">}</span>
+
+    <span class="cm">/**
+     * 尝试获取锁的内部方法，不包含AQS逻辑
+     */</span>
+    <span class="kd">private</span> <span class="nc">RedisLock</span> <span class="nf">tryLock</span><span class="o">(</span><span class="nc">String</span> <span class="n">key</span><span class="o">,</span> <span class="kt">long</span> <span class="n">lockTimeout</span><span class="o">,</span> <span class="nc">Sync</span> <span class="n">sync</span><span class="o">)</span> <span class="o">{</span>
+        <span class="c1">// 将原来lock方法的实现移到这里</span>
+        <span class="kt">long</span> <span class="n">timestamp</span> <span class="o">=</span> <span class="nc">System</span><span class="o">.</span><span class="na">currentTimeMillis</span><span class="o">();</span>
+        <span class="k">try</span> <span class="o">{</span>
+            <span class="n">key</span> <span class="o">=</span> <span class="n">key</span> <span class="o">+</span> <span class="s">".lock"</span><span class="o">;</span>
+            <span class="no">UUID</span> <span class="n">uuid</span> <span class="o">=</span> <span class="no">UUID</span><span class="o">.</span><span class="na">randomUUID</span><span class="o">();</span>
+            <span class="nc">String</span> <span class="n">lockValue</span> <span class="o">=</span> <span class="n">uuid</span> <span class="o">+</span> <span class="s">":"</span> <span class="o">+</span> <span class="nc">Thread</span><span class="o">.</span><span class="na">currentThread</span><span class="o">().</span><span class="na">getId</span><span class="o">();</span>
+
+            <span class="nc">JedisClusterPipeline</span> <span class="n">pipeline</span> <span class="o">=</span> <span class="n">jedisClient</span><span class="o">.</span><span class="na">getPipelined</span><span class="o">();</span>
+            <span class="nc">Response</span><span class="o">&lt;</span><span class="nc">String</span><span class="o">&gt;</span> <span class="n">result</span> <span class="o">=</span> <span class="n">pipeline</span><span class="o">.</span><span class="na">eval</span><span class="o">(</span><span class="no">LUA_SCRIPT_LOCK</span><span class="o">,</span>
+                    <span class="nc">Collections</span><span class="o">.</span><span class="na">singletonList</span><span class="o">(</span><span class="n">key</span><span class="o">),</span>
+                    <span class="nc">Arrays</span><span class="o">.</span><span class="na">asList</span><span class="o">(</span><span class="n">lockValue</span><span class="o">,</span> <span class="nc">String</span><span class="o">.</span><span class="na">valueOf</span><span class="o">(</span><span class="n">lockTimeout</span><span class="o">))</span>
+            <span class="o">);</span>
+            <span class="n">pipeline</span><span class="o">.</span><span class="na">sync</span><span class="o">();</span>
+
+            <span class="k">if</span> <span class="o">(</span><span class="n">result</span> <span class="o">!=</span> <span class="kc">null</span> <span class="o">&amp;&amp;</span> <span class="s">"OK"</span><span class="o">.</span><span class="na">equals</span><span class="o">(</span><span class="n">result</span><span class="o">.</span><span class="na">get</span><span class="o">()))</span> <span class="o">{</span>
+                <span class="nc">RedisLock</span> <span class="n">lock</span> <span class="o">=</span> <span class="k">new</span> <span class="nc">RedisLock</span><span class="o">(</span><span class="n">key</span><span class="o">,</span> <span class="n">uuid</span><span class="o">,</span> <span class="nc">Thread</span><span class="o">.</span><span class="na">currentThread</span><span class="o">().</span><span class="na">getId</span><span class="o">(),</span>
+                        <span class="n">lockTimeout</span><span class="o">,</span> <span class="n">timestamp</span><span class="o">,</span> <span class="nc">System</span><span class="o">.</span><span class="na">currentTimeMillis</span><span class="o">(),</span> <span class="mi">1</span><span class="o">,</span> <span class="n">sync</span><span class="o">);</span>
+                <span class="n">startRenewThread</span><span class="o">(</span><span class="n">lock</span><span class="o">);</span>
+                <span class="k">return</span> <span class="n">lock</span><span class="o">;</span>
+            <span class="o">}</span>
+        <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="nc">Exception</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
+            <span class="n">logger</span><span class="o">.</span><span class="na">error</span><span class="o">(</span><span class="s">"Fail to get lock key: {}"</span><span class="o">,</span> <span class="n">key</span><span class="o">,</span> <span class="n">e</span><span class="o">);</span>
+        <span class="o">}</span>
+        <span class="k">return</span> <span class="kc">null</span><span class="o">;</span>
+    <span class="o">}</span>
+
+    <span class="cm">/**
+     * 获取分布式锁（使用AQS实现线程排队）
+     */</span>
+    <span class="kd">public</span> <span class="nc">RedisLock</span> <span class="nf">lock</span><span class="o">(</span><span class="nc">String</span> <span class="n">key</span><span class="o">,</span> <span class="kt">long</span> <span class="n">lockTimeout</span><span class="o">)</span> <span class="o">{</span>
+        <span class="nc">Sync</span> <span class="n">sync</span> <span class="o">=</span> <span class="k">new</span> <span class="nc">Sync</span><span class="o">(</span><span class="k">this</span><span class="o">,</span> <span class="n">key</span><span class="o">,</span> <span class="n">lockTimeout</span><span class="o">);</span>
+        <span class="n">sync</span><span class="o">.</span><span class="na">acquire</span><span class="o">(</span><span class="mi">1</span><span class="o">);</span> <span class="c1">// 阻塞直到获取到锁</span>
+        <span class="k">return</span> <span class="n">sync</span><span class="o">.</span><span class="na">getRedisLock</span><span class="o">();</span>
+    <span class="o">}</span>
+
+    <span class="cm">/**
+     * 尝试获取分布式锁（非阻塞）
+     */</span>
+    <span class="kd">public</span> <span class="nc">RedisLock</span> <span class="nf">tryLock</span><span class="o">(</span><span class="nc">String</span> <span class="n">key</span><span class="o">,</span> <span class="kt">long</span> <span class="n">lockTimeout</span><span class="o">)</span> <span class="o">{</span>
+        <span class="nc">Sync</span> <span class="n">sync</span> <span class="o">=</span> <span class="k">new</span> <span class="nc">Sync</span><span class="o">(</span><span class="k">this</span><span class="o">,</span> <span class="n">key</span><span class="o">,</span> <span class="n">lockTimeout</span><span class="o">);</span>
+        <span class="k">return</span> <span class="n">sync</span><span class="o">.</span><span class="na">tryAcquire</span><span class="o">(</span><span class="mi">1</span><span class="o">)</span> <span class="o">?</span> <span class="n">sync</span><span class="o">.</span><span class="na">getRedisLock</span><span class="o">()</span> <span class="o">:</span> <span class="kc">null</span><span class="o">;</span>
+    <span class="o">}</span>
+
+    <span class="cm">/**
+     * 带超时的尝试获取分布式锁
+     */</span>
+    <span class="kd">public</span> <span class="nc">RedisLock</span> <span class="nf">tryLock</span><span class="o">(</span><span class="nc">String</span> <span class="n">key</span><span class="o">,</span> <span class="kt">long</span> <span class="n">lockTimeout</span><span class="o">,</span> <span class="kt">long</span> <span class="n">tryLockTimeout</span><span class="o">,</span> <span class="nc">TimeUnit</span> <span class="n">unit</span><span class="o">)</span> <span class="kd">throws</span> <span class="nc">InterruptedException</span> <span class="o">{</span>
+        <span class="nc">Sync</span> <span class="n">sync</span> <span class="o">=</span> <span class="k">new</span> <span class="nc">Sync</span><span class="o">(</span><span class="k">this</span><span class="o">,</span> <span class="n">key</span><span class="o">,</span> <span class="n">lockTimeout</span><span class="o">);</span>
+        <span class="k">return</span> <span class="n">sync</span><span class="o">.</span><span class="na">tryAcquireNanos</span><span class="o">(</span><span class="mi">1</span><span class="o">,</span> <span class="n">unit</span><span class="o">.</span><span class="na">toNanos</span><span class="o">(</span><span class="n">tryLockTimeout</span><span class="o">))</span> <span class="o">?</span> <span class="n">sync</span><span class="o">.</span><span class="na">getRedisLock</span><span class="o">()</span> <span class="o">:</span> <span class="kc">null</span><span class="o">;</span>
+    <span class="o">}</span>
+
+
+    <span class="cm">/**
+     * 启动续期守护线程
+     */</span>
+    <span class="kd">private</span> <span class="kt">void</span> <span class="nf">startRenewThread</span><span class="o">(</span><span class="nc">RedisLock</span> <span class="n">lock</span><span class="o">)</span> <span class="o">{</span>
+        <span class="nc">Thread</span> <span class="n">renewThread</span> <span class="o">=</span> <span class="k">new</span> <span class="nc">Thread</span><span class="o">(()</span> <span class="o">-&gt;</span> <span class="o">{</span>
+            <span class="kt">long</span> <span class="n">renewInterval</span> <span class="o">=</span> <span class="o">(</span><span class="kt">long</span><span class="o">)</span> <span class="o">(</span><span class="n">lock</span><span class="o">.</span><span class="na">getLockTimeout</span><span class="o">()</span> <span class="o">*</span> <span class="no">RENEW_FACTOR</span><span class="o">);</span>
+            <span class="k">while</span> <span class="o">(!</span><span class="nc">Thread</span><span class="o">.</span><span class="na">currentThread</span><span class="o">().</span><span class="na">isInterrupted</span><span class="o">())</span> <span class="o">{</span>
+                <span class="k">try</span> <span class="o">{</span>
+                    <span class="nc">Thread</span><span class="o">.</span><span class="na">sleep</span><span class="o">(</span><span class="n">renewInterval</span><span class="o">);</span>
+                    <span class="kt">boolean</span> <span class="n">renewed</span> <span class="o">=</span> <span class="n">renewLock</span><span class="o">(</span><span class="n">lock</span><span class="o">);</span>
+                    <span class="k">if</span> <span class="o">(!</span><span class="n">renewed</span><span class="o">)</span> <span class="o">{</span>
+                        <span class="k">break</span><span class="o">;</span>
+                    <span class="o">}</span>
+                <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="nc">InterruptedException</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
+                    <span class="k">break</span><span class="o">;</span>
+                <span class="o">}</span>
+            <span class="o">}</span>
+        <span class="o">});</span>
+        <span class="n">renewThread</span><span class="o">.</span><span class="na">setDaemon</span><span class="o">(</span><span class="kc">true</span><span class="o">);</span>
+        <span class="n">renewThread</span><span class="o">.</span><span class="na">start</span><span class="o">();</span>
+        <span class="n">lock</span><span class="o">.</span><span class="na">setRenewThread</span><span class="o">(</span><span class="n">renewThread</span><span class="o">);</span>  <span class="c1">// 需要在RedisLock类中添加renewThread字段</span>
+    <span class="o">}</span>
+
+    <span class="cm">/**
+     * 续期锁
+     */</span>
+    <span class="kd">private</span> <span class="kt">boolean</span> <span class="nf">renewLock</span><span class="o">(</span><span class="nc">RedisLock</span> <span class="n">lock</span><span class="o">)</span> <span class="o">{</span>
+        <span class="k">try</span> <span class="o">{</span>
+            <span class="nc">String</span> <span class="n">lockValue</span> <span class="o">=</span> <span class="n">lock</span><span class="o">.</span><span class="na">getUuid</span><span class="o">().</span><span class="na">toString</span><span class="o">()</span> <span class="o">+</span> <span class="s">":"</span> <span class="o">+</span> <span class="n">lock</span><span class="o">.</span><span class="na">getThreadId</span><span class="o">();</span>
+            <span class="nc">JedisClusterPipeline</span> <span class="n">pipeline</span> <span class="o">=</span> <span class="n">jedisClient</span><span class="o">.</span><span class="na">getPipelined</span><span class="o">();</span>
+            <span class="nc">Response</span><span class="o">&lt;</span><span class="nc">String</span><span class="o">&gt;</span> <span class="n">response</span> <span class="o">=</span> <span class="n">pipeline</span><span class="o">.</span><span class="na">eval</span><span class="o">(</span><span class="no">LUA_SCRIPT_RENEW</span><span class="o">,</span>
+                    <span class="nc">Collections</span><span class="o">.</span><span class="na">singletonList</span><span class="o">(</span><span class="n">lock</span><span class="o">.</span><span class="na">getKey</span><span class="o">()),</span>
+                    <span class="nc">Arrays</span><span class="o">.</span><span class="na">asList</span><span class="o">(</span><span class="n">lockValue</span><span class="o">,</span> <span class="nc">String</span><span class="o">.</span><span class="na">valueOf</span><span class="o">(</span><span class="n">lock</span><span class="o">.</span><span class="na">getLockTimeout</span><span class="o">()))</span>
+            <span class="o">);</span>
+            <span class="n">pipeline</span><span class="o">.</span><span class="na">sync</span><span class="o">();</span>
+            <span class="kt">boolean</span> <span class="n">success</span> <span class="o">=</span> <span class="n">response</span> <span class="o">!=</span> <span class="kc">null</span> <span class="o">&amp;&amp;</span> <span class="nc">Objects</span><span class="o">.</span><span class="na">equals</span><span class="o">(</span><span class="n">response</span><span class="o">.</span><span class="na">get</span><span class="o">(),</span> <span class="s">"suc"</span><span class="o">);</span>
+            <span class="k">if</span> <span class="o">(</span><span class="n">success</span><span class="o">)</span> <span class="o">{</span>
+                <span class="n">logger</span><span class="o">.</span><span class="na">debug</span><span class="o">(</span><span class="s">"Successfully renewed lock: {}"</span><span class="o">,</span> <span class="n">lock</span><span class="o">.</span><span class="na">getKey</span><span class="o">());</span>
+            <span class="o">}</span> <span class="k">else</span> <span class="o">{</span>
+                <span class="n">logger</span><span class="o">.</span><span class="na">warn</span><span class="o">(</span><span class="s">"Failed to renew lock: {}"</span><span class="o">,</span> <span class="n">lock</span><span class="o">.</span><span class="na">getKey</span><span class="o">());</span>
+            <span class="o">}</span>
+            <span class="k">return</span> <span class="n">success</span><span class="o">;</span>
+        <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="nc">Exception</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
+            <span class="n">logger</span><span class="o">.</span><span class="na">error</span><span class="o">(</span><span class="s">"Error while renewing lock: {}"</span><span class="o">,</span> <span class="n">lock</span><span class="o">.</span><span class="na">getKey</span><span class="o">(),</span> <span class="n">e</span><span class="o">);</span>
+            <span class="k">return</span> <span class="kc">false</span><span class="o">;</span>
+        <span class="o">}</span>
+    <span class="o">}</span>
+
+    <span class="kd">public</span> <span class="kt">boolean</span> <span class="nf">unlock</span><span class="o">(</span><span class="nc">RedisLock</span> <span class="n">lock</span><span class="o">)</span> <span class="o">{</span>
+        <span class="k">if</span> <span class="o">(</span><span class="n">lock</span> <span class="o">==</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+            <span class="k">return</span> <span class="kc">false</span><span class="o">;</span>
+        <span class="o">}</span>
+
+        <span class="c1">// 验证当前线程是否为加锁线程</span>
+        <span class="k">if</span> <span class="o">(</span><span class="n">lock</span><span class="o">.</span><span class="na">getThreadId</span><span class="o">()</span> <span class="o">!=</span> <span class="nc">Thread</span><span class="o">.</span><span class="na">currentThread</span><span class="o">().</span><span class="na">getId</span><span class="o">())</span> <span class="o">{</span>
+            <span class="n">logger</span><span class="o">.</span><span class="na">warn</span><span class="o">(</span><span class="s">"Current thread[{}] is not the lock owner[{}], will not unlock"</span><span class="o">,</span>
+                    <span class="nc">Thread</span><span class="o">.</span><span class="na">currentThread</span><span class="o">().</span><span class="na">getId</span><span class="o">(),</span> <span class="n">lock</span><span class="o">.</span><span class="na">getThreadId</span><span class="o">());</span>
+            <span class="k">return</span> <span class="kc">false</span><span class="o">;</span>
+        <span class="o">}</span>
+
+        <span class="k">try</span> <span class="o">{</span>
+            <span class="c1">// 停止续期线程</span>
+            <span class="k">if</span> <span class="o">(</span><span class="n">lock</span><span class="o">.</span><span class="na">getRenewThread</span><span class="o">()</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+                <span class="n">lock</span><span class="o">.</span><span class="na">getRenewThread</span><span class="o">().</span><span class="na">interrupt</span><span class="o">();</span>
+            <span class="o">}</span>
+
+            <span class="nc">String</span> <span class="n">lockValue</span> <span class="o">=</span> <span class="n">lock</span><span class="o">.</span><span class="na">getUuid</span><span class="o">().</span><span class="na">toString</span><span class="o">()</span> <span class="o">+</span> <span class="s">":"</span> <span class="o">+</span> <span class="n">lock</span><span class="o">.</span><span class="na">getThreadId</span><span class="o">();</span>
+            <span class="nc">JedisClusterPipeline</span> <span class="n">pipeline</span> <span class="o">=</span> <span class="n">jedisClient</span><span class="o">.</span><span class="na">getPipelined</span><span class="o">();</span>
+            <span class="nc">Response</span><span class="o">&lt;</span><span class="nc">String</span><span class="o">&gt;</span> <span class="n">response</span> <span class="o">=</span> <span class="n">pipeline</span><span class="o">.</span><span class="na">eval</span><span class="o">(</span><span class="no">LUA_SCRIPT_UNLOCK</span><span class="o">,</span>
+                    <span class="nc">Collections</span><span class="o">.</span><span class="na">singletonList</span><span class="o">(</span><span class="n">lock</span><span class="o">.</span><span class="na">getKey</span><span class="o">()),</span>
+                    <span class="nc">Collections</span><span class="o">.</span><span class="na">singletonList</span><span class="o">(</span><span class="n">lockValue</span><span class="o">)</span>  <span class="c1">// 使用包含线程ID的lockValue</span>
+            <span class="o">);</span>
+            <span class="n">pipeline</span><span class="o">.</span><span class="na">sync</span><span class="o">();</span>
+            <span class="k">return</span> <span class="n">response</span> <span class="o">!=</span> <span class="kc">null</span> <span class="o">&amp;&amp;</span> <span class="nc">Objects</span><span class="o">.</span><span class="na">equals</span><span class="o">(</span><span class="n">response</span><span class="o">.</span><span class="na">get</span><span class="o">(),</span> <span class="s">"suc"</span><span class="o">);</span>
+        <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="nc">Exception</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
+            <span class="n">logger</span><span class="o">.</span><span class="na">error</span><span class="o">(</span><span class="s">"Failed to release lock: {}"</span><span class="o">,</span> <span class="n">lock</span><span class="o">.</span><span class="na">getKey</span><span class="o">(),</span> <span class="n">e</span><span class="o">);</span>
+            <span class="k">return</span> <span class="kc">false</span><span class="o">;</span>
+        <span class="o">}</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<h2 id="结语">结语</h2>
+
+<p>本篇，我们从0-1，从简单到复杂完整了实现了一个Redis分布式锁，实现的细节难免粗糙，如果有问题请您指出，希望本篇可以给您提供一个思路，谢谢。</p>
+
+
+
+    </div>
+
+</article>
+<div class="post-nav">
+<a class="previous" href="/others/2024/12/12/%E8%AE%B0%E4%B8%80%E6%AC%A1%E4%B8%9A%E5%8A%A1MySQL%E6%AD%BB%E9%94%81case.html" title="记一次业务MySQL死锁">记一次业务MySQL死锁</a><span></span>
+</div>
+<div class="post-related">
+      <div>Related Articles</div>
+      <ul>
+        <li class="top-post">
+          <a class="post-link" href="/mysql/2024/09/25/MySQL%E4%B8%BA%E4%BB%80%E4%B9%88%E6%9C%89%E4%BA%86redolog%E8%BF%98%E9%9C%80%E8%A6%81double-write-buffer.html" title="MySQL为什么有了redolog还需要double write buffer">
+            MySQL为什么有了redolog还需要double write buffer<span class="post-badges">
+  <span class="post-badge badge-top">TOP</span>
+  <span class="post-badge badge-new">NEW</span>
+</span>
+</a>
+        </li>
+<li class="top-post">
+          <a class="post-link" href="/redis/2024/09/25/Redis-key%E8%BF%87%E6%9C%9F%E5%88%A0%E9%99%A4%E6%9C%BA%E5%88%B6.html" title="Redis key过期删除机制">
+            Redis key过期删除机制<span class="post-badges">
+  <span class="post-badge badge-top">TOP</span>
+  <span class="post-badge badge-new">NEW</span>
+</span>
+</a>
+        </li>
+<li class="top-post">
+          <a class="post-link" href="/others/2025/01/23/Redis%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81%E5%AE%9E%E7%8E%B0%E6%8C%87%E5%8C%97.html" title="Redis分布式锁实现指北">
+            Redis分布式锁实现指北<span class="post-badges">
+  <span class="post-badge badge-top">TOP</span>
+  <span class="post-badge badge-new">NEW</span>
+</span>
+</a>
+        </li>
+<li class="top-post">
+          <a class="post-link" href="/redis/2024/09/25/Redis6.0-Client-Side%E7%BC%93%E5%AD%98%E6%98%AF%E4%BB%80%E4%B9%88.html" title="Redis6.0 Client-Side缓存是什么">
+            Redis6.0 Client-Side缓存是什么<span class="post-badges">
+  <span class="post-badge badge-top">TOP</span>
+  <span class="post-badge badge-new">NEW</span>
+</span>
+</a>
+        </li>
+</ul>
+    </div>
+<div class="post-comments"></div></section>
+</div>
+
+
+  </section>
+  <section class="sidebar" style="margin-left: 15px;">
+    <!-- Get sidebar items --><style type="text/css" media="screen">
+.post-menu ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+</style>
+
+<div class="post-menu">
+  <div class="post-menu-title">TOC</div>
+  <div class="post-menu-content"></div>
+</div>
+
+<script>
+  function generateContent() {
+    var menu = document.querySelector(".post-menu");
+    var menuContent =  menu.querySelector(".post-menu-content");
+    var headings = document.querySelector(".post-content").querySelectorAll("h2, h3, h4, h5, h6");
+
+    // Hide menu when no headings
+    if (headings.length === 0) {
+      return menu.style.display = "none";
+    }
+
+    // Generate post menu
+    var menuHTML = '';
+    for (var i = 0; i < headings.length; i++) {
+      var h = headings[i];
+      menuHTML += (
+        '<li class="h-' + h.tagName.toLowerCase() + '">'
+        + '<a href="#h-' + h.getAttribute('id') + '">' + h.textContent + '</a></li>');
+    }
+
+    menuContent.innerHTML = '<ul>' + menuHTML + '</ul>';
+
+    // The header element
+    var header = document.querySelector('header.site-header');
+
+    function doMenuCollapse(index, over_items) {
+      var items = menuContent.firstChild.children;
+
+      if (over_items == undefined) {
+        over_items = 20;
+      }
+
+      if (items.length < over_items) {
+        return;
+      }
+
+      var activeItem = items[index];
+      var beginItem = activeItem
+      var endItem = activeItem
+      var beginIndex = index;
+      var endIndex = index + 1;
+      while (beginIndex >= 0
+        && !items[beginIndex].classList.contains('h-h2')) {
+        beginIndex -= 1;
+      }
+      while (endIndex < items.length
+        && !items[endIndex].classList.contains('h-h2')) {
+        endIndex += 1;
+      }
+      for (var i = 0; i < beginIndex; i++) {
+        item = items[i]
+        if (!item.classList.contains('h-h2')) {
+          item.style.display = 'none';
+        }
+      }
+      for (var i = beginIndex + 1; i < endIndex; i++) {
+        item = items[i]
+        // if (!item.classList.contains('h-h2')) {
+          item.style.display = '';
+        // }
+      }
+      for (var i = endIndex; i < items.length; i++) {
+        item = items[i]
+        if (!item.classList.contains('h-h2')) {
+          item.style.display = 'none';
+        }
+      }
+    }
+
+    // Init menu collapsed
+    doMenuCollapse(-1);
+
+    // Active the menu item
+    window.addEventListener('scroll', function (event) {
+      var lastActive = menuContent.querySelector('.active');
+      var changed = true;
+      var activeIndex = -1;
+      for (var i = headings.length - 1; i >= 0; i--) {
+        var h = headings[i];
+        var headingRect = h.getBoundingClientRect();
+        var headerRect = header.getBoundingClientRect();
+        var headerTop = Math.floor(headerRect.top);
+        var headerHeight = Math.floor(headerRect.height);
+        var headerHeight = headerTop + headerHeight + 20;
+        if (headingRect.top <= headerHeight) {
+          var id = 'h-' + h.getAttribute('id');
+          var a = menuContent.querySelector('a[href="#' + id  + '"]');
+          var curActive = a.parentNode;
+          if (curActive) {
+            curActive.classList.add('active');
+            activeIndex = i;
+          }
+          if (lastActive == curActive) {
+            changed = false;
+          }
+          break;
+        }
+      }
+      if (changed) {
+        if (lastActive) {
+          lastActive.classList.remove('active');
+        }
+        doMenuCollapse(activeIndex);
+      }
+      event.preventDefault();
+    });
+  }
+  generateContent();
+</script>
+</section>
+</div>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/"></data>
+
+  <div class="wrapper">
+    <div class="site-footer-inner">
+<div>Unpublished Work <span class="copyleft">©</span> 2017-2025 GitHub User</div>
+      <div>Powered by <a title="Jekyll is a simple, blog-aware, static site
+      generator." href="https://jekyllrb.com/">Jekyll</a> &amp; <a title="Yat, yet
+      another theme." href="https://github.com/jeffreytse/jekyll-theme-yat">Yat Theme</a>.</div>
+      <div class="footer-col rss-subscribe">Subscribe <a href="/feed.xml">via RSS</a>
+</div>
+    </div>
+  </div>
+</footer>
+</body>
+</html>

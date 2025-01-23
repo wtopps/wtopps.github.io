@@ -7,21 +7,22 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="google-translate-customization" content="108d9124921d80c3-80e20d618ff053c8-g4f02ec6f3dba68b7-c">
 <!-- Begin Jekyll SEO tag v2.8.0 -->
-<title>About | wtopps</title>
+<title>记一次业务MySQL死锁 | wtopps</title>
 <meta name="generator" content="Jekyll v4.3.4">
-<meta property="og:title" content="About">
+<meta property="og:title" content="记一次业务MySQL死锁">
 <meta name="author" content="GitHub User">
 <meta property="og:locale" content="en_US">
 <meta name="description" content="Write an awesome description for your new site here. You can edit this line in _config.yml. It will appear in your document head meta (for Google search results) and in your feed.xml site description.">
 <meta property="og:description" content="Write an awesome description for your new site here. You can edit this line in _config.yml. It will appear in your document head meta (for Google search results) and in your feed.xml site description.">
-<link rel="canonical" href="http://localhost:4000/about.html">
-<meta property="og:url" content="http://localhost:4000/about.html">
+<link rel="canonical" href="http://localhost:4000/others/2024/12/12/%E8%AE%B0%E4%B8%80%E6%AC%A1%E4%B8%9A%E5%8A%A1MySQL%E6%AD%BB%E9%94%81case.html">
+<meta property="og:url" content="http://localhost:4000/others/2024/12/12/%E8%AE%B0%E4%B8%80%E6%AC%A1%E4%B8%9A%E5%8A%A1MySQL%E6%AD%BB%E9%94%81case.html">
 <meta property="og:site_name" content="wtopps">
-<meta property="og:type" content="website">
+<meta property="og:type" content="article">
+<meta property="article:published_time" content="2024-12-12T00:00:00+08:00">
 <meta name="twitter:card" content="summary">
-<meta property="twitter:title" content="About">
+<meta property="twitter:title" content="记一次业务MySQL死锁">
 <script type="application/ld+json">
-{"@context":"https://schema.org","@type":"WebPage","author":{"@type":"Person","name":"GitHub User"},"description":"Write an awesome description for your new site here. You can edit this line in _config.yml. It will appear in your document head meta (for Google search results) and in your feed.xml site description.","headline":"About","url":"http://localhost:4000/about.html"}</script>
+{"@context":"https://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"GitHub User"},"dateModified":"2024-12-12T00:00:00+08:00","datePublished":"2024-12-12T00:00:00+08:00","description":"Write an awesome description for your new site here. You can edit this line in _config.yml. It will appear in your document head meta (for Google search results) and in your feed.xml site description.","headline":"记一次业务MySQL死锁","mainEntityOfPage":{"@type":"WebPage","@id":"http://localhost:4000/others/2024/12/12/%E8%AE%B0%E4%B8%80%E6%AC%A1%E4%B8%9A%E5%8A%A1MySQL%E6%AD%BB%E9%94%81case.html"},"url":"http://localhost:4000/others/2024/12/12/%E8%AE%B0%E4%B8%80%E6%AC%A1%E4%B8%9A%E5%8A%A1MySQL%E6%AD%BB%E9%94%81case.html"}</script>
 <!-- End Jekyll SEO tag -->
 <link rel="icon" href="">
   <link rel="canonical" href="http://localhost:4000">
@@ -857,27 +858,205 @@ function googleTranslateElementInit() {
 
 
 
+<header class="post-header">
+  <h1 class="post-title p-name" itemprop="name headline">记一次业务MySQL死锁</h1>
+  <h2 class="post-subtitle">记一次业务MySQL死锁</h2>
+
+  <div class="post-meta">
+    <time class="dt-published" datetime="2024-12-12T00:00:00+08:00" itemprop="datePublished"><i class="fa fa-calendar"></i> Dec 12, 2024
+    </time>
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <span class="post-reading-time left-vsplit"><i class="fa fa-clock-o"></i> About 2 mins</span>
+  </div>
+<div class="post-tags"><a class="post-tag" href="/tags.html#Serialization">#Serialization</a></div></header>
 <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
 
     <div class="post-content e-content" itemprop="articleBody">
 
-      <h2>About</h2>
+      <p><img src="https://raw.githubusercontent.com/wtopps/wtopps.github.io/refs/heads/master/images/image1.webp" alt="banner"></p>
 
-<p><img class="emoji" title=":art:" alt=":art:" raw="🎨" src="https://github.githubassets.com/images/icons/emoji/unicode/1f3a8.png" style="vertical-align: middle; display: inline; max-width: 1em; visibility: hidden;" onload="this.style.visibility='visible'" onerror="this.replaceWith(this.getAttribute('raw'))"> Yet another theme for elegant writers with modern flat style
-and beautiful night mode.
-</p>
+<h2 id="问题">问题</h2>
 
-<p>
-Hey, nice to meet you, you found this Jekyll theme. Here the yet another
-theme is a modern theme, and it's quite clear, clean and neat for writers
-and posts.
-</p>
+<p>线上服务出现服务告警，查询日志现场，错误信息如下：</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Caused by: com.mysql.cj.jdbc.exceptions.MySQLTransactionRollbackException: Deadlock found when trying to get lock<span class="p">;</span> try restarting transaction
+	at com.mysql.cj.jdbc.exceptions.SQLError.createSQLException<span class="o">(</span>SQLError.java:124<span class="o">)</span>
+	at com.mysql.cj.jdbc.exceptions.SQLExceptionsMapping.translateException<span class="o">(</span>SQLExceptionsMapping.java:122<span class="o">)</span>
+	at com.mysql.cj.jdbc.ClientPreparedStatement.executeInternal<span class="o">(</span>ClientPreparedStatement.java:916<span class="o">)</span>
+	at com.mysql.cj.jdbc.ClientPreparedStatement.executeQuery<span class="o">(</span>ClientPreparedStatement.java:972<span class="o">)</span>
+	at com.alibaba.druid.pool.DruidPooledPreparedStatement.executeQuery<span class="o">(</span>DruidPooledPreparedStatement.java:213<span class="o">)</span>
+	at org.hibernate.engine.jdbc.internal.ResultSetReturnImpl.extract<span class="o">(</span>ResultSetReturnImpl.java:57<span class="o">)</span>
+	... 113 common frames omitted
+	
+....
+
+Deadlock found when trying to get lock<span class="p">;</span> try restarting transaction
+</code></pre></div></div>
+
+<p>根据日志信息，很显然是一个MySQL死锁的case。</p>
+
+<h2 id="问题分析">问题分析</h2>
+
+<p>根据报错信息，定位到报错的代码：</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">for</span> <span class="o">(</span><span class="nc">AuditProcessRecord</span> <span class="n">auditProcessRecord</span> <span class="o">:</span> <span class="n">auditProcessRecords</span><span class="o">)</span> <span class="o">{</span>
+    <span class="k">if</span> <span class="o">(</span><span class="n">auditProcessRecord</span><span class="o">.</span><span class="na">getId</span><span class="o">().</span><span class="na">equals</span><span class="o">(</span><span class="n">auditProcessRecordId</span><span class="o">))</span> <span class="o">{</span>
+        <span class="n">auditProcessRecord</span><span class="o">.</span><span class="na">setAuditStatus</span><span class="o">(</span><span class="nc">AuditProcessStatus</span><span class="o">.</span><span class="na">AUDIT_PASS</span><span class="o">.</span><span class="na">getStatus</span><span class="o">());</span>
+        <span class="n">auditProcessRecordRepo</span><span class="o">.</span><span class="na">save</span><span class="o">(</span><span class="n">auditProcessRecord</span><span class="o">);</span>
+        <span class="k">break</span><span class="o">;</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+<span class="c1">// 检查是否存在审核中的流程，如果存在，继续等待剩余流程结束</span>
+<span class="c1">// 事务中，加读锁，当前读</span>
+<span class="c1">// 不加锁，快照读</span>
+<span class="kt">int</span> <span class="n">auditingRecordCount</span> <span class="o">=</span> <span class="n">auditProcessRecordRepo</span><span class="o">.</span><span class="na">existsAuditingRecordInLock</span><span class="o">(</span><span class="n">auditId</span><span class="o">);</span>
+<span class="k">if</span> <span class="o">(</span><span class="n">auditingRecordCount</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="o">)</span> <span class="o">{</span>
+    <span class="n">log</span><span class="o">.</span><span class="na">info</span><span class="o">(</span><span class="s">"LotteryAudit process is pending auditItem, waiting. lotteryId={}, auditId={}"</span><span class="o">,</span>
+            <span class="n">lotteryAuditRecord</span><span class="o">.</span><span class="na">getLotteryId</span><span class="o">(),</span> <span class="n">auditId</span><span class="o">);</span>
+    <span class="k">return</span><span class="o">;</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<p>报错的方法是existsAuditingRecordInLock，看一下实现：</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nd">@Query</span><span class="o">(</span><span class="n">value</span> <span class="o">=</span> <span class="s">"select count(*) from audit_process_record where audit_id = ?1 and audit_status = 0 LOCK IN SHARE MODE"</span><span class="o">,</span><span class="n">nativeQuery</span> <span class="o">=</span> <span class="kc">true</span><span class="o">)</span>
+<span class="nc">Integer</span> <span class="nf">existsAuditingRecordInLock</span><span class="o">(</span><span class="nc">String</span> <span class="n">auditId</span><span class="o">);</span>
+</code></pre></div></div>
+
+<p>existsAuditingRecordInLock的实现可以看到，使用了共享锁查询audit_process_record的行数，线上MySQL的事务级别使用RR，使用共享锁的目的，应该是希望避免快照读，而是使用当前读，并发场景下，可以查询到其他线程的最新数据，但问题也恰恰出在这里。</p>
+
+<h4 id="执行过程分析">执行过程分析</h4>
+
+<p>假定有两个线程，同时执行上面的代码，两个线程同时处理不同的 auditProcessRecordId，但是相同的 auditId：</p>
+
+<p>线程A：</p>
+
+<ol>
+  <li>BEGIN;</li>
+  <li>更新记录1：
+UPDATE audit_process_record SET audit_status = 1 WHERE id = 1  // 获得id=1记录的排他锁</li>
+  <li>SELECT COUNT(*) … LOCK IN SHARE MODE   // 尝试获取audit_id=1的所有记录的共享锁
+需要获取id=2记录的共享锁，但被线程B的排他锁阻塞</li>
+</ol>
+
+<p>线程B：</p>
+<ol>
+  <li>BEGIN;</li>
+  <li>更新记录2：
+UPDATE audit_process_record SET audit_status = 1 WHERE id = 2  // 获得id=2记录的排他锁</li>
+  <li>SELECT COUNT(*) … LOCK IN SHARE MODE   // 尝试获取audit_id=1的所有记录的共享锁
+需要获取id=1记录的共享锁，但被线程A的排他锁阻塞</li>
+</ol>
+
+<p>死锁原因：</p>
+
+<p>线程A先获得记录1的排他锁，然后要获取所有记录（包括记录2）的共享锁</p>
+
+<p>线程B先获得记录2的排他锁，然后要获取所有记录（包括记录1）的共享锁</p>
+
+<p>形成循环等待：</p>
+
+<p>​	A持有记录1排他锁，等待记录2的共享锁</p>
+
+<p>​	B持有记录2排他锁，等待记录1的共享锁</p>
+
+<h2 id="问题解决">问题解决</h2>
+
+<p>方法一：</p>
+
+<p>使用FOR UPDATE替代LOCK IN SHARE MODE</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="no">SELECT</span> <span class="nf">COUNT</span><span class="o">(*)</span> <span class="no">FROM</span> <span class="n">audit_process_record</span> <span class="no">WHERE</span> <span class="n">audit_id</span> <span class="o">=</span> <span class="o">?</span><span class="mi">1</span> <span class="no">AND</span> <span class="n">audit_status</span> <span class="o">=</span> <span class="mi">0</span> 
+<span class="no">FOR</span> <span class="no">UPDATE</span>
+</code></pre></div></div>
+
+<p>FOR UPDATE是独占锁（排他锁），它在读取数据时会锁定记录，并且同时防止其他事务读取或修改这些记录。在事务中使用 FOR UPDATE 时，其他事务将无法对加锁的记录执行 SELECT 或任何修改操作，直到当前事务提交或回滚。</p>
+
+<p>方法二：</p>
+
+<p>调整事物隔离级别，RR变为RC</p>
+
+<p>方法三：</p>
+
+<p>使用其他的分布式锁，例如Redis或者ZK，代替MySQL的锁操作。</p>
 
 
 
     </div>
 
 </article>
+<div class="post-nav">
+<a class="previous" href="/others/2024/11/11/Protobuf-Varint%E5%BA%8F%E5%88%97%E5%8C%96%E5%8E%9F%E7%90%86.html" title="Protobuf Varint序列化原理">Protobuf Varint序列化原理</a><a class="next" href="/others/2025/01/23/Redis%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81%E5%AE%9E%E7%8E%B0%E6%8C%87%E5%8C%97.html" title="Redis分布式锁实现指北">Redis分布式锁实现指北</a>
+</div>
+<div class="post-related">
+      <div>Related Articles</div>
+      <ul>
+        <li class="top-post">
+          <a class="post-link" href="/redis/2024/09/25/Redis-key%E8%BF%87%E6%9C%9F%E5%88%A0%E9%99%A4%E6%9C%BA%E5%88%B6.html" title="Redis key过期删除机制">
+            Redis key过期删除机制<span class="post-badges">
+  <span class="post-badge badge-top">TOP</span>
+  <span class="post-badge badge-new">NEW</span>
+</span>
+</a>
+        </li>
+<li class="top-post">
+          <a class="post-link" href="/redis/2024/09/25/Redis6.0-Client-Side%E7%BC%93%E5%AD%98%E6%98%AF%E4%BB%80%E4%B9%88.html" title="Redis6.0 Client-Side缓存是什么">
+            Redis6.0 Client-Side缓存是什么<span class="post-badges">
+  <span class="post-badge badge-top">TOP</span>
+  <span class="post-badge badge-new">NEW</span>
+</span>
+</a>
+        </li>
+<li class="top-post">
+          <a class="post-link" href="/mysql/2024/09/25/MySQL%E4%B8%BA%E4%BB%80%E4%B9%88%E6%9C%89%E4%BA%86redolog%E8%BF%98%E9%9C%80%E8%A6%81double-write-buffer.html" title="MySQL为什么有了redolog还需要double write buffer">
+            MySQL为什么有了redolog还需要double write buffer<span class="post-badges">
+  <span class="post-badge badge-top">TOP</span>
+  <span class="post-badge badge-new">NEW</span>
+</span>
+</a>
+        </li>
+<li class="top-post">
+          <a class="post-link" href="/mysql/2024/09/25/MySQL%E6%85%A2SQL%E6%8E%A2%E7%A9%B6.html" title="MySQL慢SQL探究">
+            MySQL慢SQL探究<span class="post-badges">
+  <span class="post-badge badge-top">TOP</span>
+  <span class="post-badge badge-new">NEW</span>
+</span>
+</a>
+        </li>
+</ul>
+    </div>
 <div class="post-comments"></div></section>
 </div>
 
