@@ -2,13 +2,13 @@
 layout: post
 title: MySQL为什么有了redolog还需要double write buffer
 subtitle: MySQL为什么有了redolog还需要double write buffer
-excerpt_image: https://github.com/jeffreytse/jekyll-theme-yat/assets/9413601/2ed22d49-90b1-4f7e-8e8f-b77b21dee505
+excerpt_image: https://github.com/wtopps/wtopps.github.io/blob/master/images/MySQL.jpeg?raw=true
 categories: MySQL
 tags: [MySQL]
 top: 1
 ---
 
-![banner](https://github.com/jeffreytse/jekyll-theme-yat/assets/9413601/2ed22d49-90b1-4f7e-8e8f-b77b21dee505)
+![banner](https://github.com/wtopps/wtopps.github.io/blob/master/images/MySQL.jpeg?raw=true)
 
 ## 问题
 

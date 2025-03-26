@@ -2,13 +2,13 @@
 layout: post
 title: Protobuf Varint序列化原理
 subtitle: Protobuf Varint序列化原理
-excerpt_image: https://raw.githubusercontent.com/wtopps/wtopps.github.io/refs/heads/master/images/image1.webp
+excerpt_image: https://github.com/wtopps/wtopps.github.io/blob/master/images/Protobuf.jpeg?raw=true
 categories: Others
 tags: [Serialization]
 top: 1
 ---
 
-![banner](https://raw.githubusercontent.com/wtopps/wtopps.github.io/refs/heads/master/images/image1.webp)
+![banner](https://github.com/wtopps/wtopps.github.io/blob/master/images/Protobuf.jpeg?raw=true)
 
 ## 前言
 
