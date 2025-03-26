@@ -2,14 +2,14 @@
 layout: post
 title: Java ThreadPoolExecutor线程池概述
 subtitle: Java ThreadPoolExecutor线程池概述
-excerpt_image: https://github.com/jeffreytse/jekyll-theme-yat/assets/9413601/2ed22d49-90b1-4f7e-8e8f-b77b21dee505
+excerpt_image: https://github.com/wtopps/wtopps.github.io/blob/master/images/ThreadPool.jpeg?raw=true
 categories: Java
 tags: [Java]
 top: 2
 
 ---
 
-![banner](https://github.com/jeffreytse/jekyll-theme-yat/assets/9413601/2ed22d49-90b1-4f7e-8e8f-b77b21dee505)
+![banner](https://github.com/wtopps/wtopps.github.io/blob/master/images/ThreadPool.jpeg?raw=true)
 
 # 导航
 
