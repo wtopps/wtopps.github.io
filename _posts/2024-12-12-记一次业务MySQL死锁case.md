@@ -2,14 +2,14 @@
 layout: post
 title: 记一次业务MySQL死锁
 subtitle: 记一次业务MySQL死锁
-excerpt_image: https://raw.githubusercontent.com/wtopps/wtopps.github.io/refs/heads/master/images/image1.webp
-categories: Others
-tags: [Serialization]
+excerpt_image: https://github.com/wtopps/wtopps.github.io/blob/master/images/Problem%20Investigation.jpeg?raw=true
+categories: MySQL
+tags: [MySQL]
 top: 1
 
 ---
 
-![banner](https://raw.githubusercontent.com/wtopps/wtopps.github.io/refs/heads/master/images/image1.webp)
+![banner](https://github.com/wtopps/wtopps.github.io/blob/master/images/Problem%20Investigation.jpeg?raw=true)
 
 ## 问题
 
