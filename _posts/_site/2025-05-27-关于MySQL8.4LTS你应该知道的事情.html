@@ -1,0 +1,205 @@
+<p><img src="https://github.com/wtopps/wtopps.github.io/blob/master/images/MySQL8.4.jpeg?raw=true" alt="banner" /></p>
+
+<h2 id="mysql-84">MySQL 8.4</h2>
+
+<p>MySQL8.4是官方第一个正式指定为长期支持（LTS）版本，也是一个重要的里程碑版本，MySQL官方对该版本将提供长达五年的主要支持和额外的三年扩展支持，总支持周期预计持续到 2032 年 4 月左右。</p>
+
+<p>与此前的 MySQL 8.0 版本相比，MySQL 8.4 引入了诸多变化，包括功能成熟化为默认设置、部分功能被弃用或移除。但在8.4中，并未引入新的“革命性的新特性”，更多的是对部分参数的小调整，以及性能的优化提升。</p>
+
+<p>本篇，我就来一起看一下MySQL8.4对比8.0版本，有哪些改变。</p>
+
+<h2 id="performance-improvement"><em>Performance improvement</em></h2>
+
+<p>MySQL 8.4 在性能方面取得了显著进步，特别是在特定工作负载和内部机制上进行了优化，旨在提供更快的查询执行、更高的响应速度以及更流畅的数据库操作 。</p>
+
+<p>首先，多项 InnoDB 存储引擎相关的系统变量默认值得到了调整，以更好地适应现代硬件能力并提升性能。</p>
+
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">innodb_buffer_pool_in_core_file</code> 的默认值从 <code class="language-plaintext highlighter-rouge">ON</code> 变为 <code class="language-plaintext highlighter-rouge">OFF</code>，这有助于通过移除大型 InnoDB 的缓冲池数据包含在核心转储文件中，以此来减小核心文件大小 。</li>
+  <li><code class="language-plaintext highlighter-rouge">innodb_change_buffering</code> 的默认值从 <code class="language-plaintext highlighter-rouge">all</code> 变为 <code class="language-plaintext highlighter-rouge">none</code>，这意味着不再缓存索引更改，这在 SSD 上尤其能带来更快的写入速度 。</li>
+  <li><code class="language-plaintext highlighter-rouge">innodb_flush_method</code> 在 Linux 上的默认值从 <code class="language-plaintext highlighter-rouge">fsync</code> 变为 <code class="language-plaintext highlighter-rouge">O_DIRECT</code>（如果支持），这更符合现代硬件特性，特别是对于 SSD 和 RAID 系统 。</li>
+  <li><code class="language-plaintext highlighter-rouge">innodb_log_buffer_size</code> 的默认值从 16 MB 增加到 64 MB，更大的日志缓冲区可以减少日志写入频率，从而提升性能 。</li>
+  <li><code class="language-plaintext highlighter-rouge">temptable_max_ram</code> 的默认值也从 1 GB 动态调整为总内存的 3%（在 1-4 GB 范围内），这使得内存分配更加灵活，平衡了性能与稳定性 。</li>
+</ul>
+
+<table>
+  <thead>
+    <tr>
+      <th>变量名</th>
+      <th>MySQL 8.0 默认值</th>
+      <th>MySQL 8.4 默认值</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>innodb_buffer_pool_in_core_file</td>
+      <td>ON</td>
+      <td>OFF（如果支持 MADV_DONTDUMP）</td>
+    </tr>
+    <tr>
+      <td>innodb_change_buffering</td>
+      <td>all</td>
+      <td>none</td>
+    </tr>
+    <tr>
+      <td>innodb_adaptive_hash_index</td>
+      <td>ON</td>
+      <td>OFF</td>
+    </tr>
+    <tr>
+      <td>innodb_doublewrite_pages</td>
+      <td>innodb_write_io_threads (4)</td>
+      <td>128</td>
+    </tr>
+    <tr>
+      <td>innodb_flush_method (Linux)</td>
+      <td>fsync</td>
+      <td>O_DIRECT（如果支持）</td>
+    </tr>
+    <tr>
+      <td>innodb_io_capacity</td>
+      <td>200</td>
+      <td>10000</td>
+    </tr>
+    <tr>
+      <td>innodb_log_buffer_size</td>
+      <td>16 MB</td>
+      <td>64 MB</td>
+    </tr>
+    <tr>
+      <td>temptable_max_ram</td>
+      <td>1 GB</td>
+      <td>总内存的 3%（1-4 GB）</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>其次，更深层次的性能优化体现在以下几个关键领域：</p>
+
+<ul>
+  <li><strong>Binlog 事务依赖性优化：</strong> MySQL 8.4 将 <code class="language-plaintext highlighter-rouge">binlog_transaction_dependency</code> 的数据结构从 <code class="language-plaintext highlighter-rouge">std::map</code> 切换到 <code class="language-plaintext highlighter-rouge">ankerl::unordered_dense::map</code> 。这一改变显著提升了 <code class="language-plaintext highlighter-rouge">INLIST_UPDATE</code> 和 <code class="language-plaintext highlighter-rouge">UPDATE_INDEX_LIMIT</code> 等工作负载的效率，带来了高达 <strong>19.4% 的平均性能提升</strong> 。这种内部数据结构的变化，直接解决了特定高并发场景下的瓶颈，对于依赖这些操作的应用程序而言，性能增益将尤为明显。</li>
+  <li><strong>JOIN 查询执行优化：</strong> MySQL 8.4 解决了在 MySQL 8.0.33 版本中相对于 8.0.28 版本在使用 <code class="language-plaintext highlighter-rouge">JOIN</code> 查询时出现的性能下降问题 。这项优化为 <code class="language-plaintext highlighter-rouge">POINTS_COVERED_SI</code> 和 <code class="language-plaintext highlighter-rouge">POINTS_NOTCOVERED_SI</code> 等工作负载带来了 <strong>2.17% 的平均性能提升</strong> 。这表明开发团队通过深入分析并修复了特定查询模式下的低效问题，使得复杂的联接操作更为高效。</li>
+  <li><strong>索引范围扫描改进：</strong> 在之前的 MySQL 版本中，索引范围扫描缺少记录缓冲区导致了不必要的性能下降 。最新版本解决了这一问题，为 <code class="language-plaintext highlighter-rouge">ORDER_RANGES</code>、<code class="language-plaintext highlighter-rouge">RANGE_NOTCOVERED</code>、<code class="language-plaintext highlighter-rouge">RANGE_COVERED</code> 和 <code class="language-plaintext highlighter-rouge">SUM_RANGES</code> 等多种工作负载带来了 <strong>2.12% 的平均性能提升</strong> 。这一改进直接提升了依赖索引扫描的读取密集型操作的效率。</li>
+  <li><strong><code class="language-plaintext highlighter-rouge">innodb_doublewrite_pages</code> 默认值调整：</strong> MySQL 8.4 将 <code class="language-plaintext highlighter-rouge">innodb_doublewrite_pages</code> 的默认值从 MySQL 8.0.20 的 4 调整为 128 。这一更改修复了之前版本中一个次优行为，该行为可能导致在使用 <code class="language-plaintext highlighter-rouge">ALTER TABLE</code> 的 <code class="language-plaintext highlighter-rouge">INPLACE</code> 算法等操作时出现性能下降。</li>
+</ul>
+
+<p>总体而言，这些优化带来了显著的性能提升：写入工作负载平均性能提升约 <strong>7.25%</strong>，读取工作负载平均性能提升约 <strong>1.39%</strong> 。</p>
+
+<h2 id="security-enhancement"><em>Security enhancement</em></h2>
+
+<p>MySQL 8.4 在安全性方面进行了多项重要强化，为用户提供了更强大的数据保护和更灵活的身份验证机制。</p>
+
+<p><strong>默认认证插件变化：</strong> <code class="language-plaintext highlighter-rouge">MySQL 8.0</code> 使用 <code class="language-plaintext highlighter-rouge">caching_sha2_password</code> 作为默认插件，但 <code class="language-plaintext highlighter-rouge">mysql_native_password</code> 仍可用。</p>
+
+<p><code class="language-plaintext highlighter-rouge">MySQL 8.4</code> 中，<code class="language-plaintext highlighter-rouge">mysql_native_password</code>默认被禁用，必须通过 –mysql-native-password=ON 或在 [mysqld] 部分添加 mysql_native_password=ON 启用。Percona 文章指出，这与 MySQL 8.0.34 的弃用趋势一致，预计在 MySQL 9.0 中完全移除，研究显示这提升了安全性，但可能影响旧系统兼容性。</p>
+
+<p><strong>SASL 基于 LDAP 认证：</strong> MySQL 8.4 在 Windows 上支持 GSSAPI/Kerberos 的 SASL 认证，使用 <code class="language-plaintext highlighter-rouge">authentication_ldap_sasl_client</code> 插件，适合企业级身份验证场景。</p>
+
+<p><strong>WebAuthn 认证：</strong> 新增 <code class="language-plaintext highlighter-rouge">authentication_webauthn</code>（服务器端，企业版）和 <code class="language-plaintext highlighter-rouge">authentication_webauthn_client</code>（客户端）插件，支持智能卡等设备认证，增强了多因素认证能力。</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>特性</th>
+      <th>MySQL 8.0</th>
+      <th>MySQL 8.4</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>默认认证插件</td>
+      <td>caching_sha2_password，可用 mysql_native_password</td>
+      <td>caching_sha2_password，mysql_native_password 默认禁用</td>
+    </tr>
+    <tr>
+      <td>SASL LDAP 认证</td>
+      <td>不支持 Windows GSSAPI/Kerberos</td>
+      <td>支持 Windows GSSAPI/Kerberos</td>
+    </tr>
+    <tr>
+      <td>WebAuthn 认证</td>
+      <td>不支持</td>
+      <td>支持（企业版）</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="replication-enhancement"><em>Replication Enhancement</em></h2>
+
+<p>MySQL8.4 对于主从复制方面进行了优化和改进，准确的说，在8.4中，已经不能叫做主从复制了，主要改变如下。</p>
+
+<ul>
+  <li>
+    <p>MySQL 8.0 使用 MASTER/SLAVE 术语，MySQL 8.4 改为 SOURCE/REPLICA，符合包容性标准，Percona 文章指出这对用户理解复制角色更清晰。</p>
+
+    <p><code class="language-plaintext highlighter-rouge">MASTER</code>/<code class="language-plaintext highlighter-rouge">SLAVE</code> 术语的完全移除 是社会语言变化转化为技术变更的一个典型例子。虽然从道德角度值得称赞，但这一变化对于依赖这些术语的现有自动化脚本、监控工具和自定义指标收集器来说，是一个<strong>破坏性变更</strong> 。这凸显了数据库升级的一个关键方面：需要对所有周边操作工具进行全面审计和更新，而不仅仅是数据库本身。这强调了即使是看似“非技术性”的更改，如果不在升级周期中主动解决，也可能导致显著的技术债务。</p>
+  </li>
+  <li>
+    <p><strong>GTID 标签：</strong> 新增支持，格式为 UUID:TAG:NUMBER，通过 gtid_next=AUTOMATIC:TAG 或 UUID:TAG:NUMBER 启用，需要 TRANSACTION_GTID_TAG 权限。官方文档提到这便于事务组跟踪，适合复杂复制环境。</p>
+  </li>
+  <li>
+    <p><strong>SQL_AFTER_GTIDS：</strong> 现在兼容多线程应用器（MTA），提升复制性能。</p>
+  </li>
+</ul>
+
+<table>
+  <thead>
+    <tr>
+      <th>特性</th>
+      <th>MySQL 8.0</th>
+      <th>MySQL 8.4</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>复制术语</td>
+      <td>MASTER/SLAVE</td>
+      <td>SOURCE/REPLICA</td>
+    </tr>
+    <tr>
+      <td>SOURCE_RETRY_COUNT 默认值</td>
+      <td>未指定</td>
+      <td>10</td>
+    </tr>
+    <tr>
+      <td>GTID 标签</td>
+      <td>不支持</td>
+      <td>支持（UUID:TAG:NUMBER）</td>
+    </tr>
+    <tr>
+      <td>SQL_AFTER_GTIDS</td>
+      <td>不兼容 MTA</td>
+      <td>兼容 MTA</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="foreign-key-constraint"><em>Foreign key constraint</em></h2>
+
+<p>MySQL 8.0 允许父表上的索引不一定是唯一的，MySQL 8.4 要求引用列上必须有唯一键，由 <code class="language-plaintext highlighter-rouge">restrict_fk_on_non_standard_key</code> 控制（默认 ON）。Percona 文章指出，这增强了数据完整性，但可能需要调整现有架构。</p>
+
+<p>此项变更对于强制执行更严格的关系完整性至关重要，更重要的是，它旨在防止在使用多线程应用器时，父表上没有唯一键可能导致的随机复制中断 。因此，以前可用的创建外键的 DDL 语句现在可能会失败。组织必须审查其模式和 DDL 脚本，以确保引用父列上存在唯一键。这是朝着改进数据一致性和复制可靠性迈出的重要一步。</p>
+
+<h2 id="key-removal"><em>Key removal</em></h2>
+
+<p>MySQL 8.4 的发布，伴随着一些功能的弃用和移除，这些变化可能对现有系统和升级过程产生显著影响。</p>
+
+<ul>
+  <li><strong><code class="language-plaintext highlighter-rouge">AUTO_INCREMENT</code> 与 <code class="language-plaintext highlighter-rouge">FLOAT</code> 或 <code class="language-plaintext highlighter-rouge">DOUBLE</code> 数据类型：</strong> 这种组合在 MySQL 8.0 中已被弃用，并在 8.4 中<strong>完全移除</strong>。尝试在 <code class="language-plaintext highlighter-rouge">FLOAT</code> 或 <code class="language-plaintext highlighter-rouge">DOUBLE</code> 列上使用 <code class="language-plaintext highlighter-rouge">AUTO_INCREMENT</code> 选项创建或修改表将导致错误 。</li>
+  <li><strong><code class="language-plaintext highlighter-rouge">FLUSH HOSTS</code> 语句：</strong> 该语句已在 MySQL 8.4 中移除。推荐的替代方法是使用 <code class="language-plaintext highlighter-rouge">TRUNCATE TABLE performance_schema.host_cache</code> 。</li>
+  <li><strong><code class="language-plaintext highlighter-rouge">SET_USER_ID</code> 权限：</strong> 该权限在 MySQL 8.2 中被弃用，并已在 8.4 中完全移除。其职责被拆分为 <code class="language-plaintext highlighter-rouge">SET_ANY_DEFINER</code> 和 <code class="language-plaintext highlighter-rouge">ALLOW_NONEXISTENT_DEFINER</code> 。</li>
+  <li><strong><code class="language-plaintext highlighter-rouge">default_authentication_plugin</code> 变量：</strong> 该系统变量已在 MySQL 8.4 中移除 。数据库系统现在将始终默认为新用户使用 <code class="language-plaintext highlighter-rouge">caching_sha2_password</code>，忽略任何先前的 <code class="language-plaintext highlighter-rouge">default_authentication_plugin</code> 设置。用户账户仍然可以通过 <code class="language-plaintext highlighter-rouge">CREATE USER</code> 和 <code class="language-plaintext highlighter-rouge">ALTER USER</code> 语句覆盖此默认值 。</li>
+  <li><strong>复制相关状态变量：</strong> 多个与复制命令相关的 <code class="language-plaintext highlighter-rouge">Com_</code> 状态变量（例如 <code class="language-plaintext highlighter-rouge">Com_change_master</code>、<code class="language-plaintext highlighter-rouge">Com_show_master_status</code>、<code class="language-plaintext highlighter-rouge">Com_show_slave_hosts</code>、<code class="language-plaintext highlighter-rouge">Com_show_slave_status</code>、<code class="language-plaintext highlighter-rouge">Com_slave_start</code>、<code class="language-plaintext highlighter-rouge">Com_slave_stop</code>）已在 8.4 中移除 。查询这些状态变量的监控工具和脚本将失败，需要更新以使用替代方法或新变量。</li>
+</ul>
+
+<h2 id="conclusions">Conclusions</h2>
+
+<p>MySQL 8.4 LTS 版本代表了 MySQL 数据库演进中的一个重要进步，它在稳定性、性能和安全性方面带来了显著的提升。总体来说，8.4没有什么革命性的创新，更多的是细节方面的完善，作为LTS，8.4的目标肯定是稳定压倒一切。</p>
+
+<p><strong>总结：</strong></p>
+
+<ul>
+  <li><strong>增强的性能：</strong> 通过对 InnoDB 内部机制的优化、JOIN 查询和索引范围扫描的改进，以及更智能的自动直方图更新，MySQL 8.4 提供了可衡量的性能提升，尤其是在写入密集型工作负载和特定查询模式下。</li>
+  <li><strong>强化的安全性：</strong> 8.4 版本引入了全面的高级密码管理功能，强制使用更现代、更安全的 TLS 协议，并支持 WebAuthn 和增强的 SASL-based LDAP 等新的身份验证方法，显著提升了数据库的整体安全态势。</li>
+  <li><strong>功能成熟与现代化：</strong> 8.4 版本继续完善了 MySQL 8.0 中引入的现代 SQL 功能（如 CTEs 和窗口函数）和 JSON 数据类型处理，并引入了 GTID 标签等复制增强功能，以提高可观察性和弹性。</li>
+</ul>

@@ -1,0 +1,1379 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="google-translate-customization" content="108d9124921d80c3-80e20d618ff053c8-g4f02ec6f3dba68b7-c">
+<!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>关于Valkey你需要知道的事情 | wtopps</title>
+<meta name="generator" content="Jekyll v4.3.4">
+<meta property="og:title" content="关于Valkey你需要知道的事情">
+<meta name="author" content="GitHub User">
+<meta property="og:locale" content="en_US">
+<meta name="description" content="Write an awesome description for your new site here. You can edit this line in _config.yml. It will appear in your document head meta (for Google search results) and in your feed.xml site description.">
+<meta property="og:description" content="Write an awesome description for your new site here. You can edit this line in _config.yml. It will appear in your document head meta (for Google search results) and in your feed.xml site description.">
+<link rel="canonical" href="http://localhost:4000/redis/2025/04/17/%E5%85%B3%E4%BA%8EValkey%E4%BD%A0%E9%9C%80%E8%A6%81%E7%9F%A5%E9%81%93%E7%9A%84%E4%BA%8B%E6%83%85.html">
+<meta property="og:url" content="http://localhost:4000/redis/2025/04/17/%E5%85%B3%E4%BA%8EValkey%E4%BD%A0%E9%9C%80%E8%A6%81%E7%9F%A5%E9%81%93%E7%9A%84%E4%BA%8B%E6%83%85.html">
+<meta property="og:site_name" content="wtopps">
+<meta property="og:type" content="article">
+<meta property="article:published_time" content="2025-04-17T00:00:00+08:00">
+<meta name="twitter:card" content="summary">
+<meta property="twitter:title" content="关于Valkey你需要知道的事情">
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"GitHub User"},"dateModified":"2025-04-17T00:00:00+08:00","datePublished":"2025-04-17T00:00:00+08:00","description":"Write an awesome description for your new site here. You can edit this line in _config.yml. It will appear in your document head meta (for Google search results) and in your feed.xml site description.","headline":"关于Valkey你需要知道的事情","mainEntityOfPage":{"@type":"WebPage","@id":"http://localhost:4000/redis/2025/04/17/%E5%85%B3%E4%BA%8EValkey%E4%BD%A0%E9%9C%80%E8%A6%81%E7%9F%A5%E9%81%93%E7%9A%84%E4%BA%8B%E6%83%85.html"},"url":"http://localhost:4000/redis/2025/04/17/%E5%85%B3%E4%BA%8EValkey%E4%BD%A0%E9%9C%80%E8%A6%81%E7%9F%A5%E9%81%93%E7%9A%84%E4%BA%8B%E6%83%85.html"}</script>
+<!-- End Jekyll SEO tag -->
+<link rel="icon" href="">
+  <link rel="canonical" href="http://localhost:4000">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/typeface-noto-sans@0.0.72/index.min.css">
+  <link rel="stylesheet" href="/assets/css/main.css">
+  <script src="/assets/js/main.js"></script><link type="application/atom+xml" rel="alternate" href="http://localhost:4000/feed.xml" title="wtopps">
+<link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/styles/default.min.css">
+<script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/highlight.min.js"></script>
+<!-- and it's easy to individually load additional languages -->
+<script charset="UTF-8" src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/languages/go.min.js" async></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<script>
+// Init highlight js
+document.addEventListener('DOMContentLoaded', function(event) {
+  var els = document.querySelectorAll('pre code')
+
+  function addLangData(block) {
+    var outer = block.parentElement.parentElement.parentElement;
+    var lang = block.getAttribute('data-lang');
+    for (var i = 0; i < outer.classList.length; i++) {
+      var cls = outer.classList[i];
+      if (cls.startsWith('language-')) {
+        lang = cls;
+        break;
+      }
+    }
+    if (!lang) {
+      cls = block.getAttribute('class');
+      lang = cls ? cls.replace('hljs ', '') : '';
+    }
+    if (lang.startsWith('language-')) {
+      lang = lang.substr(9);
+    }
+    block.setAttribute('class', 'hljs ' + lang);
+    block.parentNode.setAttribute('data-lang', lang);
+  }
+
+  function addBadge(block) {
+    var enabled = ('true' || 'true').toLowerCase();
+    if (enabled == 'true') {
+      var pre = block.parentElement;
+      pre.classList.add('badge');
+    }
+  }
+
+  function handle(block) {
+    addLangData(block);
+    addBadge(block)
+    hljs.highlightBlock(block);
+  }
+
+  for (var i = 0; i < els.length; i++) {
+    var el = els[i];
+    handle(el);
+  }
+});
+</script>
+
+<style>
+  /* code language badge */
+  pre.badge::before {
+    content: attr(data-lang);
+    color: #fff;
+    background-color: #ff4e00;
+    padding: 0 .5em;
+    border-radius: 0 2px;
+    text-transform: uppercase;
+    text-align: center;
+    min-width: 32px;
+    display: inline-block;
+    position: absolute;
+    right: 0;
+  }
+
+  /* fix wrong badge display for firefox browser */
+  code > table pre::before {
+    display: none;
+  }
+</style>
+<script src="//cdnjs.cloudflare.com/ajax/libs/photoswipe/5.3.7/umd/photoswipe-lightbox.umd.min.js" async></script>
+<script src="//cdnjs.cloudflare.com/ajax/libs/photoswipe/5.3.7/umd/photoswipe.umd.min.js" async></script>
+<link href="//cdnjs.cloudflare.com/ajax/libs/photoswipe/5.3.7/photoswipe.min.css" rel="stylesheet">
+<style>
+  .pswp .pswp__container .pswp__img {
+    background-color: white;
+  }
+</style>
+
+<script>
+  function initPhotoSwipe() {
+    let customOptions = {};
+
+    try {
+      const data = ``.replaceAll("=>", ":");
+      customOptions = JSON.parse(data);
+    } catch (e) {
+      console.info("Invalid custom photo previewer options! " + e.message);
+    }
+
+    // Define object and gallery options
+    const options = Object.assign(
+      {
+        gallery: "section.main",
+        children: "a.photo-swipe",
+        photo_scale: 2,
+        // dynamic import is not supported in UMD version
+        pswpModule: PhotoSwipe,
+      },
+      customOptions
+    );
+
+    const galleryEl = document.querySelector(options.gallery);
+    if (!galleryEl) {
+      return;
+    }
+
+    const imgEls = [];
+    const els = galleryEl.querySelectorAll("img:not(.emoji)");
+    els.forEach((el) => {
+      if (el.src.trim() == "") {
+        return;
+      }
+      if (!imgEls.includes(el)) {
+        imgEls.push(el);
+      }
+    });
+
+    if (imgEls.length === 0) {
+      return;
+    }
+
+    imgEls.forEach((imgEl) => {
+      imgEl.outerHTML = `
+      <a class="photo-swipe"
+        href="${imgEl.src}"
+        data-pswp-width="${
+          Math.max(imgEl.naturalWidth, imgEl.width) * options.photo_scale
+        }"
+        data-pswp-height="${
+          Math.max(imgEl.naturalHeight, imgEl.height) * options.photo_scale
+        }"
+        data-pswp-caption="${imgEl.getAttribute("caption") || imgEl.alt}"
+        target="_blank">
+        ${imgEl.outerHTML}
+      </a>`;
+    });
+
+    // Initialize PhotoSwipe 5
+    var lightbox = new PhotoSwipeLightbox(options);
+
+    lightbox.init();
+  }
+
+  window.addEventListener("load", initPhotoSwipe);
+</script>
+</head>
+<body>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<header class="site-header " role="banner">
+
+  <div class="wrapper">
+    <div class="site-header-inner">
+<span class="site-brand"><a class="site-brand-inner" rel="author" href="/">
+  <img class="site-favicon" title="wtopps" src="" onerror="this.style.display='none'">
+  wtopps
+</a>
+</span><nav class="site-nav">
+          <input type="checkbox" id="nav-trigger" class="nav-trigger">
+          <label for="nav-trigger">
+            <span class="menu-icon">
+              <svg viewbox="0 0 18 15" width="18px" height="15px">
+                <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"></path>
+              </svg>
+            </span>
+          </label>
+
+          <div class="trigger">
+<a class="page-link" href="/about.html">ABOUT</a><a class="page-link" href="/archives.html">ARCHIVES</a><a class="page-link" href="/categories.html">CATEGORIES</a><a class="page-link" href="/">HOME</a><a class="page-link" href="/tags.html">TAGS</a>
+
+
+
+
+
+
+
+
+
+<div class="page-link" style="display: inline;">
+
+
+
+<div id="google_translate_element" style="display: none;">
+</div>
+
+<div class="ct-language">
+  <ul class="list-unstyled ct-language-dropdown">
+    
+      <li>
+        <a href="#" class="lang-select" data-lang="en">
+          
+          <img src="https://cdn.countryflags.com/thumbs/united-states-of-america/flag-400.png" title="English">
+          
+        </a>
+      </li>
+    
+      <li>
+        <a href="#" class="lang-select" data-lang="fr">
+          
+          <img src="https://cdn.countryflags.com/thumbs/france/flag-400.png" title="French">
+          
+        </a>
+      </li>
+    
+      <li>
+        <a href="#" class="lang-select" data-lang="zh-CN">
+          
+          <img src="https://cdn.countryflags.com/thumbs/china/flag-400.png" title="Chinese(Simple)">
+          
+        </a>
+      </li>
+    
+      <li>
+        <a href="#" class="lang-select" data-lang="ja">
+          
+          <img src="https://cdn.countryflags.com/thumbs/japan/flag-400.png" title="Japanese">
+          
+        </a>
+      </li>
+    
+      <li>
+        <a href="#" class="lang-select" data-lang="ko">
+          
+          <img src="https://cdn.countryflags.com/thumbs/south-korea/flag-400.png" title="Korean">
+          
+        </a>
+      </li>
+    
+      <li>
+        <a href="#" class="lang-select" data-lang="ru">
+          
+          <img src="https://cdn.countryflags.com/thumbs/russia/flag-400.png" title="Russian">
+          
+        </a>
+      </li>
+    
+  </ul>
+</div>
+
+<script type="text/javascript">
+function googleTranslateElementInit() {
+  new google.translate.TranslateElement({
+    pageLanguage: 'en',
+    autoDisplay: false,
+    layout: google.translate.TranslateElement.InlineLayout.VERTICAL
+  }, 'google_translate_element');
+
+  // Links to cross-origin destinations are unsafe
+  var gll = document.getElementsByClassName('goog-logo-link')[0];
+  if (gll) {
+    gll.setAttribute('rel', 'noopener');
+  }
+
+  function restoreLang() {
+    var iframe = document.getElementsByClassName('goog-te-banner-frame')[0];
+    if (!iframe) return;
+
+    var innerDoc = iframe.contentDocument || iframe.contentWindow.document;
+    var restore_el = innerDoc.getElementsByTagName("button");
+
+    for (var i = 0; i < restore_el.length; i++) {
+      if (restore_el[i].id.indexOf("restore") >= 0) {
+        restore_el[i].click();
+        var close_el = innerDoc.getElementsByClassName("goog-close-link");
+        close_el[0].click();
+        return;
+      }
+    }
+  }
+
+  function triggerHtmlEvent(element, eventName) {
+    var event;
+    if (document.createEvent) {
+      event = document.createEvent('HTMLEvents');
+      event.initEvent(eventName, true, true);
+      element.dispatchEvent(event);
+    } else {
+      event = document.createEventObject();
+      event.eventType = eventName;
+      element.fireEvent('on' + event.eventType, event);
+    }
+  }
+
+  var googleCombo = document.querySelector("select.goog-te-combo");
+  var langSelect = document.querySelector('.ct-language');
+  langSelect.addEventListener('click', function(event) {
+    if (!event.target) {
+      return;
+    }
+
+    var selected = document.querySelector('.ct-language .ct-language-selected');
+    if (selected) {
+      selected.classList.remove('ct-language-selected');
+    }
+
+    var target = event.target;
+    while (target && target !== langSelect ) {
+      if (target.matches('.lang-select')) {
+        break;
+      }
+      target = target.parentElement;
+    }
+
+    if (target && target.matches('.lang-select')) {
+      var lang = target.getAttribute('data-lang');
+      if (googleCombo.value == lang) {
+        restoreLang();
+      } else {
+        target.parentElement.classList.add('ct-language-selected');
+        googleCombo.value = lang;
+        triggerHtmlEvent(googleCombo, 'change');
+      }
+    }
+
+    event.preventDefault();
+  });
+}
+</script>
+
+<script type="text/javascript" src="https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit" async></script>
+</div>
+</div>
+        </nav>
+</div>
+  </div>
+</header>
+
+<script>
+  function initHeader() {
+    var lastScrollY = getScrollPos().y;
+    var documentElement = document.documentElement;
+
+    function storeScrollData() {
+      var y = getScrollPos().y;var scrollStatus = "";
+
+      if (y <= 0) {
+        scrollStatus = "top";
+      } else if ((window.innerHeight + y) >= document.body.offsetHeight) {
+        scrollStatus = "bottom";
+      } else {
+        var isScrollDown = (y - lastScrollY > 0) ? true : false;
+        scrollStatus = isScrollDown ? "down" : "up";
+      }
+
+      lastScrollY = y;
+      documentElement.setAttribute("data-scroll-status", scrollStatus);
+    }
+
+    window.addEventListener('scroll', function(e) {
+      storeScrollData();
+    });
+
+    storeScrollData();
+  }
+  document.addEventListener('DOMContentLoaded', initHeader);
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<script>
+  function hashLocate(hashValue) {
+    hashValue = hashValue.replace(/^.*#h-/, '');
+    hashValue = decodeURIComponent(hashValue);
+    var element = document.getElementById(hashValue);
+
+    if (!element) {
+      return;
+    }
+
+    var header = document.querySelector('header.site-header');
+    var headerRect = header.getBoundingClientRect();
+    var headerTop = Math.floor(headerRect.top);
+    var headerHeight = Math.floor(headerRect.height);
+    var scrollPos = getScrollPos();
+    var offsetY = element.offsetTop - (headerTop + headerHeight + 20);
+
+    if (offsetY == scrollPos.y) {
+      return;
+    }
+
+    if (headerTop == 0  && offsetY > scrollPos.y) {
+      offsetY += headerHeight + 2;
+    } else if (headerTop < 0  && offsetY < scrollPos.y) {
+      offsetY -= headerHeight - 2;
+    }
+
+    smoothScrollTo(offsetY);
+  }
+
+  // The first event occurred
+  window.addEventListener('load', function(event) {
+    if (window.location.hash) {
+      hashLocate(window.location.hash);
+    }
+  });
+
+  // The first event occurred
+  window.addEventListener('click', function(event) {
+    if (event.target.tagName.toLowerCase() == 'a') {
+      hashLocate(event.target.getAttribute('href'));
+    }
+  });
+</script>
+<div class="theme-toggle">
+  <input type="checkbox" id="theme-switch">
+  <label for="theme-switch">
+    <div class="toggle"></div>
+    <div class="names">
+      <p class="light">Light</p>
+      <p class="dark">Dark</p>
+    </div>
+  </label>
+</div>
+
+
+
+
+<script>
+  (function() {
+    var sw = document.getElementById('theme-switch');
+    var html = document.getElementsByTagName('html')[0];
+    var nightModeOption = ('auto' || 'auto').toLowerCase();
+    var storage = nightModeOption === 'manual'
+        ? localStorage
+        : sessionStorage;
+    var themeData = loadThemeData();
+
+    function saveThemeData(data) {
+      storage.setItem('theme', JSON.stringify(data));
+    }
+
+    function loadThemeData() {
+      var data = storage.getItem('theme');
+      try {
+        data = JSON.parse(data ? data : '');
+      } catch(e) {
+        data = { nightShift: undefined, autoToggleAt: 0 };
+        saveThemeData(data);
+      }
+      return data;
+    }
+
+    function handleThemeToggle(nightShift) {
+      themeData.nightShift = nightShift;
+      saveThemeData(themeData);
+      html.dataset.theme = nightShift ? 'dark' : 'light';
+      setTimeout(function() {
+        sw.checked = nightShift ? true : false;
+      }, 50);
+    }
+
+    function autoThemeToggle() {
+      // Next time point of theme toggle
+      var now = new Date();
+      var toggleAt = new Date();
+      var hours = now.getHours();
+      var nightShift = hours >= 19 || hours <=7;
+
+      if (nightShift) {
+        if (hours > 7) {
+          toggleAt.setDate(toggleAt.getDate() + 1);
+        }
+        toggleAt.setHours(7);
+      } else {
+        toggleAt.setHours(19);
+      }
+
+      toggleAt.setMinutes(0);
+      toggleAt.setSeconds(0);
+      toggleAt.setMilliseconds(0)
+
+      var delay = toggleAt.getTime() - now.getTime();
+
+      // auto toggle theme mode
+      setTimeout(function() {
+        handleThemeToggle(!nightShift);
+      }, delay);
+
+      return {
+        nightShift: nightShift,
+        toggleAt: toggleAt.getTime()
+      };
+    }
+
+    // Listen the theme toggle event
+    sw.addEventListener('change', function(event) {
+      handleThemeToggle(event.target.checked);
+    });
+
+    if (nightModeOption == 'auto') {
+      var data = autoThemeToggle();
+
+      // Toggle theme by local setting
+      if (data.toggleAt > themeData.autoToggleAt) {
+        themeData.autoToggleAt = data.toggleAt;
+        handleThemeToggle(data.nightShift);
+      } else {
+        handleThemeToggle(themeData.nightShift);
+      }
+    } else if (nightModeOption == 'manual') {
+      handleThemeToggle(themeData.nightShift);
+    } else {
+      var nightShift = themeData.nightShift;
+      if (nightShift === undefined) {
+        nightShift = nightModeOption === 'on';
+      }
+      handleThemeToggle(nightShift);
+    }
+  })();
+</script>
+<div id="click-to-top" class="click-to-top">
+  <i class="fa fa-arrow-up"></i>
+</div>
+<script>
+  (function () {
+    const clickToTop = document.getElementById('click-to-top');
+    window.addEventListener('scroll', () => {
+      if (window.scrollY > 100) {
+        clickToTop.classList.add('show')
+      }else {
+        clickToTop.classList.remove('show')
+      }
+    });
+    clickToTop.addEventListener('click', () => {
+      window.smoothScrollTo(0);
+    });
+  })();
+</script>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <div class="framework">
+  <section class="main">
+
+     <div class="post">
+  <section>
+
+
+
+
+
+
+
+
+
+<header class="post-header">
+  <h1 class="post-title p-name" itemprop="name headline">关于Valkey你需要知道的事情</h1>
+  <h2 class="post-subtitle">关于Valkey你需要知道的事情</h2>
+
+  <div class="post-meta">
+    <time class="dt-published" datetime="2025-04-17T00:00:00+08:00" itemprop="datePublished"><i class="fa fa-calendar"></i> Apr 17, 2025
+    </time>
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <span class="post-reading-time left-vsplit"><i class="fa fa-clock-o"></i> About 4 mins</span>
+  </div>
+<div class="post-tags"><a class="post-tag" href="/tags.html#Redis">#Redis</a></div></header>
+<article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+
+    <div class="post-content e-content" itemprop="articleBody">
+
+      <p><img src="https://raw.githubusercontent.com/wtopps/wtopps.github.io/refs/heads/master/images/Valkey.webp" alt="banner"></p>
+
+<h2 id="前言">前言</h2>
+
+<blockquote>
+  <p>Valkey is an open source (BSD) high-performance key/value datastore that supports a variety of workloads such as caching, message queues, and can act as a primary database. The project is backed by the Linux Foundation, ensuring it will remain open source forever.</p>
+</blockquote>
+
+<p>Valkey 是 Redis 的一个开源分支（fork），由 Linux 基金会支持，于 2024 年 3 月因 Redis 许可证从 BSD 3-clause 转为更严格的源代码可用许可证（RSALv2 和 SSPLv1）而创建。Valkey 基于 Redis 7.2.4 版本，旨在保持开源特性并进一步优化性能和功能。</p>
+
+<p>看到这里你可能满头问号，什么是<strong>BSD 3-clause</strong>协议，什么又是<b>RSALv2 和 SSPLv1</b>协议？</p>
+
+<h2 id="bsd-3-clause-vs-rsalv2--ssplv1">BSD 3-clause VS RSALv2 &amp; SSPLv1</h2>
+
+<h3 id="bsd协议的前世今生">BSD协议的前世今生</h3>
+
+<blockquote>
+  <p>BSD许可证（英语：Berkeley Software Distribution license）是自由软件中使用最广泛的许可证之一。BSD就是遵照这个许可证来发布，也因此而得名 BSD许可证。</p>
+
+  <p>BSD包最初所有者是加州大学的董事会，这是由于 BSD 源自加州大学伯克利分校。BSD开始后，BSD许可证得以修正，使得以后许多BSD变种，都采用类似风格的条款。</p>
+
+  <p>跟其他条款相比，从GNU通用公共许可证（GPL）到限制重重的著作权（Copyright），BSD许可证比较宽松，甚至跟公有领域更为接近。事实上，BSD许可证被认为是copycenter（中间著作权），介乎标准的copyright与GPL的copyleft之间。”Take it down to the copy center and make as many copies as you want”[1]。可以说，GPL强迫后续版本必须一样是自由软件，BSD的后续版本可以选择要继续是BSD或其他自由软件条款或封闭软件等等。——Wikipedia</p>
+</blockquote>
+
+<p>BSD 3-Clause 许可证（<strong>BSD 3-Clause License</strong>，又称 <strong>Revised BSD License</strong> 或 <strong>New BSD License</strong>）是一种 <strong>高度宽松的开源许可证</strong>，允许用户自由使用、修改和分发代码，几乎没有任何使用限制（包括商业用途）。它是 Berkeley Software Distribution（BSD）操作系统及其衍生软件的传统许可证。</p>
+
+<p><strong>核心条款（3个主要条件）</strong></p>
+
+<p>许可证名称中的 “3-Clause” 指它包含 <strong>3 个基本约束条件</strong>：</p>
+
+<ol>
+  <li>
+<strong>保留原始版权声明</strong>（Redistributions must retain the original copyright notice）
+    <ul>
+      <li>任何分发或修改后的代码必须 <strong>包含原始作者的版权声明</strong>。</li>
+    </ul>
+  </li>
+  <li>
+<strong>保留许可证文本</strong>（Redistributions must include the license text）
+    <ul>
+      <li>所有副本（无论是二进制还是源代码）必须附带 <strong>完整的 BSD 3-Clause 许可证文本</strong>。</li>
+    </ul>
+  </li>
+  <li>
+<strong>禁止使用作者名进行推广</strong>（Neither the name of the copyright holder nor the names of its contributors may be used to endorse or promote products derived from this software without specific prior written permission）
+    <ul>
+      <li>不得使用原作者或贡献者的名字 <strong>为衍生作品背书或营销</strong>，除非获得明确书面许可。</li>
+    </ul>
+  </li>
+</ol>
+
+<p>BSD 3-Clause由于极其宽松的限制，允许闭源、商用，无需回报社区，因而受到了商业公司的大力追捧。</p>
+
+<h3 id="rsalv2--ssplv1协议的前世今生">RSALv2 &amp; SSPLv1协议的前世今生</h3>
+
+<p><strong>RSALv2</strong>全称<em>Redis Source Available License</em>，是由Redis公司为主导，核心目标是限制云厂商商业化托管服务因而推出的协议，可以说是专门为了云厂商而制定的协议，RSALv2限制了云厂商（如AWS/Azure）将其作为托管服务商业化提供（需与Redis签订商业协议），但允许其他企业内部使用或开发专有软件。</p>
+
+<p><strong>SSPLv1</strong>全称<em>Redis Source Available License</em>，是由MongoDB为主导，防止SaaS厂商规避开源贡献而制定的协议。</p>
+
+<p>其要求 <strong>任何提供SSPL软件作为服务的行为</strong> 必须开源整个服务栈的代码（包括管理工具、监控系统等），非SaaS场景下可自由使用（如本地部署）。</p>
+
+<p>OK，说了这么多，你可能也看晕了，下面用一张图标来进行一个总结：</p>
+
+<p><img src="https://github.com/wtopps/wtopps.github.io/blob/master/images/License%20Compare.png?raw=true" alt="License"></p>
+
+<table>
+  <thead>
+    <tr>
+      <th><strong>义务</strong></th>
+      <th>RSALv2</th>
+      <th>SSPLv1</th>
+      <th>BSD 3-Clause</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>保留版权声明</td>
+      <td>✅</td>
+      <td>✅</td>
+      <td>✅</td>
+    </tr>
+    <tr>
+      <td>允许修改/闭源</td>
+      <td>✅（非云场景）</td>
+      <td>✅（非SaaS场景）</td>
+      <td>✅</td>
+    </tr>
+    <tr>
+      <td>云/SaaS触发条款</td>
+      <td>❌云托管</td>
+      <td>❌SaaS需开源</td>
+      <td>无限制</td>
+    </tr>
+    <tr>
+      <td>专利授权</td>
+      <td>有（限制性）</td>
+      <td>有</td>
+      <td>无</td>
+    </tr>
+  </tbody>
+</table>
+
+<p><strong>Redis</strong>自 2024 年 3 月起，采用 RSALv2 和 SSPLv1 许可证，限制了云服务提供商和某些商业场景的自由使用，引发社区不满，导致 Valkey 的诞生。</p>
+
+<h1 id="valkey的优势">Valkey的优势</h1>
+
+<h2 id="与-redis-的兼容性与迁移简便性">与 Redis 的兼容性与迁移简便性</h2>
+
+<p>作为 Redis 7.2.4 的直接分支，Valkey 保留完全兼容性，支持 Redis 的 API、命令和数据结构（如字符串、哈希、列表、集合等）。迁移只需更改连接配置（如 YAML 文件中的一行），无需修改代码。AWS ElastiCache 和 MemoryDB 支持无缝迁移。但是需要注意的是，Redis 提供专有模块（如 RedisBloom、RedisGraph、RedisTimeSeries），Valkey 当前不支持，但社区正在开发替代方案。</p>
+
+<h2 id="性能优化">性能优化</h2>
+
+<h4 id="多线程支持">多线程支持</h4>
+
+<p>Valkey 引入了多线程 I/O 和命令执行，充分利用多核处理器，显著提升写密集型工作负载的吞吐量。Valkey 8.0 发布宣称可达 100 万请求每秒（RPS），比 Redis 开源版本（7.2.4）快 3 倍。</p>
+
+<p>More Detail：https://aws.amazon.com/cn/blogs/china/valkey-performance-testing-exploring-version-changes-and-cloud-hosting-performance-improvements/</p>
+
+<p><img src="https://s3.cn-north-1.amazonaws.com.cn/awschinablog/valkey-performance-testing-exploring-version-changes-and-cloud-hosting-performance-improvements1.jpg" alt="AWS压测对比和分析"></p>
+
+<h4 id="异步-io">异步 I/O</h4>
+
+<p>Valkey 通过异步 I/O 线程降低延迟，提升实时应用响应速度，优于 Redis 的单线程主导架构。</p>
+
+<p>Valkey 的多线程和异步 I/O 使高吞吐量场景（如实时分析、电商库存更新）表现更优，尤其适合现代硬件。</p>
+
+<h3 id="内存效率">内存效率</h3>
+
+<p><strong>新字典结构</strong>：Valkey 优化了字典结构，减少内存占用，适合大规模数据集场景。</p>
+
+<p><strong>内存密度提升</strong>：Valkey 8.0 通过 AWS 的贡献提高了集群内存密度，优化了内存密集型工作负载。</p>
+
+<p><b>内存管理</b>：Redis 的内存管理较为传统，在大数据集或高并发场景下内存效率较低，Valkey 的内存优化降低运营成本，适合缓存、会话存储等内存敏感应用。</p>
+
+<h3 id="集群监控">集群监控</h3>
+
+<p><strong>每槽指标</strong>：Valkey 提供按槽（per-slot）粒度的性能和使用模式指标，帮助管理员主动识别和解决性能瓶颈。</p>
+
+<p>Redis 的监控功能较为基础，缺乏细粒度指标，难以满足复杂应用的监控需求，Valkey 的高级观测性对需要深入性能分析的场景（如大规模缓存或实时数据处理）有显著优势。</p>
+
+<h3 id="实验性功能rdma-支持">实验性功能：RDMA 支持</h3>
+
+<p>Redis 开源版本不原生支持 RDMA，限制了其在高性能计算场景的应用，而Valkey提供实验性 RDMA（远程直接内存访问）支持，可在特定高性能环境中大幅提升性能。</p>
+
+<p>这里需要简单介绍一下什么是RDMA技术。</p>
+
+<h4 id="传统-redis-的数据处理瓶颈">传统 Redis 的数据处理瓶颈</h4>
+
+<p>典型请求路径（TCP/IP 模式）</p>
+
+<p>当客户端发送一个 <code class="language-plaintext highlighter-rouge">GET key</code> 请求时，Redis Server 端的处理流程如下：</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>1. 网卡接收 TCP 报文 → 内核协议栈（TCP/IP 解包）→ 数据拷贝到内核缓冲区
+2. 内核通过系统调用（read()）将数据拷到用户态（Redis 进程）
+3. Redis 主线程解析命令（如识别 "GET"）
+4. 从内存哈希表中查找 `key` 对应的值
+5. 反向重复上述步骤：用户态 → 内核 → 网卡 → 客户端
+</code></pre></div></div>
+
+<p><strong>关键瓶颈</strong>：</p>
+
+<ul>
+  <li>
+<strong>数据拷贝</strong>：至少 2 次内核态↔用户态拷贝（即使使用零拷贝技术如 <code class="language-plaintext highlighter-rouge">sendfile</code>，命令解析仍需用户态介入）。</li>
+  <li>
+<strong>CPU 开销</strong>：协议栈处理（校验和、序列号等）占大量 CPU 周期（尤其在 10Gbps+ 高带宽场景）。</li>
+</ul>
+
+<h4 id="valkey-的-rdma-如何绕过这些瓶颈">Valkey 的 RDMA 如何绕过这些瓶颈？</h4>
+
+<p><strong>RDMA 的 Server 端角色</strong></p>
+
+<p>RDMA 在 Valkey Server 端的核心创新是：
+ <strong>将内存中的键值数据直接暴露给网卡</strong>，客户端可通过 RDMA 协议 <strong>直接读取或修改 Server 内存</strong>，无需经过传统内核协议栈和 Redis 主线程的解析。</p>
+
+<p><strong>具体绕过机制</strong></p>
+
+<p>以 <code class="language-plaintext highlighter-rouge">GET key</code> 为例，RDMA 模式下的流程：</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>1. 客户端预先与 Server 协商好：
+   - Key 的内存地址（通过注册的 Memory Region）
+   - 权限（只读/读写）
+   
+2. 客户端网卡直接发起 RDMA READ 操作：
+   - 通过 RoCE/InfiniBand 协议包，指定目标地址（Server 内存中 `key` 的位置）
+   - 数据从 Server 内存 → 客户端内存，全程无需 Server 的 CPU 参与
+
+3. Server 的 RDMA 网卡自主完成数据传输：
+   - 校验权限和地址合法性（通过保护域 Protection Domain）
+   - 直接访问内存数据并返回
+</code></pre></div></div>
+
+<p><strong>关键突破</strong>：</p>
+
+<ul>
+  <li>
+<strong>零拷贝</strong>：数据不经过内核，也不触发 Server 的 CPU 中断。</li>
+  <li>
+<strong>零解析</strong>：客户端需提前知道 Key 的内存布局（依赖预注册的元数据），跳过命令解析步骤。</li>
+</ul>
+
+<table>
+  <thead>
+    <tr>
+      <th><strong>步骤</strong></th>
+      <th><strong>TCP/IP 模式</strong></th>
+      <th><strong>RDMA 模式</strong></th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>网络协议处理</td>
+      <td>内核 TCP/IP 栈</td>
+      <td>网卡硬件处理（RoCE/IB）</td>
+    </tr>
+    <tr>
+      <td>数据处理线程</td>
+      <td>Redis 主线程参与</td>
+      <td>无 CPU 参与（完全网卡卸载）</td>
+    </tr>
+    <tr>
+      <td>数据路径</td>
+      <td>用户态 ↔ 内核态多次拷贝</td>
+      <td>网卡 ↔ 内存直通</td>
+    </tr>
+    <tr>
+      <td>延迟分布</td>
+      <td>毫秒级（CPU 调度抖动）</td>
+      <td>微秒级（硬件确定性强）</td>
+    </tr>
+  </tbody>
+</table>
+
+<h4 id="rdma目前的限制">RDMA目前的限制</h4>
+
+<ol>
+  <li>仅支持简单 KV 操作
+    <ul>
+      <li>
+<code class="language-plaintext highlighter-rouge">GET/SET</code> 可直接映射为 RDMA READ/WRITE。</li>
+      <li>复杂命令（如 <code class="language-plaintext highlighter-rouge">INCR</code>、<code class="language-plaintext highlighter-rouge">LPUSH</code>）仍需走 TCP 路径（需 CPU 执行逻辑）。</li>
+    </ul>
+  </li>
+  <li>客户端需改造
+    <ul>
+      <li>传统 Redis 客户端无法直接使用，需集成 RDMA 库（如 <code class="language-plaintext highlighter-rouge">libibverbs</code>）。</li>
+    </ul>
+  </li>
+  <li>安全边界模糊
+    <ul>
+      <li>Server 内存直接暴露给客户端，依赖网络隔离和硬件校验（如 P_Key）。</li>
+    </ul>
+  </li>
+  <li>网卡支持
+    <ul>
+      <li>必须使用支持的RDMA 网卡</li>
+    </ul>
+  </li>
+</ol>
+
+<h3 id="社区的支持">社区的支持</h3>
+
+<p><strong>Valkey</strong>由 Linux 基金会托管，得到 AWS、Google Cloud、Oracle、Snap Inc. 等公司支持，贡献者包括 Redis 原核心开发者（如 Madelyn Olson 和 Binbin Zhu）。Valkey 8.1（2025 年 4 月发布）显示出快速迭代能力，性能提升 10%，TLS 连接管理更高效。</p>
+
+<p><strong>Redis</strong> 由Redis公司进行维护，商业支持强大，但社区贡献受限，核心开发主要由公司控制。 Valkey 的社区驱动模式和广泛行业支持确保长期开发活力和快速功能迭代，降低对单一厂商的依赖。</p>
+
+<p>综上，我们简单总结一下Valkey：</p>
+
+<ol>
+  <li>完全开源的 BSD 许可证，得到广泛行业支持。</li>
+  <li>多线程、异步 I/O 和内存优化带来显著性能提升（最高 100 万 RPS）。</li>
+  <li>改进的集群管理（自动故障转移、可靠槽迁移）。</li>
+  <li>细粒度观测性和实验性 RDMA 支持。</li>
+  <li>与 Redis 的高兼容性，迁移成本低。</li>
+</ol>
+
+<h2 id="结语">结语</h2>
+
+<p>Redis经过多年的发展，在互联网行业内的地位牢不可破，但Valkey作为社区的新宠儿，在多家云厂商的推崇下，发展前景也是非常的可期，不过真的要在生产环境将Redis替换为Valkey，还有待验证，我们可以持续观望社区的动态。</p>
+
+
+    </div>
+
+</article>
+<div class="post-nav">
+<a class="previous" href="/java/2025/03/26/CompletableFuture%E4%BD%A0%E9%9C%80%E8%A6%81%E7%9F%A5%E9%81%93%E7%9A%84%E4%BA%8B%E6%83%85.html" title="CompletableFuture你需要知道的事情.">CompletableFuture你需要知道的事情.</a><a class="next" href="/others/2025/04/28/Nacos%E9%85%8D%E7%BD%AE%E6%97%A0%E6%B3%95%E8%87%AA%E5%8A%A8%E5%88%B7%E6%96%B0%E9%97%AE%E9%A2%98%E6%8E%92%E6%9F%A5.html" title="Nacos配置无法自动刷新问题排查">Nacos配置无法自动刷新问题排查</a>
+</div>
+<div class="post-related">
+      <div>Related Articles</div>
+      <ul>
+        <li class="top-post">
+          <a class="post-link" href="/redis/2025/04/17/%E5%85%B3%E4%BA%8EValkey%E4%BD%A0%E9%9C%80%E8%A6%81%E7%9F%A5%E9%81%93%E7%9A%84%E4%BA%8B%E6%83%85.html" title="关于Valkey你需要知道的事情">
+            关于Valkey你需要知道的事情<span class="post-badges">
+  <span class="post-badge badge-top">TOP</span>
+  <span class="post-badge badge-new">NEW</span>
+</span>
+</a>
+        </li>
+<li class="top-post">
+          <a class="post-link" href="/redis/2025/01/23/Redis%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81%E5%AE%9E%E7%8E%B0%E6%8C%87%E5%8C%97.html" title="Redis分布式锁实现指北">
+            Redis分布式锁实现指北<span class="post-badges">
+  <span class="post-badge badge-top">TOP</span>
+  <span class="post-badge badge-new">NEW</span>
+</span>
+</a>
+        </li>
+<li class="top-post">
+          <a class="post-link" href="/mysql/2024/09/25/MySQL%E4%B8%BB%E9%94%AE%E8%87%AA%E5%A2%9E%E6%9C%89%E5%87%A0%E7%A7%8D%E6%A8%A1%E5%BC%8F.html" title="MySQL主键自增有几种模式？">
+            MySQL主键自增有几种模式？<span class="post-badges">
+  <span class="post-badge badge-top">TOP</span>
+  <span class="post-badge badge-new">NEW</span>
+</span>
+</a>
+        </li>
+<li class="top-post">
+          <a class="post-link" href="/kafka/2025/07/07/%E5%85%B3%E4%BA%8EKafka%E5%88%86%E5%B1%82%E5%AD%98%E5%82%A8%E4%BD%A0%E5%BA%94%E8%AF%A5%E7%9F%A5%E9%81%93%E7%9A%84%E4%BA%8B%E6%83%85.html" title="关于Kafka分层存储你应该知道的事情">
+            关于Kafka分层存储你应该知道的事情<span class="post-badges">
+  <span class="post-badge badge-top">TOP</span>
+  <span class="post-badge badge-new">NEW</span>
+</span>
+</a>
+        </li>
+</ul>
+    </div>
+<div class="post-comments"></div></section>
+</div>
+
+
+  </section>
+  <section class="sidebar" style="margin-left: 15px;">
+    <!-- Get sidebar items --><style type="text/css" media="screen">
+.post-menu ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+</style>
+
+<div class="post-menu">
+  <div class="post-menu-title">TOC</div>
+  <div class="post-menu-content"></div>
+</div>
+
+<script>
+  function generateContent() {
+    var menu = document.querySelector(".post-menu");
+    var menuContent =  menu.querySelector(".post-menu-content");
+    var headings = document.querySelector(".post-content").querySelectorAll("h2, h3, h4, h5, h6");
+
+    // Hide menu when no headings
+    if (headings.length === 0) {
+      return menu.style.display = "none";
+    }
+
+    // Generate post menu
+    var menuHTML = '';
+    for (var i = 0; i < headings.length; i++) {
+      var h = headings[i];
+      menuHTML += (
+        '<li class="h-' + h.tagName.toLowerCase() + '">'
+        + '<a href="#h-' + h.getAttribute('id') + '">' + h.textContent + '</a></li>');
+    }
+
+    menuContent.innerHTML = '<ul>' + menuHTML + '</ul>';
+
+    // The header element
+    var header = document.querySelector('header.site-header');
+
+    function doMenuCollapse(index, over_items) {
+      var items = menuContent.firstChild.children;
+
+      if (over_items == undefined) {
+        over_items = 20;
+      }
+
+      if (items.length < over_items) {
+        return;
+      }
+
+      var activeItem = items[index];
+      var beginItem = activeItem
+      var endItem = activeItem
+      var beginIndex = index;
+      var endIndex = index + 1;
+      while (beginIndex >= 0
+        && !items[beginIndex].classList.contains('h-h2')) {
+        beginIndex -= 1;
+      }
+      while (endIndex < items.length
+        && !items[endIndex].classList.contains('h-h2')) {
+        endIndex += 1;
+      }
+      for (var i = 0; i < beginIndex; i++) {
+        item = items[i]
+        if (!item.classList.contains('h-h2')) {
+          item.style.display = 'none';
+        }
+      }
+      for (var i = beginIndex + 1; i < endIndex; i++) {
+        item = items[i]
+        // if (!item.classList.contains('h-h2')) {
+          item.style.display = '';
+        // }
+      }
+      for (var i = endIndex; i < items.length; i++) {
+        item = items[i]
+        if (!item.classList.contains('h-h2')) {
+          item.style.display = 'none';
+        }
+      }
+    }
+
+    // Init menu collapsed
+    doMenuCollapse(-1);
+
+    // Active the menu item
+    window.addEventListener('scroll', function (event) {
+      var lastActive = menuContent.querySelector('.active');
+      var changed = true;
+      var activeIndex = -1;
+      for (var i = headings.length - 1; i >= 0; i--) {
+        var h = headings[i];
+        var headingRect = h.getBoundingClientRect();
+        var headerRect = header.getBoundingClientRect();
+        var headerTop = Math.floor(headerRect.top);
+        var headerHeight = Math.floor(headerRect.height);
+        var headerHeight = headerTop + headerHeight + 20;
+        if (headingRect.top <= headerHeight) {
+          var id = 'h-' + h.getAttribute('id');
+          var a = menuContent.querySelector('a[href="#' + id  + '"]');
+          var curActive = a.parentNode;
+          if (curActive) {
+            curActive.classList.add('active');
+            activeIndex = i;
+          }
+          if (lastActive == curActive) {
+            changed = false;
+          }
+          break;
+        }
+      }
+      if (changed) {
+        if (lastActive) {
+          lastActive.classList.remove('active');
+        }
+        doMenuCollapse(activeIndex);
+      }
+      event.preventDefault();
+    });
+  }
+  generateContent();
+</script>
+</section>
+</div>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/"></data>
+
+  <div class="wrapper">
+    <div class="site-footer-inner">
+<div>Unpublished Work <span class="copyleft">©</span> 2017-2025 GitHub User</div>
+      <div>Powered by <a title="Jekyll is a simple, blog-aware, static site
+      generator." href="https://jekyllrb.com/">Jekyll</a> &amp; <a title="Yat, yet
+      another theme." href="https://github.com/jeffreytse/jekyll-theme-yat">Yat Theme</a>.</div>
+      <div class="footer-col rss-subscribe">Subscribe <a href="/feed.xml">via RSS</a>
+</div>
+    </div>
+  </div>
+</footer>
+</body>
+</html>

@@ -1,0 +1,1341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="google-translate-customization" content="108d9124921d80c3-80e20d618ff053c8-g4f02ec6f3dba68b7-c">
+<!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>Nacos配置无法自动刷新问题排查 | wtopps</title>
+<meta name="generator" content="Jekyll v4.3.4">
+<meta property="og:title" content="Nacos配置无法自动刷新问题排查">
+<meta name="author" content="GitHub User">
+<meta property="og:locale" content="en_US">
+<meta name="description" content="Write an awesome description for your new site here. You can edit this line in _config.yml. It will appear in your document head meta (for Google search results) and in your feed.xml site description.">
+<meta property="og:description" content="Write an awesome description for your new site here. You can edit this line in _config.yml. It will appear in your document head meta (for Google search results) and in your feed.xml site description.">
+<link rel="canonical" href="http://localhost:4000/others/2025/04/28/Nacos%E9%85%8D%E7%BD%AE%E6%97%A0%E6%B3%95%E8%87%AA%E5%8A%A8%E5%88%B7%E6%96%B0%E9%97%AE%E9%A2%98%E6%8E%92%E6%9F%A5.html">
+<meta property="og:url" content="http://localhost:4000/others/2025/04/28/Nacos%E9%85%8D%E7%BD%AE%E6%97%A0%E6%B3%95%E8%87%AA%E5%8A%A8%E5%88%B7%E6%96%B0%E9%97%AE%E9%A2%98%E6%8E%92%E6%9F%A5.html">
+<meta property="og:site_name" content="wtopps">
+<meta property="og:type" content="article">
+<meta property="article:published_time" content="2025-04-28T00:00:00+08:00">
+<meta name="twitter:card" content="summary">
+<meta property="twitter:title" content="Nacos配置无法自动刷新问题排查">
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"GitHub User"},"dateModified":"2025-04-28T00:00:00+08:00","datePublished":"2025-04-28T00:00:00+08:00","description":"Write an awesome description for your new site here. You can edit this line in _config.yml. It will appear in your document head meta (for Google search results) and in your feed.xml site description.","headline":"Nacos配置无法自动刷新问题排查","mainEntityOfPage":{"@type":"WebPage","@id":"http://localhost:4000/others/2025/04/28/Nacos%E9%85%8D%E7%BD%AE%E6%97%A0%E6%B3%95%E8%87%AA%E5%8A%A8%E5%88%B7%E6%96%B0%E9%97%AE%E9%A2%98%E6%8E%92%E6%9F%A5.html"},"url":"http://localhost:4000/others/2025/04/28/Nacos%E9%85%8D%E7%BD%AE%E6%97%A0%E6%B3%95%E8%87%AA%E5%8A%A8%E5%88%B7%E6%96%B0%E9%97%AE%E9%A2%98%E6%8E%92%E6%9F%A5.html"}</script>
+<!-- End Jekyll SEO tag -->
+<link rel="icon" href="">
+  <link rel="canonical" href="http://localhost:4000">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/typeface-noto-sans@0.0.72/index.min.css">
+  <link rel="stylesheet" href="/assets/css/main.css">
+  <script src="/assets/js/main.js"></script><link type="application/atom+xml" rel="alternate" href="http://localhost:4000/feed.xml" title="wtopps">
+<link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/styles/default.min.css">
+<script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/highlight.min.js"></script>
+<!-- and it's easy to individually load additional languages -->
+<script charset="UTF-8" src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/languages/go.min.js" async></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<script>
+// Init highlight js
+document.addEventListener('DOMContentLoaded', function(event) {
+  var els = document.querySelectorAll('pre code')
+
+  function addLangData(block) {
+    var outer = block.parentElement.parentElement.parentElement;
+    var lang = block.getAttribute('data-lang');
+    for (var i = 0; i < outer.classList.length; i++) {
+      var cls = outer.classList[i];
+      if (cls.startsWith('language-')) {
+        lang = cls;
+        break;
+      }
+    }
+    if (!lang) {
+      cls = block.getAttribute('class');
+      lang = cls ? cls.replace('hljs ', '') : '';
+    }
+    if (lang.startsWith('language-')) {
+      lang = lang.substr(9);
+    }
+    block.setAttribute('class', 'hljs ' + lang);
+    block.parentNode.setAttribute('data-lang', lang);
+  }
+
+  function addBadge(block) {
+    var enabled = ('true' || 'true').toLowerCase();
+    if (enabled == 'true') {
+      var pre = block.parentElement;
+      pre.classList.add('badge');
+    }
+  }
+
+  function handle(block) {
+    addLangData(block);
+    addBadge(block)
+    hljs.highlightBlock(block);
+  }
+
+  for (var i = 0; i < els.length; i++) {
+    var el = els[i];
+    handle(el);
+  }
+});
+</script>
+
+<style>
+  /* code language badge */
+  pre.badge::before {
+    content: attr(data-lang);
+    color: #fff;
+    background-color: #ff4e00;
+    padding: 0 .5em;
+    border-radius: 0 2px;
+    text-transform: uppercase;
+    text-align: center;
+    min-width: 32px;
+    display: inline-block;
+    position: absolute;
+    right: 0;
+  }
+
+  /* fix wrong badge display for firefox browser */
+  code > table pre::before {
+    display: none;
+  }
+</style>
+<script src="//cdnjs.cloudflare.com/ajax/libs/photoswipe/5.3.7/umd/photoswipe-lightbox.umd.min.js" async></script>
+<script src="//cdnjs.cloudflare.com/ajax/libs/photoswipe/5.3.7/umd/photoswipe.umd.min.js" async></script>
+<link href="//cdnjs.cloudflare.com/ajax/libs/photoswipe/5.3.7/photoswipe.min.css" rel="stylesheet">
+<style>
+  .pswp .pswp__container .pswp__img {
+    background-color: white;
+  }
+</style>
+
+<script>
+  function initPhotoSwipe() {
+    let customOptions = {};
+
+    try {
+      const data = ``.replaceAll("=>", ":");
+      customOptions = JSON.parse(data);
+    } catch (e) {
+      console.info("Invalid custom photo previewer options! " + e.message);
+    }
+
+    // Define object and gallery options
+    const options = Object.assign(
+      {
+        gallery: "section.main",
+        children: "a.photo-swipe",
+        photo_scale: 2,
+        // dynamic import is not supported in UMD version
+        pswpModule: PhotoSwipe,
+      },
+      customOptions
+    );
+
+    const galleryEl = document.querySelector(options.gallery);
+    if (!galleryEl) {
+      return;
+    }
+
+    const imgEls = [];
+    const els = galleryEl.querySelectorAll("img:not(.emoji)");
+    els.forEach((el) => {
+      if (el.src.trim() == "") {
+        return;
+      }
+      if (!imgEls.includes(el)) {
+        imgEls.push(el);
+      }
+    });
+
+    if (imgEls.length === 0) {
+      return;
+    }
+
+    imgEls.forEach((imgEl) => {
+      imgEl.outerHTML = `
+      <a class="photo-swipe"
+        href="${imgEl.src}"
+        data-pswp-width="${
+          Math.max(imgEl.naturalWidth, imgEl.width) * options.photo_scale
+        }"
+        data-pswp-height="${
+          Math.max(imgEl.naturalHeight, imgEl.height) * options.photo_scale
+        }"
+        data-pswp-caption="${imgEl.getAttribute("caption") || imgEl.alt}"
+        target="_blank">
+        ${imgEl.outerHTML}
+      </a>`;
+    });
+
+    // Initialize PhotoSwipe 5
+    var lightbox = new PhotoSwipeLightbox(options);
+
+    lightbox.init();
+  }
+
+  window.addEventListener("load", initPhotoSwipe);
+</script>
+</head>
+<body>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<header class="site-header " role="banner">
+
+  <div class="wrapper">
+    <div class="site-header-inner">
+<span class="site-brand"><a class="site-brand-inner" rel="author" href="/">
+  <img class="site-favicon" title="wtopps" src="" onerror="this.style.display='none'">
+  wtopps
+</a>
+</span><nav class="site-nav">
+          <input type="checkbox" id="nav-trigger" class="nav-trigger">
+          <label for="nav-trigger">
+            <span class="menu-icon">
+              <svg viewbox="0 0 18 15" width="18px" height="15px">
+                <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"></path>
+              </svg>
+            </span>
+          </label>
+
+          <div class="trigger">
+<a class="page-link" href="/about.html">ABOUT</a><a class="page-link" href="/archives.html">ARCHIVES</a><a class="page-link" href="/categories.html">CATEGORIES</a><a class="page-link" href="/">HOME</a><a class="page-link" href="/tags.html">TAGS</a>
+
+
+
+
+
+
+
+
+
+<div class="page-link" style="display: inline;">
+
+
+
+<div id="google_translate_element" style="display: none;">
+</div>
+
+<div class="ct-language">
+  <ul class="list-unstyled ct-language-dropdown">
+    
+      <li>
+        <a href="#" class="lang-select" data-lang="en">
+          
+          <img src="https://cdn.countryflags.com/thumbs/united-states-of-america/flag-400.png" title="English">
+          
+        </a>
+      </li>
+    
+      <li>
+        <a href="#" class="lang-select" data-lang="fr">
+          
+          <img src="https://cdn.countryflags.com/thumbs/france/flag-400.png" title="French">
+          
+        </a>
+      </li>
+    
+      <li>
+        <a href="#" class="lang-select" data-lang="zh-CN">
+          
+          <img src="https://cdn.countryflags.com/thumbs/china/flag-400.png" title="Chinese(Simple)">
+          
+        </a>
+      </li>
+    
+      <li>
+        <a href="#" class="lang-select" data-lang="ja">
+          
+          <img src="https://cdn.countryflags.com/thumbs/japan/flag-400.png" title="Japanese">
+          
+        </a>
+      </li>
+    
+      <li>
+        <a href="#" class="lang-select" data-lang="ko">
+          
+          <img src="https://cdn.countryflags.com/thumbs/south-korea/flag-400.png" title="Korean">
+          
+        </a>
+      </li>
+    
+      <li>
+        <a href="#" class="lang-select" data-lang="ru">
+          
+          <img src="https://cdn.countryflags.com/thumbs/russia/flag-400.png" title="Russian">
+          
+        </a>
+      </li>
+    
+  </ul>
+</div>
+
+<script type="text/javascript">
+function googleTranslateElementInit() {
+  new google.translate.TranslateElement({
+    pageLanguage: 'en',
+    autoDisplay: false,
+    layout: google.translate.TranslateElement.InlineLayout.VERTICAL
+  }, 'google_translate_element');
+
+  // Links to cross-origin destinations are unsafe
+  var gll = document.getElementsByClassName('goog-logo-link')[0];
+  if (gll) {
+    gll.setAttribute('rel', 'noopener');
+  }
+
+  function restoreLang() {
+    var iframe = document.getElementsByClassName('goog-te-banner-frame')[0];
+    if (!iframe) return;
+
+    var innerDoc = iframe.contentDocument || iframe.contentWindow.document;
+    var restore_el = innerDoc.getElementsByTagName("button");
+
+    for (var i = 0; i < restore_el.length; i++) {
+      if (restore_el[i].id.indexOf("restore") >= 0) {
+        restore_el[i].click();
+        var close_el = innerDoc.getElementsByClassName("goog-close-link");
+        close_el[0].click();
+        return;
+      }
+    }
+  }
+
+  function triggerHtmlEvent(element, eventName) {
+    var event;
+    if (document.createEvent) {
+      event = document.createEvent('HTMLEvents');
+      event.initEvent(eventName, true, true);
+      element.dispatchEvent(event);
+    } else {
+      event = document.createEventObject();
+      event.eventType = eventName;
+      element.fireEvent('on' + event.eventType, event);
+    }
+  }
+
+  var googleCombo = document.querySelector("select.goog-te-combo");
+  var langSelect = document.querySelector('.ct-language');
+  langSelect.addEventListener('click', function(event) {
+    if (!event.target) {
+      return;
+    }
+
+    var selected = document.querySelector('.ct-language .ct-language-selected');
+    if (selected) {
+      selected.classList.remove('ct-language-selected');
+    }
+
+    var target = event.target;
+    while (target && target !== langSelect ) {
+      if (target.matches('.lang-select')) {
+        break;
+      }
+      target = target.parentElement;
+    }
+
+    if (target && target.matches('.lang-select')) {
+      var lang = target.getAttribute('data-lang');
+      if (googleCombo.value == lang) {
+        restoreLang();
+      } else {
+        target.parentElement.classList.add('ct-language-selected');
+        googleCombo.value = lang;
+        triggerHtmlEvent(googleCombo, 'change');
+      }
+    }
+
+    event.preventDefault();
+  });
+}
+</script>
+
+<script type="text/javascript" src="https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit" async></script>
+</div>
+</div>
+        </nav>
+</div>
+  </div>
+</header>
+
+<script>
+  function initHeader() {
+    var lastScrollY = getScrollPos().y;
+    var documentElement = document.documentElement;
+
+    function storeScrollData() {
+      var y = getScrollPos().y;var scrollStatus = "";
+
+      if (y <= 0) {
+        scrollStatus = "top";
+      } else if ((window.innerHeight + y) >= document.body.offsetHeight) {
+        scrollStatus = "bottom";
+      } else {
+        var isScrollDown = (y - lastScrollY > 0) ? true : false;
+        scrollStatus = isScrollDown ? "down" : "up";
+      }
+
+      lastScrollY = y;
+      documentElement.setAttribute("data-scroll-status", scrollStatus);
+    }
+
+    window.addEventListener('scroll', function(e) {
+      storeScrollData();
+    });
+
+    storeScrollData();
+  }
+  document.addEventListener('DOMContentLoaded', initHeader);
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<script>
+  function hashLocate(hashValue) {
+    hashValue = hashValue.replace(/^.*#h-/, '');
+    hashValue = decodeURIComponent(hashValue);
+    var element = document.getElementById(hashValue);
+
+    if (!element) {
+      return;
+    }
+
+    var header = document.querySelector('header.site-header');
+    var headerRect = header.getBoundingClientRect();
+    var headerTop = Math.floor(headerRect.top);
+    var headerHeight = Math.floor(headerRect.height);
+    var scrollPos = getScrollPos();
+    var offsetY = element.offsetTop - (headerTop + headerHeight + 20);
+
+    if (offsetY == scrollPos.y) {
+      return;
+    }
+
+    if (headerTop == 0  && offsetY > scrollPos.y) {
+      offsetY += headerHeight + 2;
+    } else if (headerTop < 0  && offsetY < scrollPos.y) {
+      offsetY -= headerHeight - 2;
+    }
+
+    smoothScrollTo(offsetY);
+  }
+
+  // The first event occurred
+  window.addEventListener('load', function(event) {
+    if (window.location.hash) {
+      hashLocate(window.location.hash);
+    }
+  });
+
+  // The first event occurred
+  window.addEventListener('click', function(event) {
+    if (event.target.tagName.toLowerCase() == 'a') {
+      hashLocate(event.target.getAttribute('href'));
+    }
+  });
+</script>
+<div class="theme-toggle">
+  <input type="checkbox" id="theme-switch">
+  <label for="theme-switch">
+    <div class="toggle"></div>
+    <div class="names">
+      <p class="light">Light</p>
+      <p class="dark">Dark</p>
+    </div>
+  </label>
+</div>
+
+
+
+
+<script>
+  (function() {
+    var sw = document.getElementById('theme-switch');
+    var html = document.getElementsByTagName('html')[0];
+    var nightModeOption = ('auto' || 'auto').toLowerCase();
+    var storage = nightModeOption === 'manual'
+        ? localStorage
+        : sessionStorage;
+    var themeData = loadThemeData();
+
+    function saveThemeData(data) {
+      storage.setItem('theme', JSON.stringify(data));
+    }
+
+    function loadThemeData() {
+      var data = storage.getItem('theme');
+      try {
+        data = JSON.parse(data ? data : '');
+      } catch(e) {
+        data = { nightShift: undefined, autoToggleAt: 0 };
+        saveThemeData(data);
+      }
+      return data;
+    }
+
+    function handleThemeToggle(nightShift) {
+      themeData.nightShift = nightShift;
+      saveThemeData(themeData);
+      html.dataset.theme = nightShift ? 'dark' : 'light';
+      setTimeout(function() {
+        sw.checked = nightShift ? true : false;
+      }, 50);
+    }
+
+    function autoThemeToggle() {
+      // Next time point of theme toggle
+      var now = new Date();
+      var toggleAt = new Date();
+      var hours = now.getHours();
+      var nightShift = hours >= 19 || hours <=7;
+
+      if (nightShift) {
+        if (hours > 7) {
+          toggleAt.setDate(toggleAt.getDate() + 1);
+        }
+        toggleAt.setHours(7);
+      } else {
+        toggleAt.setHours(19);
+      }
+
+      toggleAt.setMinutes(0);
+      toggleAt.setSeconds(0);
+      toggleAt.setMilliseconds(0)
+
+      var delay = toggleAt.getTime() - now.getTime();
+
+      // auto toggle theme mode
+      setTimeout(function() {
+        handleThemeToggle(!nightShift);
+      }, delay);
+
+      return {
+        nightShift: nightShift,
+        toggleAt: toggleAt.getTime()
+      };
+    }
+
+    // Listen the theme toggle event
+    sw.addEventListener('change', function(event) {
+      handleThemeToggle(event.target.checked);
+    });
+
+    if (nightModeOption == 'auto') {
+      var data = autoThemeToggle();
+
+      // Toggle theme by local setting
+      if (data.toggleAt > themeData.autoToggleAt) {
+        themeData.autoToggleAt = data.toggleAt;
+        handleThemeToggle(data.nightShift);
+      } else {
+        handleThemeToggle(themeData.nightShift);
+      }
+    } else if (nightModeOption == 'manual') {
+      handleThemeToggle(themeData.nightShift);
+    } else {
+      var nightShift = themeData.nightShift;
+      if (nightShift === undefined) {
+        nightShift = nightModeOption === 'on';
+      }
+      handleThemeToggle(nightShift);
+    }
+  })();
+</script>
+<div id="click-to-top" class="click-to-top">
+  <i class="fa fa-arrow-up"></i>
+</div>
+<script>
+  (function () {
+    const clickToTop = document.getElementById('click-to-top');
+    window.addEventListener('scroll', () => {
+      if (window.scrollY > 100) {
+        clickToTop.classList.add('show')
+      }else {
+        clickToTop.classList.remove('show')
+      }
+    });
+    clickToTop.addEventListener('click', () => {
+      window.smoothScrollTo(0);
+    });
+  })();
+</script>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <div class="framework">
+  <section class="main">
+
+     <div class="post">
+  <section>
+
+
+
+
+
+
+
+
+
+<header class="post-header">
+  <h1 class="post-title p-name" itemprop="name headline">Nacos配置无法自动刷新问题排查</h1>
+  <h2 class="post-subtitle">Nacos配置无法自动刷新问题排查</h2>
+
+  <div class="post-meta">
+    <time class="dt-published" datetime="2025-04-28T00:00:00+08:00" itemprop="datePublished"><i class="fa fa-calendar"></i> Apr 28, 2025
+    </time>
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <span class="post-reading-time left-vsplit"><i class="fa fa-clock-o"></i> About 9 mins</span>
+  </div>
+<div class="post-tags"><a class="post-tag" href="/tags.html#Nacos">#Nacos</a></div></header>
+<article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+
+    <div class="post-content e-content" itemprop="articleBody">
+
+      <p><img src="https://github.com/wtopps/wtopps.github.io/blob/master/images/Nacos%20Logo.jpeg?raw=true" alt="banner"></p>
+
+<h2 id="背景">背景</h2>
+
+<p>Nacos SpringBoot版本中，提供了<code class="language-plaintext highlighter-rouge">@NacosValue</code>注解，支持控制台修改值时，自动刷新，但是今天遇见了无法自动刷新的问题。</p>
+
+<h2 id="环境">环境</h2>
+<p>SpringBoot 2.2.x
+nacos-client：2.1.0
+nacos-config-spring-boot-starter：0.2.12</p>
+
+<h2 id="问题排查">问题排查</h2>
+<p>首先确认，nacos的配置信息：</p>
+<div class="language-yml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="na">nacos</span><span class="pi">:</span>
+  <span class="na">config</span><span class="pi">:</span>
+    <span class="na">bootstrap</span><span class="pi">:</span>
+      <span class="na">enable</span><span class="pi">:</span> <span class="kc">true</span>
+      <span class="na">log-enable</span><span class="pi">:</span> <span class="kc">false</span>
+    <span class="na">server-addr</span><span class="pi">:</span> <span class="s">xxx</span>
+    <span class="na">type</span><span class="pi">:</span> <span class="s">yaml</span>
+    <span class="na">auto-refresh</span><span class="pi">:</span> <span class="kc">true</span>
+    <span class="na">data-ids</span><span class="pi">:</span> <span class="s">my-config.yml</span>
+</code></pre></div></div>
+<p>确认<code class="language-plaintext highlighter-rouge">auto-refresh</code>配置为<code class="language-plaintext highlighter-rouge">true</code>，Nacos提供了注解<code class="language-plaintext highlighter-rouge">@NacosConfigListener</code>可以监听配置修改的信息，排查nacos与client的长连接通道是否正常。</p>
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nd">@NacosConfigListener</span><span class="o">(</span><span class="n">dataId</span> <span class="o">=</span> <span class="s">"${nacos.config.data-ids}"</span><span class="o">,</span> <span class="n">timeout</span> <span class="o">=</span> <span class="mi">5000</span><span class="o">)</span>
+<span class="kd">public</span> <span class="kt">void</span> <span class="nf">onConfigChange</span><span class="o">(</span><span class="nc">String</span> <span class="n">newConfig</span><span class="o">)</span> <span class="o">{</span>
+    <span class="n">log</span><span class="o">.</span><span class="na">info</span><span class="o">(</span><span class="s">"Nacos配置更新完成, config data={}"</span><span class="o">,</span> <span class="n">newConfig</span><span class="o">);</span>
+<span class="o">}</span>
+</code></pre></div></div>
+<p>在控制台修改配置，发现onConfigChange()可以正常触发，说明长连通道没有问题，看来只能追查源码。</p>
+
+<p><code class="language-plaintext highlighter-rouge">com.alibaba.nacos.client.config.impl.CacheData#safeNotifyListener</code></p>
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">private</span> <span class="kt">void</span> <span class="nf">safeNotifyListener</span><span class="o">(</span><span class="kd">final</span> <span class="nc">String</span> <span class="n">dataId</span><span class="o">,</span> <span class="kd">final</span> <span class="nc">String</span> <span class="n">group</span><span class="o">,</span> <span class="kd">final</span> <span class="nc">String</span> <span class="n">content</span><span class="o">,</span> <span class="kd">final</span> <span class="nc">String</span> <span class="n">type</span><span class="o">,</span>
+            <span class="kd">final</span> <span class="nc">String</span> <span class="n">md5</span><span class="o">,</span> <span class="kd">final</span> <span class="nc">String</span> <span class="n">encryptedDataKey</span><span class="o">,</span> <span class="kd">final</span> <span class="nc">ManagerListenerWrap</span> <span class="n">listenerWrap</span><span class="o">)</span> <span class="o">{</span>
+        <span class="kd">final</span> <span class="nc">Listener</span> <span class="n">listener</span> <span class="o">=</span> <span class="n">listenerWrap</span><span class="o">.</span><span class="na">listener</span><span class="o">;</span>
+        <span class="k">if</span> <span class="o">(</span><span class="n">listenerWrap</span><span class="o">.</span><span class="na">inNotifying</span><span class="o">)</span> <span class="o">{</span>
+            <span class="no">LOGGER</span><span class="o">.</span><span class="na">warn</span><span class="o">(</span>
+                    <span class="s">"[{}] [notify-currentSkip] dataId={}, group={}, md5={}, listener={}, listener is not finish yet,will try next time."</span><span class="o">,</span>
+                    <span class="n">name</span><span class="o">,</span> <span class="n">dataId</span><span class="o">,</span> <span class="n">group</span><span class="o">,</span> <span class="n">md5</span><span class="o">,</span> <span class="n">listener</span><span class="o">);</span>
+            <span class="k">return</span><span class="o">;</span>
+        <span class="o">}</span>
+        <span class="nc">Runnable</span> <span class="n">job</span> <span class="o">=</span> <span class="o">()</span> <span class="o">-&gt;</span> <span class="o">{</span>
+            <span class="kt">long</span> <span class="n">start</span> <span class="o">=</span> <span class="nc">System</span><span class="o">.</span><span class="na">currentTimeMillis</span><span class="o">();</span>
+            <span class="nc">ClassLoader</span> <span class="n">myClassLoader</span> <span class="o">=</span> <span class="nc">Thread</span><span class="o">.</span><span class="na">currentThread</span><span class="o">().</span><span class="na">getContextClassLoader</span><span class="o">();</span>
+            <span class="nc">ClassLoader</span> <span class="n">appClassLoader</span> <span class="o">=</span> <span class="n">listener</span><span class="o">.</span><span class="na">getClass</span><span class="o">().</span><span class="na">getClassLoader</span><span class="o">();</span>
+            <span class="k">try</span> <span class="o">{</span>
+                <span class="k">if</span> <span class="o">(</span><span class="n">listener</span> <span class="k">instanceof</span> <span class="nc">AbstractSharedListener</span><span class="o">)</span> <span class="o">{</span>
+                    <span class="nc">AbstractSharedListener</span> <span class="n">adapter</span> <span class="o">=</span> <span class="o">(</span><span class="nc">AbstractSharedListener</span><span class="o">)</span> <span class="n">listener</span><span class="o">;</span>
+                    <span class="n">adapter</span><span class="o">.</span><span class="na">fillContext</span><span class="o">(</span><span class="n">dataId</span><span class="o">,</span> <span class="n">group</span><span class="o">);</span>
+                    <span class="no">LOGGER</span><span class="o">.</span><span class="na">info</span><span class="o">(</span><span class="s">"[{}] [notify-context] dataId={}, group={}, md5={}"</span><span class="o">,</span> <span class="n">name</span><span class="o">,</span> <span class="n">dataId</span><span class="o">,</span> <span class="n">group</span><span class="o">,</span> <span class="n">md5</span><span class="o">);</span>
+                <span class="o">}</span>
+                <span class="c1">// Before executing the callback, set the thread classloader to the classloader of</span>
+                <span class="c1">// the specific webapp to avoid exceptions or misuses when calling the spi interface in</span>
+                <span class="c1">// the callback method (this problem occurs only in multi-application deployment).</span>
+                <span class="nc">Thread</span><span class="o">.</span><span class="na">currentThread</span><span class="o">().</span><span class="na">setContextClassLoader</span><span class="o">(</span><span class="n">appClassLoader</span><span class="o">);</span>
+                
+                <span class="nc">ConfigResponse</span> <span class="n">cr</span> <span class="o">=</span> <span class="k">new</span> <span class="nc">ConfigResponse</span><span class="o">();</span>
+                <span class="n">cr</span><span class="o">.</span><span class="na">setDataId</span><span class="o">(</span><span class="n">dataId</span><span class="o">);</span>
+                <span class="n">cr</span><span class="o">.</span><span class="na">setGroup</span><span class="o">(</span><span class="n">group</span><span class="o">);</span>
+                <span class="n">cr</span><span class="o">.</span><span class="na">setContent</span><span class="o">(</span><span class="n">content</span><span class="o">);</span>
+                <span class="n">cr</span><span class="o">.</span><span class="na">setEncryptedDataKey</span><span class="o">(</span><span class="n">encryptedDataKey</span><span class="o">);</span>
+                <span class="n">configFilterChainManager</span><span class="o">.</span><span class="na">doFilter</span><span class="o">(</span><span class="kc">null</span><span class="o">,</span> <span class="n">cr</span><span class="o">);</span>
+                <span class="nc">String</span> <span class="n">contentTmp</span> <span class="o">=</span> <span class="n">cr</span><span class="o">.</span><span class="na">getContent</span><span class="o">();</span>
+                <span class="n">listenerWrap</span><span class="o">.</span><span class="na">inNotifying</span> <span class="o">=</span> <span class="kc">true</span><span class="o">;</span>
+
+                <span class="c1">// 重点实现方法，将Nacos Server的配置写入Spring容器中</span>
+                <span class="n">listener</span><span class="o">.</span><span class="na">receiveConfigInfo</span><span class="o">(</span><span class="n">contentTmp</span><span class="o">);</span>
+                
+                <span class="c1">// compare lastContent and content</span>
+                <span class="k">if</span> <span class="o">(</span><span class="n">listener</span> <span class="k">instanceof</span> <span class="nc">AbstractConfigChangeListener</span><span class="o">)</span> <span class="o">{</span>
+                    <span class="nc">Map</span> <span class="n">data</span> <span class="o">=</span> <span class="nc">ConfigChangeHandler</span><span class="o">.</span><span class="na">getInstance</span><span class="o">()</span>
+                            <span class="o">.</span><span class="na">parseChangeData</span><span class="o">(</span><span class="n">listenerWrap</span><span class="o">.</span><span class="na">lastContent</span><span class="o">,</span> <span class="n">content</span><span class="o">,</span> <span class="n">type</span><span class="o">);</span>
+                    <span class="nc">ConfigChangeEvent</span> <span class="n">event</span> <span class="o">=</span> <span class="k">new</span> <span class="nc">ConfigChangeEvent</span><span class="o">(</span><span class="n">data</span><span class="o">);</span>
+                    <span class="o">((</span><span class="nc">AbstractConfigChangeListener</span><span class="o">)</span> <span class="n">listener</span><span class="o">).</span><span class="na">receiveConfigChange</span><span class="o">(</span><span class="n">event</span><span class="o">);</span>
+                    <span class="n">listenerWrap</span><span class="o">.</span><span class="na">lastContent</span> <span class="o">=</span> <span class="n">content</span><span class="o">;</span>
+                <span class="o">}</span>
+                
+                <span class="o">.....</span><span class="na">省略部分代码</span>
+    <span class="o">}</span>
+</code></pre></div></div>
+<p>进入receiveConfigInfo()实现：
+<code class="language-plaintext highlighter-rouge">com.alibaba.nacos.spring.context.event.config.DelegatingEventPublishingListener#receiveConfigInfo</code></p>
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nd">@Override</span>
+<span class="kd">public</span> <span class="kt">void</span> <span class="nf">receiveConfigInfo</span><span class="o">(</span><span class="nc">String</span> <span class="n">content</span><span class="o">)</span> <span class="o">{</span>
+	<span class="c1">// 刷新Spring容器配置</span>
+	<span class="n">onReceived</span><span class="o">(</span><span class="n">content</span><span class="o">);</span>
+	<span class="c1">// 发布变更事件</span>
+	<span class="n">publishEvent</span><span class="o">(</span><span class="n">content</span><span class="o">);</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<p><code class="language-plaintext highlighter-rouge">com.alibaba.nacos.spring.core.env.NacosPropertySourcePostProcessor#addListenerIfAutoRefreshed</code></p>
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">public</span> <span class="kd">static</span> <span class="kt">void</span> <span class="nf">addListenerIfAutoRefreshed</span><span class="o">(</span>
+			<span class="kd">final</span> <span class="nc">NacosPropertySource</span> <span class="n">nacosPropertySource</span><span class="o">,</span> <span class="kd">final</span> <span class="nc">Properties</span> <span class="n">properties</span><span class="o">,</span>
+			<span class="kd">final</span> <span class="nc">ConfigurableEnvironment</span> <span class="n">environment</span><span class="o">)</span> <span class="o">{</span>
+
+		<span class="k">if</span> <span class="o">(!</span><span class="n">nacosPropertySource</span><span class="o">.</span><span class="na">isAutoRefreshed</span><span class="o">())</span> <span class="o">{</span> <span class="c1">// Disable Auto-Refreshed</span>
+			<span class="k">return</span><span class="o">;</span>
+		<span class="o">}</span>
+
+		<span class="kd">final</span> <span class="nc">String</span> <span class="n">dataId</span> <span class="o">=</span> <span class="n">nacosPropertySource</span><span class="o">.</span><span class="na">getDataId</span><span class="o">();</span>
+		<span class="kd">final</span> <span class="nc">String</span> <span class="n">groupId</span> <span class="o">=</span> <span class="n">nacosPropertySource</span><span class="o">.</span><span class="na">getGroupId</span><span class="o">();</span>
+		<span class="kd">final</span> <span class="nc">String</span> <span class="n">type</span> <span class="o">=</span> <span class="n">nacosPropertySource</span><span class="o">.</span><span class="na">getType</span><span class="o">();</span>
+		<span class="kd">final</span> <span class="nc">NacosServiceFactory</span> <span class="n">nacosServiceFactory</span> <span class="o">=</span> <span class="n">getNacosServiceFactoryBean</span><span class="o">(</span>
+				<span class="n">beanFactory</span><span class="o">);</span>
+
+		<span class="k">try</span> <span class="o">{</span>
+
+			<span class="nc">ConfigService</span> <span class="n">configService</span> <span class="o">=</span> <span class="n">nacosServiceFactory</span>
+					<span class="o">.</span><span class="na">createConfigService</span><span class="o">(</span><span class="n">properties</span><span class="o">);</span>
+
+			<span class="nc">Listener</span> <span class="n">listener</span> <span class="o">=</span> <span class="k">new</span> <span class="nc">AbstractListener</span><span class="o">()</span> <span class="o">{</span>
+
+				<span class="nd">@Override</span>
+				<span class="kd">public</span> <span class="kt">void</span> <span class="nf">receiveConfigInfo</span><span class="o">(</span><span class="nc">String</span> <span class="n">config</span><span class="o">)</span> <span class="o">{</span>
+					<span class="nc">String</span> <span class="n">name</span> <span class="o">=</span> <span class="n">nacosPropertySource</span><span class="o">.</span><span class="na">getName</span><span class="o">();</span>
+					<span class="nc">NacosPropertySource</span> <span class="n">newNacosPropertySource</span> <span class="o">=</span> <span class="k">new</span> <span class="nc">NacosPropertySource</span><span class="o">(</span>
+							<span class="n">dataId</span><span class="o">,</span> <span class="n">groupId</span><span class="o">,</span> <span class="n">name</span><span class="o">,</span> <span class="n">config</span><span class="o">,</span> <span class="n">type</span><span class="o">);</span>
+					<span class="n">newNacosPropertySource</span><span class="o">.</span><span class="na">copy</span><span class="o">(</span><span class="n">nacosPropertySource</span><span class="o">);</span>
+					<span class="nc">MutablePropertySources</span> <span class="n">propertySources</span> <span class="o">=</span> <span class="n">environment</span>
+							<span class="o">.</span><span class="na">getPropertySources</span><span class="o">();</span>
+					<span class="c1">// replace NacosPropertySource</span>
+					<span class="c1">// 核心实现，将Nacos的配置值刷新Spring容器中的配置值</span>
+					<span class="n">propertySources</span><span class="o">.</span><span class="na">replace</span><span class="o">(</span><span class="n">name</span><span class="o">,</span> <span class="n">newNacosPropertySource</span><span class="o">);</span>
+				<span class="o">}</span>
+			<span class="o">};</span>
+
+			<span class="o">....</span><span class="na">省略部分代码</span>
+	<span class="o">}</span>
+</code></pre></div></div>
+<p>点击replace的实现，发现一点问题：
+<img src="https://github.com/wtopps/wtopps.github.io/blob/master/images/nacos%E9%97%AE%E9%A2%98%E6%8E%92%E6%9F%A51.jpeg?raw=true" alt="疑点1">
+这里面有两个实现，其中一个是jasypt的实现，这个三方类库是常用于对代码中的数据库配置信息进行加密的，难道说，是因为它？同时在控制台也有一条日志值得注意：</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>[notify-error] dataId=xxx  …… placeholder 'project.version' in value &amp;quot;${project.version}
+</code></pre></div></div>
+<p>这里是一个疑点，我们先继续往下看：
+<code class="language-plaintext highlighter-rouge">com.alibaba.nacos.spring.context.event.config.DelegatingEventPublishingListener#receiveConfigInfo</code></p>
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nd">@Override</span>
+<span class="kd">public</span> <span class="kt">void</span> <span class="nf">receiveConfigInfo</span><span class="o">(</span><span class="nc">String</span> <span class="n">content</span><span class="o">)</span> <span class="o">{</span>
+	<span class="n">onReceived</span><span class="o">(</span><span class="n">content</span><span class="o">);</span>
+	<span class="n">publishEvent</span><span class="o">(</span><span class="n">content</span><span class="o">);</span>
+<span class="o">}</span>
+
+<span class="kd">private</span> <span class="kt">void</span> <span class="nf">publishEvent</span><span class="o">(</span><span class="nc">String</span> <span class="n">content</span><span class="o">)</span> <span class="o">{</span>
+	<span class="nc">NacosConfigReceivedEvent</span> <span class="n">event</span> <span class="o">=</span> <span class="k">new</span> <span class="nc">NacosConfigReceivedEvent</span><span class="o">(</span><span class="n">configService</span><span class="o">,</span>
+			<span class="n">dataId</span><span class="o">,</span> <span class="n">groupId</span><span class="o">,</span> <span class="n">content</span><span class="o">,</span> <span class="n">configType</span><span class="o">);</span>
+	<span class="c1">// 发布变更事件</span>
+	<span class="n">applicationEventPublisher</span><span class="o">.</span><span class="na">publishEvent</span><span class="o">(</span><span class="n">event</span><span class="o">);</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<p><code class="language-plaintext highlighter-rouge">org.springframework.context.support.AbstractApplicationContext#publishEvent</code></p>
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="cm">/**
+	 * Publish the given event to all listeners.
+	 * @param event the event to publish (may be an {@link ApplicationEvent}
+	 * or a payload object to be turned into a {@link PayloadApplicationEvent})
+	 * @param eventType the resolved event type, if known
+	 * @since 4.2
+	 */</span>
+	<span class="kd">protected</span> <span class="kt">void</span> <span class="nf">publishEvent</span><span class="o">(</span><span class="nc">Object</span> <span class="n">event</span><span class="o">,</span> <span class="nd">@Nullable</span> <span class="nc">ResolvableType</span> <span class="n">eventType</span><span class="o">)</span> <span class="o">{</span>
+		<span class="nc">Assert</span><span class="o">.</span><span class="na">notNull</span><span class="o">(</span><span class="n">event</span><span class="o">,</span> <span class="s">"Event must not be null"</span><span class="o">);</span>
+
+		<span class="c1">// Decorate event as an ApplicationEvent if necessary</span>
+		<span class="nc">ApplicationEvent</span> <span class="n">applicationEvent</span><span class="o">;</span>
+		<span class="k">if</span> <span class="o">(</span><span class="n">event</span> <span class="k">instanceof</span> <span class="nc">ApplicationEvent</span><span class="o">)</span> <span class="o">{</span>
+			<span class="n">applicationEvent</span> <span class="o">=</span> <span class="o">(</span><span class="nc">ApplicationEvent</span><span class="o">)</span> <span class="n">event</span><span class="o">;</span>
+		<span class="o">}</span>
+		<span class="k">else</span> <span class="o">{</span>
+			<span class="n">applicationEvent</span> <span class="o">=</span> <span class="k">new</span> <span class="nc">PayloadApplicationEvent</span><span class="o">&lt;&gt;(</span><span class="k">this</span><span class="o">,</span> <span class="n">event</span><span class="o">);</span>
+			<span class="k">if</span> <span class="o">(</span><span class="n">eventType</span> <span class="o">==</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+				<span class="n">eventType</span> <span class="o">=</span> <span class="o">((</span><span class="nc">PayloadApplicationEvent</span><span class="o">&lt;?&gt;)</span> <span class="n">applicationEvent</span><span class="o">).</span><span class="na">getResolvableType</span><span class="o">();</span>
+			<span class="o">}</span>
+		<span class="o">}</span>
+
+		<span class="c1">// Multicast right now if possible - or lazily once the multicaster is initialized</span>
+		<span class="k">if</span> <span class="o">(</span><span class="k">this</span><span class="o">.</span><span class="na">earlyApplicationEvents</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+			<span class="k">this</span><span class="o">.</span><span class="na">earlyApplicationEvents</span><span class="o">.</span><span class="na">add</span><span class="o">(</span><span class="n">applicationEvent</span><span class="o">);</span>
+		<span class="o">}</span>
+		<span class="k">else</span> <span class="o">{</span>
+			<span class="c1">// 重点关注，发布广播事件，通知全部监听器</span>
+			<span class="n">getApplicationEventMulticaster</span><span class="o">().</span><span class="na">multicastEvent</span><span class="o">(</span><span class="n">applicationEvent</span><span class="o">,</span> <span class="n">eventType</span><span class="o">);</span>
+		<span class="o">}</span>
+
+		<span class="c1">// Publish event via parent context as well...</span>
+		<span class="k">if</span> <span class="o">(</span><span class="k">this</span><span class="o">.</span><span class="na">parent</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+			<span class="k">if</span> <span class="o">(</span><span class="k">this</span><span class="o">.</span><span class="na">parent</span> <span class="k">instanceof</span> <span class="nc">AbstractApplicationContext</span><span class="o">)</span> <span class="o">{</span>
+				<span class="o">((</span><span class="nc">AbstractApplicationContext</span><span class="o">)</span> <span class="k">this</span><span class="o">.</span><span class="na">parent</span><span class="o">).</span><span class="na">publishEvent</span><span class="o">(</span><span class="n">event</span><span class="o">,</span> <span class="n">eventType</span><span class="o">);</span>
+			<span class="o">}</span>
+			<span class="k">else</span> <span class="o">{</span>
+				<span class="k">this</span><span class="o">.</span><span class="na">parent</span><span class="o">.</span><span class="na">publishEvent</span><span class="o">(</span><span class="n">event</span><span class="o">);</span>
+			<span class="o">}</span>
+		<span class="o">}</span>
+	<span class="o">}</span>
+</code></pre></div></div>
+<p>下面就是核心的实现部分，真正刷新值的实现逻辑：
+<code class="language-plaintext highlighter-rouge">com.alibaba.nacos.spring.context.annotation.config.NacosValueAnnotationBeanPostProcessor#onApplicationEvent</code></p>
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nd">@Override</span>
+<span class="kd">public</span> <span class="kt">void</span> <span class="nf">onApplicationEvent</span><span class="o">(</span><span class="nc">NacosConfigReceivedEvent</span> <span class="n">event</span><span class="o">)</span> <span class="o">{</span>
+	<span class="c1">// In to this event receiver, the environment has been updated the</span>
+	<span class="c1">// latest configuration information, pull directly from the environment</span>
+	<span class="c1">// fix issue #142</span>
+	<span class="k">for</span> <span class="o">(</span><span class="nc">Map</span><span class="o">.</span><span class="na">Entry</span><span class="o">&lt;</span><span class="nc">String</span><span class="o">,</span> <span class="nc">List</span><span class="o">&lt;</span><span class="nc">NacosValueTarget</span><span class="o">&gt;&gt;</span> <span class="n">entry</span> <span class="o">:</span> <span class="n">placeholderNacosValueTargetMap</span>
+			<span class="o">.</span><span class="na">entrySet</span><span class="o">())</span> <span class="o">{</span>
+		<span class="nc">String</span> <span class="n">key</span> <span class="o">=</span> <span class="n">environment</span><span class="o">.</span><span class="na">resolvePlaceholders</span><span class="o">(</span><span class="n">entry</span><span class="o">.</span><span class="na">getKey</span><span class="o">());</span>
+		<span class="c1">// 从Spring容器中获取变更后的新值，通过反射的方式，更新数据</span>
+		<span class="nc">String</span> <span class="n">newValue</span> <span class="o">=</span> <span class="n">environment</span><span class="o">.</span><span class="na">getProperty</span><span class="o">(</span><span class="n">key</span><span class="o">);</span>
+
+		<span class="k">if</span> <span class="o">(</span><span class="n">newValue</span> <span class="o">==</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+			<span class="k">continue</span><span class="o">;</span>
+		<span class="o">}</span>
+		<span class="nc">List</span><span class="o">&lt;</span><span class="nc">NacosValueTarget</span><span class="o">&gt;</span> <span class="n">beanPropertyList</span> <span class="o">=</span> <span class="n">entry</span><span class="o">.</span><span class="na">getValue</span><span class="o">();</span>
+		<span class="k">for</span> <span class="o">(</span><span class="nc">NacosValueTarget</span> <span class="n">target</span> <span class="o">:</span> <span class="n">beanPropertyList</span><span class="o">)</span> <span class="o">{</span>
+			<span class="nc">String</span> <span class="n">md5String</span> <span class="o">=</span> <span class="nc">MD5Utils</span><span class="o">.</span><span class="na">md5Hex</span><span class="o">(</span><span class="n">newValue</span><span class="o">,</span> <span class="s">"UTF-8"</span><span class="o">);</span>
+			<span class="kt">boolean</span> <span class="n">isUpdate</span> <span class="o">=</span> <span class="o">!</span><span class="n">target</span><span class="o">.</span><span class="na">lastMD5</span><span class="o">.</span><span class="na">equals</span><span class="o">(</span><span class="n">md5String</span><span class="o">);</span>
+			<span class="k">if</span> <span class="o">(</span><span class="n">isUpdate</span><span class="o">)</span> <span class="o">{</span>
+				<span class="n">target</span><span class="o">.</span><span class="na">updateLastMD5</span><span class="o">(</span><span class="n">md5String</span><span class="o">);</span>
+				<span class="nc">Object</span> <span class="n">evaluatedValue</span> <span class="o">=</span> <span class="n">resolveNotifyValue</span><span class="o">(</span><span class="n">target</span><span class="o">.</span><span class="na">nacosValueExpr</span><span class="o">,</span> <span class="n">key</span><span class="o">,</span> <span class="n">newValue</span><span class="o">);</span>
+				<span class="k">if</span> <span class="o">(</span><span class="n">target</span><span class="o">.</span><span class="na">method</span> <span class="o">==</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+					<span class="n">setField</span><span class="o">(</span><span class="n">target</span><span class="o">,</span> <span class="n">evaluatedValue</span><span class="o">);</span>
+				<span class="o">}</span>
+				<span class="k">else</span> <span class="o">{</span>
+					<span class="n">setMethod</span><span class="o">(</span><span class="n">target</span><span class="o">,</span> <span class="n">evaluatedValue</span><span class="o">);</span>
+				<span class="o">}</span>
+			<span class="o">}</span>
+		<span class="o">}</span>
+	<span class="o">}</span>
+<span class="o">}</span>
+</code></pre></div></div>
+<p>OK，看到这里，基本已经明朗，了解了Nacos配置刷新的全流程，非常可疑的一点，就是三方类库jasypt，为了验证才想，我们将jasypt的类库移除，再次进行尝试，奇迹出现了！Nacos可以顺利刷新配置值，终于破案，是因为jasypt的加密导致的该问题，搜了一下可能导致的原因：
+1、属性源优先级冲突：jasypt 的 PropertySource（如 EncryptablePropertySource）可能覆盖或干扰 Nacos 的动态属性源，导致解密后的值无法被 Nacos 更新逻辑捕获。
+2、解密逻辑未触发：Nacos 配置更新时，新的加密值未被 jasypt 及时解密，导致 Environment 中仍是旧值。</p>
+
+<p>查看一下jasypt使用的版本：</p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;dependency&gt;
+    &lt;groupId&gt;com.github.ulisesbocchio&lt;/groupId&gt;
+    &lt;artifactId&gt;jasypt-spring-boot-starter&lt;/artifactId&gt;
+    &lt;version&gt;2.1.1&lt;/version&gt;
+&lt;/dependency&gt;
+</code></pre></div></div>
+<p>猜想是否是2.1.1版本的BUG导致了该问题，于是升级至最新版本3.0.5，再次进行测试，发现Nacos可以顺利更新，问题解决。</p>
+
+
+    </div>
+
+</article>
+<div class="post-nav">
+<a class="previous" href="/redis/2025/04/17/%E5%85%B3%E4%BA%8EValkey%E4%BD%A0%E9%9C%80%E8%A6%81%E7%9F%A5%E9%81%93%E7%9A%84%E4%BA%8B%E6%83%85.html" title="关于Valkey你需要知道的事情">关于Valkey你需要知道的事情</a><a class="next" href="/redis/2025/05/15/%E5%85%B3%E4%BA%8ERedis8.0%E4%BD%A0%E9%9C%80%E8%A6%81%E7%9F%A5%E9%81%93%E7%9A%84%E4%BA%8B%E6%83%85.html" title="关于Redis8.0你需要知道的事情">关于Redis8.0你需要知道的事情</a>
+</div>
+<div class="post-related">
+      <div>Related Articles</div>
+      <ul>
+        <li class="top-post">
+          <a class="post-link" href="/kafka/2025/07/07/%E5%85%B3%E4%BA%8EKafka%E5%88%86%E5%B1%82%E5%AD%98%E5%82%A8%E4%BD%A0%E5%BA%94%E8%AF%A5%E7%9F%A5%E9%81%93%E7%9A%84%E4%BA%8B%E6%83%85.html" title="关于Kafka分层存储你应该知道的事情">
+            关于Kafka分层存储你应该知道的事情<span class="post-badges">
+  <span class="post-badge badge-top">TOP</span>
+  <span class="post-badge badge-new">NEW</span>
+</span>
+</a>
+        </li>
+<li class="top-post">
+          <a class="post-link" href="/mysql/2024/12/12/%E8%AE%B0%E4%B8%80%E6%AC%A1%E4%B8%9A%E5%8A%A1MySQL%E6%AD%BB%E9%94%81case.html" title="记一次业务MySQL死锁">
+            记一次业务MySQL死锁<span class="post-badges">
+  <span class="post-badge badge-top">TOP</span>
+  <span class="post-badge badge-new">NEW</span>
+</span>
+</a>
+        </li>
+<li class="top-post">
+          <a class="post-link" href="/mysql/2025/05/27/%E5%85%B3%E4%BA%8EMySQL8.4LTS%E4%BD%A0%E5%BA%94%E8%AF%A5%E7%9F%A5%E9%81%93%E7%9A%84%E4%BA%8B%E6%83%85.html" title="关于MySQL8.4LTS你应该知道的事情">
+            关于MySQL8.4LTS你应该知道的事情<span class="post-badges">
+  <span class="post-badge badge-top">TOP</span>
+  <span class="post-badge badge-new">NEW</span>
+</span>
+</a>
+        </li>
+<li class="top-post">
+          <a class="post-link" href="/redis/2025/01/23/Redis%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81%E5%AE%9E%E7%8E%B0%E6%8C%87%E5%8C%97.html" title="Redis分布式锁实现指北">
+            Redis分布式锁实现指北<span class="post-badges">
+  <span class="post-badge badge-top">TOP</span>
+  <span class="post-badge badge-new">NEW</span>
+</span>
+</a>
+        </li>
+</ul>
+    </div>
+<div class="post-comments"></div></section>
+</div>
+
+
+  </section>
+  <section class="sidebar" style="margin-left: 15px;">
+    <!-- Get sidebar items --><style type="text/css" media="screen">
+.post-menu ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+</style>
+
+<div class="post-menu">
+  <div class="post-menu-title">TOC</div>
+  <div class="post-menu-content"></div>
+</div>
+
+<script>
+  function generateContent() {
+    var menu = document.querySelector(".post-menu");
+    var menuContent =  menu.querySelector(".post-menu-content");
+    var headings = document.querySelector(".post-content").querySelectorAll("h2, h3, h4, h5, h6");
+
+    // Hide menu when no headings
+    if (headings.length === 0) {
+      return menu.style.display = "none";
+    }
+
+    // Generate post menu
+    var menuHTML = '';
+    for (var i = 0; i < headings.length; i++) {
+      var h = headings[i];
+      menuHTML += (
+        '<li class="h-' + h.tagName.toLowerCase() + '">'
+        + '<a href="#h-' + h.getAttribute('id') + '">' + h.textContent + '</a></li>');
+    }
+
+    menuContent.innerHTML = '<ul>' + menuHTML + '</ul>';
+
+    // The header element
+    var header = document.querySelector('header.site-header');
+
+    function doMenuCollapse(index, over_items) {
+      var items = menuContent.firstChild.children;
+
+      if (over_items == undefined) {
+        over_items = 20;
+      }
+
+      if (items.length < over_items) {
+        return;
+      }
+
+      var activeItem = items[index];
+      var beginItem = activeItem
+      var endItem = activeItem
+      var beginIndex = index;
+      var endIndex = index + 1;
+      while (beginIndex >= 0
+        && !items[beginIndex].classList.contains('h-h2')) {
+        beginIndex -= 1;
+      }
+      while (endIndex < items.length
+        && !items[endIndex].classList.contains('h-h2')) {
+        endIndex += 1;
+      }
+      for (var i = 0; i < beginIndex; i++) {
+        item = items[i]
+        if (!item.classList.contains('h-h2')) {
+          item.style.display = 'none';
+        }
+      }
+      for (var i = beginIndex + 1; i < endIndex; i++) {
+        item = items[i]
+        // if (!item.classList.contains('h-h2')) {
+          item.style.display = '';
+        // }
+      }
+      for (var i = endIndex; i < items.length; i++) {
+        item = items[i]
+        if (!item.classList.contains('h-h2')) {
+          item.style.display = 'none';
+        }
+      }
+    }
+
+    // Init menu collapsed
+    doMenuCollapse(-1);
+
+    // Active the menu item
+    window.addEventListener('scroll', function (event) {
+      var lastActive = menuContent.querySelector('.active');
+      var changed = true;
+      var activeIndex = -1;
+      for (var i = headings.length - 1; i >= 0; i--) {
+        var h = headings[i];
+        var headingRect = h.getBoundingClientRect();
+        var headerRect = header.getBoundingClientRect();
+        var headerTop = Math.floor(headerRect.top);
+        var headerHeight = Math.floor(headerRect.height);
+        var headerHeight = headerTop + headerHeight + 20;
+        if (headingRect.top <= headerHeight) {
+          var id = 'h-' + h.getAttribute('id');
+          var a = menuContent.querySelector('a[href="#' + id  + '"]');
+          var curActive = a.parentNode;
+          if (curActive) {
+            curActive.classList.add('active');
+            activeIndex = i;
+          }
+          if (lastActive == curActive) {
+            changed = false;
+          }
+          break;
+        }
+      }
+      if (changed) {
+        if (lastActive) {
+          lastActive.classList.remove('active');
+        }
+        doMenuCollapse(activeIndex);
+      }
+      event.preventDefault();
+    });
+  }
+  generateContent();
+</script>
+</section>
+</div>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/"></data>
+
+  <div class="wrapper">
+    <div class="site-footer-inner">
+<div>Unpublished Work <span class="copyleft">©</span> 2017-2025 GitHub User</div>
+      <div>Powered by <a title="Jekyll is a simple, blog-aware, static site
+      generator." href="https://jekyllrb.com/">Jekyll</a> &amp; <a title="Yat, yet
+      another theme." href="https://github.com/jeffreytse/jekyll-theme-yat">Yat Theme</a>.</div>
+      <div class="footer-col rss-subscribe">Subscribe <a href="/feed.xml">via RSS</a>
+</div>
+    </div>
+  </div>
+</footer>
+</body>
+</html>

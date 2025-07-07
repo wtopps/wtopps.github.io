@@ -1,0 +1,241 @@
+<p><img src="https://github.com/wtopps/wtopps.github.io/blob/master/images/Nacos%20Logo.jpeg?raw=true" alt="banner" /></p>
+
+<h2 id="背景">背景</h2>
+
+<p>Nacos SpringBoot版本中，提供了<code class="language-plaintext highlighter-rouge">@NacosValue</code>注解，支持控制台修改值时，自动刷新，但是今天遇见了无法自动刷新的问题。</p>
+
+<h2 id="环境">环境</h2>
+<p>SpringBoot 2.2.x
+nacos-client：2.1.0
+nacos-config-spring-boot-starter：0.2.12</p>
+
+<h2 id="问题排查">问题排查</h2>
+<p>首先确认，nacos的配置信息：</p>
+<div class="language-yml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="na">nacos</span><span class="pi">:</span>
+  <span class="na">config</span><span class="pi">:</span>
+    <span class="na">bootstrap</span><span class="pi">:</span>
+      <span class="na">enable</span><span class="pi">:</span> <span class="kc">true</span>
+      <span class="na">log-enable</span><span class="pi">:</span> <span class="kc">false</span>
+    <span class="na">server-addr</span><span class="pi">:</span> <span class="s">xxx</span>
+    <span class="na">type</span><span class="pi">:</span> <span class="s">yaml</span>
+    <span class="na">auto-refresh</span><span class="pi">:</span> <span class="kc">true</span>
+    <span class="na">data-ids</span><span class="pi">:</span> <span class="s">my-config.yml</span>
+</code></pre></div></div>
+<p>确认<code class="language-plaintext highlighter-rouge">auto-refresh</code>配置为<code class="language-plaintext highlighter-rouge">true</code>，Nacos提供了注解<code class="language-plaintext highlighter-rouge">@NacosConfigListener</code>可以监听配置修改的信息，排查nacos与client的长连接通道是否正常。</p>
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nd">@NacosConfigListener</span><span class="o">(</span><span class="n">dataId</span> <span class="o">=</span> <span class="s">"${nacos.config.data-ids}"</span><span class="o">,</span> <span class="n">timeout</span> <span class="o">=</span> <span class="mi">5000</span><span class="o">)</span>
+<span class="kd">public</span> <span class="kt">void</span> <span class="nf">onConfigChange</span><span class="o">(</span><span class="nc">String</span> <span class="n">newConfig</span><span class="o">)</span> <span class="o">{</span>
+    <span class="n">log</span><span class="o">.</span><span class="na">info</span><span class="o">(</span><span class="s">"Nacos配置更新完成, config data={}"</span><span class="o">,</span> <span class="n">newConfig</span><span class="o">);</span>
+<span class="o">}</span>
+</code></pre></div></div>
+<p>在控制台修改配置，发现onConfigChange()可以正常触发，说明长连通道没有问题，看来只能追查源码。</p>
+
+<p><code class="language-plaintext highlighter-rouge">com.alibaba.nacos.client.config.impl.CacheData#safeNotifyListener</code></p>
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">private</span> <span class="kt">void</span> <span class="nf">safeNotifyListener</span><span class="o">(</span><span class="kd">final</span> <span class="nc">String</span> <span class="n">dataId</span><span class="o">,</span> <span class="kd">final</span> <span class="nc">String</span> <span class="n">group</span><span class="o">,</span> <span class="kd">final</span> <span class="nc">String</span> <span class="n">content</span><span class="o">,</span> <span class="kd">final</span> <span class="nc">String</span> <span class="n">type</span><span class="o">,</span>
+            <span class="kd">final</span> <span class="nc">String</span> <span class="n">md5</span><span class="o">,</span> <span class="kd">final</span> <span class="nc">String</span> <span class="n">encryptedDataKey</span><span class="o">,</span> <span class="kd">final</span> <span class="nc">ManagerListenerWrap</span> <span class="n">listenerWrap</span><span class="o">)</span> <span class="o">{</span>
+        <span class="kd">final</span> <span class="nc">Listener</span> <span class="n">listener</span> <span class="o">=</span> <span class="n">listenerWrap</span><span class="o">.</span><span class="na">listener</span><span class="o">;</span>
+        <span class="k">if</span> <span class="o">(</span><span class="n">listenerWrap</span><span class="o">.</span><span class="na">inNotifying</span><span class="o">)</span> <span class="o">{</span>
+            <span class="no">LOGGER</span><span class="o">.</span><span class="na">warn</span><span class="o">(</span>
+                    <span class="s">"[{}] [notify-currentSkip] dataId={}, group={}, md5={}, listener={}, listener is not finish yet,will try next time."</span><span class="o">,</span>
+                    <span class="n">name</span><span class="o">,</span> <span class="n">dataId</span><span class="o">,</span> <span class="n">group</span><span class="o">,</span> <span class="n">md5</span><span class="o">,</span> <span class="n">listener</span><span class="o">);</span>
+            <span class="k">return</span><span class="o">;</span>
+        <span class="o">}</span>
+        <span class="nc">Runnable</span> <span class="n">job</span> <span class="o">=</span> <span class="o">()</span> <span class="o">-&gt;</span> <span class="o">{</span>
+            <span class="kt">long</span> <span class="n">start</span> <span class="o">=</span> <span class="nc">System</span><span class="o">.</span><span class="na">currentTimeMillis</span><span class="o">();</span>
+            <span class="nc">ClassLoader</span> <span class="n">myClassLoader</span> <span class="o">=</span> <span class="nc">Thread</span><span class="o">.</span><span class="na">currentThread</span><span class="o">().</span><span class="na">getContextClassLoader</span><span class="o">();</span>
+            <span class="nc">ClassLoader</span> <span class="n">appClassLoader</span> <span class="o">=</span> <span class="n">listener</span><span class="o">.</span><span class="na">getClass</span><span class="o">().</span><span class="na">getClassLoader</span><span class="o">();</span>
+            <span class="k">try</span> <span class="o">{</span>
+                <span class="k">if</span> <span class="o">(</span><span class="n">listener</span> <span class="k">instanceof</span> <span class="nc">AbstractSharedListener</span><span class="o">)</span> <span class="o">{</span>
+                    <span class="nc">AbstractSharedListener</span> <span class="n">adapter</span> <span class="o">=</span> <span class="o">(</span><span class="nc">AbstractSharedListener</span><span class="o">)</span> <span class="n">listener</span><span class="o">;</span>
+                    <span class="n">adapter</span><span class="o">.</span><span class="na">fillContext</span><span class="o">(</span><span class="n">dataId</span><span class="o">,</span> <span class="n">group</span><span class="o">);</span>
+                    <span class="no">LOGGER</span><span class="o">.</span><span class="na">info</span><span class="o">(</span><span class="s">"[{}] [notify-context] dataId={}, group={}, md5={}"</span><span class="o">,</span> <span class="n">name</span><span class="o">,</span> <span class="n">dataId</span><span class="o">,</span> <span class="n">group</span><span class="o">,</span> <span class="n">md5</span><span class="o">);</span>
+                <span class="o">}</span>
+                <span class="c1">// Before executing the callback, set the thread classloader to the classloader of</span>
+                <span class="c1">// the specific webapp to avoid exceptions or misuses when calling the spi interface in</span>
+                <span class="c1">// the callback method (this problem occurs only in multi-application deployment).</span>
+                <span class="nc">Thread</span><span class="o">.</span><span class="na">currentThread</span><span class="o">().</span><span class="na">setContextClassLoader</span><span class="o">(</span><span class="n">appClassLoader</span><span class="o">);</span>
+                
+                <span class="nc">ConfigResponse</span> <span class="n">cr</span> <span class="o">=</span> <span class="k">new</span> <span class="nc">ConfigResponse</span><span class="o">();</span>
+                <span class="n">cr</span><span class="o">.</span><span class="na">setDataId</span><span class="o">(</span><span class="n">dataId</span><span class="o">);</span>
+                <span class="n">cr</span><span class="o">.</span><span class="na">setGroup</span><span class="o">(</span><span class="n">group</span><span class="o">);</span>
+                <span class="n">cr</span><span class="o">.</span><span class="na">setContent</span><span class="o">(</span><span class="n">content</span><span class="o">);</span>
+                <span class="n">cr</span><span class="o">.</span><span class="na">setEncryptedDataKey</span><span class="o">(</span><span class="n">encryptedDataKey</span><span class="o">);</span>
+                <span class="n">configFilterChainManager</span><span class="o">.</span><span class="na">doFilter</span><span class="o">(</span><span class="kc">null</span><span class="o">,</span> <span class="n">cr</span><span class="o">);</span>
+                <span class="nc">String</span> <span class="n">contentTmp</span> <span class="o">=</span> <span class="n">cr</span><span class="o">.</span><span class="na">getContent</span><span class="o">();</span>
+                <span class="n">listenerWrap</span><span class="o">.</span><span class="na">inNotifying</span> <span class="o">=</span> <span class="kc">true</span><span class="o">;</span>
+
+                <span class="c1">// 重点实现方法，将Nacos Server的配置写入Spring容器中</span>
+                <span class="n">listener</span><span class="o">.</span><span class="na">receiveConfigInfo</span><span class="o">(</span><span class="n">contentTmp</span><span class="o">);</span>
+                
+                <span class="c1">// compare lastContent and content</span>
+                <span class="k">if</span> <span class="o">(</span><span class="n">listener</span> <span class="k">instanceof</span> <span class="nc">AbstractConfigChangeListener</span><span class="o">)</span> <span class="o">{</span>
+                    <span class="nc">Map</span> <span class="n">data</span> <span class="o">=</span> <span class="nc">ConfigChangeHandler</span><span class="o">.</span><span class="na">getInstance</span><span class="o">()</span>
+                            <span class="o">.</span><span class="na">parseChangeData</span><span class="o">(</span><span class="n">listenerWrap</span><span class="o">.</span><span class="na">lastContent</span><span class="o">,</span> <span class="n">content</span><span class="o">,</span> <span class="n">type</span><span class="o">);</span>
+                    <span class="nc">ConfigChangeEvent</span> <span class="n">event</span> <span class="o">=</span> <span class="k">new</span> <span class="nc">ConfigChangeEvent</span><span class="o">(</span><span class="n">data</span><span class="o">);</span>
+                    <span class="o">((</span><span class="nc">AbstractConfigChangeListener</span><span class="o">)</span> <span class="n">listener</span><span class="o">).</span><span class="na">receiveConfigChange</span><span class="o">(</span><span class="n">event</span><span class="o">);</span>
+                    <span class="n">listenerWrap</span><span class="o">.</span><span class="na">lastContent</span> <span class="o">=</span> <span class="n">content</span><span class="o">;</span>
+                <span class="o">}</span>
+                
+                <span class="o">.....</span><span class="na">省略部分代码</span>
+    <span class="o">}</span>
+</code></pre></div></div>
+<p>进入receiveConfigInfo()实现：
+<code class="language-plaintext highlighter-rouge">com.alibaba.nacos.spring.context.event.config.DelegatingEventPublishingListener#receiveConfigInfo</code></p>
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nd">@Override</span>
+<span class="kd">public</span> <span class="kt">void</span> <span class="nf">receiveConfigInfo</span><span class="o">(</span><span class="nc">String</span> <span class="n">content</span><span class="o">)</span> <span class="o">{</span>
+	<span class="c1">// 刷新Spring容器配置</span>
+	<span class="n">onReceived</span><span class="o">(</span><span class="n">content</span><span class="o">);</span>
+	<span class="c1">// 发布变更事件</span>
+	<span class="n">publishEvent</span><span class="o">(</span><span class="n">content</span><span class="o">);</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<p><code class="language-plaintext highlighter-rouge">com.alibaba.nacos.spring.core.env.NacosPropertySourcePostProcessor#addListenerIfAutoRefreshed</code></p>
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">public</span> <span class="kd">static</span> <span class="kt">void</span> <span class="nf">addListenerIfAutoRefreshed</span><span class="o">(</span>
+			<span class="kd">final</span> <span class="nc">NacosPropertySource</span> <span class="n">nacosPropertySource</span><span class="o">,</span> <span class="kd">final</span> <span class="nc">Properties</span> <span class="n">properties</span><span class="o">,</span>
+			<span class="kd">final</span> <span class="nc">ConfigurableEnvironment</span> <span class="n">environment</span><span class="o">)</span> <span class="o">{</span>
+
+		<span class="k">if</span> <span class="o">(!</span><span class="n">nacosPropertySource</span><span class="o">.</span><span class="na">isAutoRefreshed</span><span class="o">())</span> <span class="o">{</span> <span class="c1">// Disable Auto-Refreshed</span>
+			<span class="k">return</span><span class="o">;</span>
+		<span class="o">}</span>
+
+		<span class="kd">final</span> <span class="nc">String</span> <span class="n">dataId</span> <span class="o">=</span> <span class="n">nacosPropertySource</span><span class="o">.</span><span class="na">getDataId</span><span class="o">();</span>
+		<span class="kd">final</span> <span class="nc">String</span> <span class="n">groupId</span> <span class="o">=</span> <span class="n">nacosPropertySource</span><span class="o">.</span><span class="na">getGroupId</span><span class="o">();</span>
+		<span class="kd">final</span> <span class="nc">String</span> <span class="n">type</span> <span class="o">=</span> <span class="n">nacosPropertySource</span><span class="o">.</span><span class="na">getType</span><span class="o">();</span>
+		<span class="kd">final</span> <span class="nc">NacosServiceFactory</span> <span class="n">nacosServiceFactory</span> <span class="o">=</span> <span class="n">getNacosServiceFactoryBean</span><span class="o">(</span>
+				<span class="n">beanFactory</span><span class="o">);</span>
+
+		<span class="k">try</span> <span class="o">{</span>
+
+			<span class="nc">ConfigService</span> <span class="n">configService</span> <span class="o">=</span> <span class="n">nacosServiceFactory</span>
+					<span class="o">.</span><span class="na">createConfigService</span><span class="o">(</span><span class="n">properties</span><span class="o">);</span>
+
+			<span class="nc">Listener</span> <span class="n">listener</span> <span class="o">=</span> <span class="k">new</span> <span class="nc">AbstractListener</span><span class="o">()</span> <span class="o">{</span>
+
+				<span class="nd">@Override</span>
+				<span class="kd">public</span> <span class="kt">void</span> <span class="nf">receiveConfigInfo</span><span class="o">(</span><span class="nc">String</span> <span class="n">config</span><span class="o">)</span> <span class="o">{</span>
+					<span class="nc">String</span> <span class="n">name</span> <span class="o">=</span> <span class="n">nacosPropertySource</span><span class="o">.</span><span class="na">getName</span><span class="o">();</span>
+					<span class="nc">NacosPropertySource</span> <span class="n">newNacosPropertySource</span> <span class="o">=</span> <span class="k">new</span> <span class="nc">NacosPropertySource</span><span class="o">(</span>
+							<span class="n">dataId</span><span class="o">,</span> <span class="n">groupId</span><span class="o">,</span> <span class="n">name</span><span class="o">,</span> <span class="n">config</span><span class="o">,</span> <span class="n">type</span><span class="o">);</span>
+					<span class="n">newNacosPropertySource</span><span class="o">.</span><span class="na">copy</span><span class="o">(</span><span class="n">nacosPropertySource</span><span class="o">);</span>
+					<span class="nc">MutablePropertySources</span> <span class="n">propertySources</span> <span class="o">=</span> <span class="n">environment</span>
+							<span class="o">.</span><span class="na">getPropertySources</span><span class="o">();</span>
+					<span class="c1">// replace NacosPropertySource</span>
+					<span class="c1">// 核心实现，将Nacos的配置值刷新Spring容器中的配置值</span>
+					<span class="n">propertySources</span><span class="o">.</span><span class="na">replace</span><span class="o">(</span><span class="n">name</span><span class="o">,</span> <span class="n">newNacosPropertySource</span><span class="o">);</span>
+				<span class="o">}</span>
+			<span class="o">};</span>
+
+			<span class="o">....</span><span class="na">省略部分代码</span>
+	<span class="o">}</span>
+</code></pre></div></div>
+<p>点击replace的实现，发现一点问题：
+<img src="https://github.com/wtopps/wtopps.github.io/blob/master/images/nacos%E9%97%AE%E9%A2%98%E6%8E%92%E6%9F%A51.jpeg?raw=true" alt="疑点1" />
+这里面有两个实现，其中一个是jasypt的实现，这个三方类库是常用于对代码中的数据库配置信息进行加密的，难道说，是因为它？同时在控制台也有一条日志值得注意：</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>[notify-error] dataId=xxx  …… placeholder 'project.version' in value &amp;quot;${project.version}
+</code></pre></div></div>
+<p>这里是一个疑点，我们先继续往下看：
+<code class="language-plaintext highlighter-rouge">com.alibaba.nacos.spring.context.event.config.DelegatingEventPublishingListener#receiveConfigInfo</code></p>
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nd">@Override</span>
+<span class="kd">public</span> <span class="kt">void</span> <span class="nf">receiveConfigInfo</span><span class="o">(</span><span class="nc">String</span> <span class="n">content</span><span class="o">)</span> <span class="o">{</span>
+	<span class="n">onReceived</span><span class="o">(</span><span class="n">content</span><span class="o">);</span>
+	<span class="n">publishEvent</span><span class="o">(</span><span class="n">content</span><span class="o">);</span>
+<span class="o">}</span>
+
+<span class="kd">private</span> <span class="kt">void</span> <span class="nf">publishEvent</span><span class="o">(</span><span class="nc">String</span> <span class="n">content</span><span class="o">)</span> <span class="o">{</span>
+	<span class="nc">NacosConfigReceivedEvent</span> <span class="n">event</span> <span class="o">=</span> <span class="k">new</span> <span class="nc">NacosConfigReceivedEvent</span><span class="o">(</span><span class="n">configService</span><span class="o">,</span>
+			<span class="n">dataId</span><span class="o">,</span> <span class="n">groupId</span><span class="o">,</span> <span class="n">content</span><span class="o">,</span> <span class="n">configType</span><span class="o">);</span>
+	<span class="c1">// 发布变更事件</span>
+	<span class="n">applicationEventPublisher</span><span class="o">.</span><span class="na">publishEvent</span><span class="o">(</span><span class="n">event</span><span class="o">);</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<p><code class="language-plaintext highlighter-rouge">org.springframework.context.support.AbstractApplicationContext#publishEvent</code></p>
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="cm">/**
+	 * Publish the given event to all listeners.
+	 * @param event the event to publish (may be an {@link ApplicationEvent}
+	 * or a payload object to be turned into a {@link PayloadApplicationEvent})
+	 * @param eventType the resolved event type, if known
+	 * @since 4.2
+	 */</span>
+	<span class="kd">protected</span> <span class="kt">void</span> <span class="nf">publishEvent</span><span class="o">(</span><span class="nc">Object</span> <span class="n">event</span><span class="o">,</span> <span class="nd">@Nullable</span> <span class="nc">ResolvableType</span> <span class="n">eventType</span><span class="o">)</span> <span class="o">{</span>
+		<span class="nc">Assert</span><span class="o">.</span><span class="na">notNull</span><span class="o">(</span><span class="n">event</span><span class="o">,</span> <span class="s">"Event must not be null"</span><span class="o">);</span>
+
+		<span class="c1">// Decorate event as an ApplicationEvent if necessary</span>
+		<span class="nc">ApplicationEvent</span> <span class="n">applicationEvent</span><span class="o">;</span>
+		<span class="k">if</span> <span class="o">(</span><span class="n">event</span> <span class="k">instanceof</span> <span class="nc">ApplicationEvent</span><span class="o">)</span> <span class="o">{</span>
+			<span class="n">applicationEvent</span> <span class="o">=</span> <span class="o">(</span><span class="nc">ApplicationEvent</span><span class="o">)</span> <span class="n">event</span><span class="o">;</span>
+		<span class="o">}</span>
+		<span class="k">else</span> <span class="o">{</span>
+			<span class="n">applicationEvent</span> <span class="o">=</span> <span class="k">new</span> <span class="nc">PayloadApplicationEvent</span><span class="o">&lt;&gt;(</span><span class="k">this</span><span class="o">,</span> <span class="n">event</span><span class="o">);</span>
+			<span class="k">if</span> <span class="o">(</span><span class="n">eventType</span> <span class="o">==</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+				<span class="n">eventType</span> <span class="o">=</span> <span class="o">((</span><span class="nc">PayloadApplicationEvent</span><span class="o">&lt;?&gt;)</span> <span class="n">applicationEvent</span><span class="o">).</span><span class="na">getResolvableType</span><span class="o">();</span>
+			<span class="o">}</span>
+		<span class="o">}</span>
+
+		<span class="c1">// Multicast right now if possible - or lazily once the multicaster is initialized</span>
+		<span class="k">if</span> <span class="o">(</span><span class="k">this</span><span class="o">.</span><span class="na">earlyApplicationEvents</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+			<span class="k">this</span><span class="o">.</span><span class="na">earlyApplicationEvents</span><span class="o">.</span><span class="na">add</span><span class="o">(</span><span class="n">applicationEvent</span><span class="o">);</span>
+		<span class="o">}</span>
+		<span class="k">else</span> <span class="o">{</span>
+			<span class="c1">// 重点关注，发布广播事件，通知全部监听器</span>
+			<span class="n">getApplicationEventMulticaster</span><span class="o">().</span><span class="na">multicastEvent</span><span class="o">(</span><span class="n">applicationEvent</span><span class="o">,</span> <span class="n">eventType</span><span class="o">);</span>
+		<span class="o">}</span>
+
+		<span class="c1">// Publish event via parent context as well...</span>
+		<span class="k">if</span> <span class="o">(</span><span class="k">this</span><span class="o">.</span><span class="na">parent</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+			<span class="k">if</span> <span class="o">(</span><span class="k">this</span><span class="o">.</span><span class="na">parent</span> <span class="k">instanceof</span> <span class="nc">AbstractApplicationContext</span><span class="o">)</span> <span class="o">{</span>
+				<span class="o">((</span><span class="nc">AbstractApplicationContext</span><span class="o">)</span> <span class="k">this</span><span class="o">.</span><span class="na">parent</span><span class="o">).</span><span class="na">publishEvent</span><span class="o">(</span><span class="n">event</span><span class="o">,</span> <span class="n">eventType</span><span class="o">);</span>
+			<span class="o">}</span>
+			<span class="k">else</span> <span class="o">{</span>
+				<span class="k">this</span><span class="o">.</span><span class="na">parent</span><span class="o">.</span><span class="na">publishEvent</span><span class="o">(</span><span class="n">event</span><span class="o">);</span>
+			<span class="o">}</span>
+		<span class="o">}</span>
+	<span class="o">}</span>
+</code></pre></div></div>
+<p>下面就是核心的实现部分，真正刷新值的实现逻辑：
+<code class="language-plaintext highlighter-rouge">com.alibaba.nacos.spring.context.annotation.config.NacosValueAnnotationBeanPostProcessor#onApplicationEvent</code></p>
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nd">@Override</span>
+<span class="kd">public</span> <span class="kt">void</span> <span class="nf">onApplicationEvent</span><span class="o">(</span><span class="nc">NacosConfigReceivedEvent</span> <span class="n">event</span><span class="o">)</span> <span class="o">{</span>
+	<span class="c1">// In to this event receiver, the environment has been updated the</span>
+	<span class="c1">// latest configuration information, pull directly from the environment</span>
+	<span class="c1">// fix issue #142</span>
+	<span class="k">for</span> <span class="o">(</span><span class="nc">Map</span><span class="o">.</span><span class="na">Entry</span><span class="o">&lt;</span><span class="nc">String</span><span class="o">,</span> <span class="nc">List</span><span class="o">&lt;</span><span class="nc">NacosValueTarget</span><span class="o">&gt;&gt;</span> <span class="n">entry</span> <span class="o">:</span> <span class="n">placeholderNacosValueTargetMap</span>
+			<span class="o">.</span><span class="na">entrySet</span><span class="o">())</span> <span class="o">{</span>
+		<span class="nc">String</span> <span class="n">key</span> <span class="o">=</span> <span class="n">environment</span><span class="o">.</span><span class="na">resolvePlaceholders</span><span class="o">(</span><span class="n">entry</span><span class="o">.</span><span class="na">getKey</span><span class="o">());</span>
+		<span class="c1">// 从Spring容器中获取变更后的新值，通过反射的方式，更新数据</span>
+		<span class="nc">String</span> <span class="n">newValue</span> <span class="o">=</span> <span class="n">environment</span><span class="o">.</span><span class="na">getProperty</span><span class="o">(</span><span class="n">key</span><span class="o">);</span>
+
+		<span class="k">if</span> <span class="o">(</span><span class="n">newValue</span> <span class="o">==</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+			<span class="k">continue</span><span class="o">;</span>
+		<span class="o">}</span>
+		<span class="nc">List</span><span class="o">&lt;</span><span class="nc">NacosValueTarget</span><span class="o">&gt;</span> <span class="n">beanPropertyList</span> <span class="o">=</span> <span class="n">entry</span><span class="o">.</span><span class="na">getValue</span><span class="o">();</span>
+		<span class="k">for</span> <span class="o">(</span><span class="nc">NacosValueTarget</span> <span class="n">target</span> <span class="o">:</span> <span class="n">beanPropertyList</span><span class="o">)</span> <span class="o">{</span>
+			<span class="nc">String</span> <span class="n">md5String</span> <span class="o">=</span> <span class="nc">MD5Utils</span><span class="o">.</span><span class="na">md5Hex</span><span class="o">(</span><span class="n">newValue</span><span class="o">,</span> <span class="s">"UTF-8"</span><span class="o">);</span>
+			<span class="kt">boolean</span> <span class="n">isUpdate</span> <span class="o">=</span> <span class="o">!</span><span class="n">target</span><span class="o">.</span><span class="na">lastMD5</span><span class="o">.</span><span class="na">equals</span><span class="o">(</span><span class="n">md5String</span><span class="o">);</span>
+			<span class="k">if</span> <span class="o">(</span><span class="n">isUpdate</span><span class="o">)</span> <span class="o">{</span>
+				<span class="n">target</span><span class="o">.</span><span class="na">updateLastMD5</span><span class="o">(</span><span class="n">md5String</span><span class="o">);</span>
+				<span class="nc">Object</span> <span class="n">evaluatedValue</span> <span class="o">=</span> <span class="n">resolveNotifyValue</span><span class="o">(</span><span class="n">target</span><span class="o">.</span><span class="na">nacosValueExpr</span><span class="o">,</span> <span class="n">key</span><span class="o">,</span> <span class="n">newValue</span><span class="o">);</span>
+				<span class="k">if</span> <span class="o">(</span><span class="n">target</span><span class="o">.</span><span class="na">method</span> <span class="o">==</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+					<span class="n">setField</span><span class="o">(</span><span class="n">target</span><span class="o">,</span> <span class="n">evaluatedValue</span><span class="o">);</span>
+				<span class="o">}</span>
+				<span class="k">else</span> <span class="o">{</span>
+					<span class="n">setMethod</span><span class="o">(</span><span class="n">target</span><span class="o">,</span> <span class="n">evaluatedValue</span><span class="o">);</span>
+				<span class="o">}</span>
+			<span class="o">}</span>
+		<span class="o">}</span>
+	<span class="o">}</span>
+<span class="o">}</span>
+</code></pre></div></div>
+<p>OK，看到这里，基本已经明朗，了解了Nacos配置刷新的全流程，非常可疑的一点，就是三方类库jasypt，为了验证才想，我们将jasypt的类库移除，再次进行尝试，奇迹出现了！Nacos可以顺利刷新配置值，终于破案，是因为jasypt的加密导致的该问题，搜了一下可能导致的原因：
+1、属性源优先级冲突：jasypt 的 PropertySource（如 EncryptablePropertySource）可能覆盖或干扰 Nacos 的动态属性源，导致解密后的值无法被 Nacos 更新逻辑捕获。
+2、解密逻辑未触发：Nacos 配置更新时，新的加密值未被 jasypt 及时解密，导致 Environment 中仍是旧值。</p>
+
+<p>查看一下jasypt使用的版本：</p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;dependency&gt;
+    &lt;groupId&gt;com.github.ulisesbocchio&lt;/groupId&gt;
+    &lt;artifactId&gt;jasypt-spring-boot-starter&lt;/artifactId&gt;
+    &lt;version&gt;2.1.1&lt;/version&gt;
+&lt;/dependency&gt;
+</code></pre></div></div>
+<p>猜想是否是2.1.1版本的BUG导致了该问题，于是升级至最新版本3.0.5，再次进行测试，发现Nacos可以顺利更新，问题解决。</p>

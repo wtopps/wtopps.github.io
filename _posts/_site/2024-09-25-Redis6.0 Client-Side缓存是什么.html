@@ -1,0 +1,124 @@
+<p><img src="https://github.com/wtopps/wtopps.github.io/blob/master/images/Redis.jpeg?raw=true" alt="banner" /></p>
+
+<h2 id="前言">前言</h2>
+
+<p>Redis在其6.0版本中加入了Client-side caching的支持，开启该功能后，Redis可以将指定的key-value缓存在客户端侧，这样当客户端发起请求时，如果客户端侧存在缓存，则无需请求Redis Server端。</p>
+
+<h2 id="why-client-side-caching">Why Client-side Caching？</h2>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>+-------------+                                +----------+
+|             | ------- GET user:1234 -------&gt; |          |
+| Application |                                | Database |
+|             | &lt;---- username = Alice ------- |          |
++-------------+                                +----------+
+</code></pre></div></div>
+
+<p>一些场景下，Redis的一些热点数据需要高频访问，但是并不会频繁的更新，这种数据存储在Redis中，会对Redis的读有一定的压力，因此，将这种数据存储在客户端侧进行缓存，当需要读取时，直接从客户端侧的内存中读取，可以大幅度减轻Redis的读压力，当数据发生变更时，Redis Server通知Client，更新Client Cache。</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>+-------------+                                +----------+
+|             |                                |          |
+| Application |       ( No chat needed )       | Database |
+|             |                                |          |
++-------------+                                +----------+
+| Local cache |
+|             |
+| user:1234 = |
+| username    |
+| Alice       |
++-------------+
+</code></pre></div></div>
+
+<h2 id="why-not-pubsub">Why Not Pub/Sub？</h2>
+
+<p>在早期的Redis版本中，一些业务场景，我们一定也会考虑到将一些不常变化的热点数据，存储在本地内存中，使用例如Caffeine Cache等Localcache，定时周期频率读取最新的值，更新Localcache，或者使用Redis Pub/Sub，当key值发生更新时，通知整个集群更新Localcache。</p>
+
+<p>使用Pub/Sub对于旧版本Redis来说，没有实现Client-side caching时，是一种解决方案，但是此种方案存在弊端，</p>
+
+<p>首先Pub/Sub不可靠，如果部分集群中的Client没有收到Pub的通知，Localcache可能没有更新；</p>
+
+<p>其次，对网络压力巨大，当Client Node非常多的时候，网络可能会出现阻塞，CPU压力也会增大，同时Client端需要自行实现Localcache的更新逻辑。</p>
+
+<h2 id="how-to-use-it">How to use it？</h2>
+
+<p>Redis Client-side Caching命令如下：</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>CLIENT TRACKING &lt;ON | OFF&gt; <span class="o">[</span>REDIRECT client-id] <span class="o">[</span>PREFIX prefix <span class="o">[</span>PREFIX prefix ...]] <span class="o">[</span>BCAST] <span class="o">[</span>OPTIN] <span class="o">[</span>OPTOUT] <span class="o">[</span>NOLOOP]
+</code></pre></div></div>
+
+<p>客户端默认不开启 track 模式，我们需要在获取执行指令之前执行开启命令：</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>CLIENT TRACKING ON
++OK
+GET foo
+<span class="s2">"bar"</span>
+</code></pre></div></div>
+
+<p>默认情况下，Client开启Tracking后，Redis Server端会对所有的Client端请求查询的key开启Tracking，当 key的值发现变化时会发送失效信息给客户端 (<code class="language-plaintext highlighter-rouge">invalidation message</code>)。</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>server -&gt; client: Invalidate foo
+</code></pre></div></div>
+
+<p>默认情况下，对所有的请求查询的key开启Tracking，这显然是不合适的，更多的场景下，我们只希望追踪部分热点且不经常变化的key，Redis支持对仅对特定的key开启<b>手动追踪</b>：</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>CLIENT TRACKING ON OPTIN // 开启特定key追踪选项
+
+CLIENT CACHING YES  // get请求前加入该命令
++OK
+GET foo
+<span class="s2">"bar"</span>
+</code></pre></div></div>
+
+<p>手动追踪模式下，需要用户在每次进行get命令之前，执行追踪的命令，这样的好处是非常的精确，但是也有点繁琐，Redis还提供了另一种追踪模式，即<b>广播模式</b></p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>CLIENT TRACKING ON BCAST PREFIX object: PREFIX user:
+</code></pre></div></div>
+
+<p>广播模式下，需要用户指定需要追踪的key的前缀，当key发生变化时，Redis Server端会发出广播通知全部订阅了该前缀key的客户端。</p>
+
+<p>需要注意的是，在这个模式下，如果用户没有指定<code class="language-plaintext highlighter-rouge">PREFIX</code>，那么服务端会给客户端广播所有 key 的失效情况，如果 key 被频繁修改，服务端会发送大量的失效广播消息，这就会消耗大量的网络带宽资源，<b>这是非常危险的一个行为，需要特别注意。</b></p>
+
+<h2 id="how-to-implement">How to implement?</h2>
+
+<p>上面的篇幅我们简单介绍了Redis的客户端侧缓存如何开启，本小节我们来看一下Redis是如何实现的，在展开这个问题之前，我们可以思考一下，如果我们是Redis的设计者，我们该如何实现该功能？</p>
+
+<p>很简单我们会想到，搞一个Array存一下嘛，对吧O(∩_∩)O，把需要追踪的key存一下，当key收到set之类的命令后，看一下Tracking Array中有没有，如果有，通知订阅的Client。</p>
+
+<p>事实上，对于手动追踪模式，Redis的确是这样实现的，Redis内部使用了<strong>Invalidation Table</strong>存储Tracking Key Data，也可以叫做<strong>Tracking Table</strong>，其内部使用LRU淘汰机制维护，当Table内的key数量达到最大值，会移除最老的记录，同时触发该记录已过期的通知给客户端。</p>
+
+<p>在<strong>Invalidation Table</strong>中，Redis存储了Tracking key的指针地址与客户端之间的映射关系，使用了一种基数树(radix tree)的数据结构，<strong>因为键对象的指针就是内存地址，也就是长整型数据</strong>。客户端缓存的相关操作就是对该数据的增删改查：</p>
+
+<p><img src="/assets/images/da6ce7522abf46068e81dd1b47d4eda5.png" alt="tracking table" /></p>
+
+<p>对于广播模式，实现的原理也是相似的，不过Redis并不是使用<strong>Invalidation Table</strong>存储，而是使用<strong>Prefixes Table</strong>存储key的前缀值与Client之间的关系：</p>
+
+<p><img src="/assets/images/e0a79f08014c4278a8277c8806589754.png" alt="Prefix Tracking Table" /></p>
+
+<h2 id="problem">Problem</h2>
+
+<p>以上，我们简单了解了Redis的Client-side caching的使用方式与实现机制，这是一个非常好的功能，可以帮助我们更加高效的使用Redis，但是其也有对应的问题。</p>
+
+<p>在Redis的官方文档中，Client-side caching功能并未提及Master/Slave 与 Cluster集群模式的特别支持，这意味着，Client端需要对key的Tracking做出特别的适配，而在Redis Cluster集群模式下，连接状态信息是分散在不同的节点上的，难以实现集中管理。</p>
+
+<p>Redis的客户端Jedis、lettuce与Redisson均不提供Client-side caching相关支持，lettuce的committer在Github中关于对Client-side caching问题做出了回复：</p>
+
+<blockquote>
+  <p>There are a few challenges to address:</p>
+
+  <ol>
+    <li>Re-apply <code class="language-plaintext highlighter-rouge">CLIENT TRACKING</code> settings upon reconnect: While that is primary a resiliency feature, in Master/Replica or Cluster mode that is a must since we don’t get hold easily of cluster connections. We also need to apply tracking settings when creating a new connection</li>
+    <li>Topology changes: Whenever the topology changes, we need to adapt to that. Meaning also that we need to carry over tracking settings. More over, how does the migration path look like when in Redis Cluster a slot assignment gets migrated to a new node? What about the server side, does it carry over also all touched keys? I assume not so reconfiguration can cause dropped notifications since the new server is no longer aware of the key subscriptions from the old server. While this could be done (with a lot of effort) on the client side, I think that is too complex.</li>
+    <li>Finally, I don’t have time to do that in the near future nor I see how I can do that alone in 2021.</li>
+  </ol>
+
+  <p>有一些挑战需要解决：</p>
+
+  <p>重新连接时重新应用客户端跟踪设置：虽然这主要是一个弹性功能，但在主/复制或群集模式下，这是必须的，因为我们不容易掌握群集连接。我们还需要在创建新连接时应用跟踪设置
+拓扑变化：每当拓扑结构发生变化时，我们都需要适应这种变化。这也意味着我们需要沿用跟踪设置。此外，当 Redis 集群中的插槽分配迁移到新节点时，迁移路径是怎样的？在服务器端，是否也会继承所有被触及的密钥？我认为不会，因此重新配置可能会导致通知丢失，因为新服务器不再知道旧服务器的密钥订阅。虽然这可以在客户端完成（需要付出很多努力），但我认为这太复杂了。
+最后，我近期没有时间去做这件事，我也不知道 2021 年我如何能单独完成这件事。</p>
+</blockquote>
+
+<p>对于我们普通开发者，希望在生产环境中使用Client-side caching，也许还需要观望后续Java Redis Client社区的支持情况。</p>
+
+<script src="https://giscus.app/client.js" data-repo="wtopps/wtopps.github.io" data-repo-id="MDEwOlJlcG9zaXRvcnk2NzY3NTA3MA==" data-category="Comments" data-category-id="DIC_kwDOBAijvs4CizS6" data-mapping="pathname" data-strict="0" data-reactions-enabled="1" data-emit-metadata="0" data-input-position="bottom" data-theme="preferred_color_scheme" data-lang="zh-CN" crossorigin="anonymous" async="">
+</script>
+

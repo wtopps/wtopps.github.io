@@ -1,0 +1,1272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="google-translate-customization" content="108d9124921d80c3-80e20d618ff053c8-g4f02ec6f3dba68b7-c">
+<!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>SQL小菜之TOP N查找问题. | wtopps</title>
+<meta name="generator" content="Jekyll v4.3.4">
+<meta property="og:title" content="SQL小菜之TOP N查找问题.">
+<meta name="author" content="GitHub User">
+<meta property="og:locale" content="en_US">
+<meta name="description" content="Write an awesome description for your new site here. You can edit this line in _config.yml. It will appear in your document head meta (for Google search results) and in your feed.xml site description.">
+<meta property="og:description" content="Write an awesome description for your new site here. You can edit this line in _config.yml. It will appear in your document head meta (for Google search results) and in your feed.xml site description.">
+<link rel="canonical" href="http://localhost:4000/mysql/2025/03/17/SQL%E5%B0%8F%E8%8F%9C%E4%B9%8BTOP-N%E6%9F%A5%E6%89%BE%E9%97%AE%E9%A2%98.html">
+<meta property="og:url" content="http://localhost:4000/mysql/2025/03/17/SQL%E5%B0%8F%E8%8F%9C%E4%B9%8BTOP-N%E6%9F%A5%E6%89%BE%E9%97%AE%E9%A2%98.html">
+<meta property="og:site_name" content="wtopps">
+<meta property="og:type" content="article">
+<meta property="article:published_time" content="2025-03-17T00:00:00+08:00">
+<meta name="twitter:card" content="summary">
+<meta property="twitter:title" content="SQL小菜之TOP N查找问题.">
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"GitHub User"},"dateModified":"2025-03-17T00:00:00+08:00","datePublished":"2025-03-17T00:00:00+08:00","description":"Write an awesome description for your new site here. You can edit this line in _config.yml. It will appear in your document head meta (for Google search results) and in your feed.xml site description.","headline":"SQL小菜之TOP N查找问题.","mainEntityOfPage":{"@type":"WebPage","@id":"http://localhost:4000/mysql/2025/03/17/SQL%E5%B0%8F%E8%8F%9C%E4%B9%8BTOP-N%E6%9F%A5%E6%89%BE%E9%97%AE%E9%A2%98.html"},"url":"http://localhost:4000/mysql/2025/03/17/SQL%E5%B0%8F%E8%8F%9C%E4%B9%8BTOP-N%E6%9F%A5%E6%89%BE%E9%97%AE%E9%A2%98.html"}</script>
+<!-- End Jekyll SEO tag -->
+<link rel="icon" href="">
+  <link rel="canonical" href="http://localhost:4000">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/typeface-noto-sans@0.0.72/index.min.css">
+  <link rel="stylesheet" href="/assets/css/main.css">
+  <script src="/assets/js/main.js"></script><link type="application/atom+xml" rel="alternate" href="http://localhost:4000/feed.xml" title="wtopps">
+<link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/styles/default.min.css">
+<script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/highlight.min.js"></script>
+<!-- and it's easy to individually load additional languages -->
+<script charset="UTF-8" src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/languages/go.min.js" async></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<script>
+// Init highlight js
+document.addEventListener('DOMContentLoaded', function(event) {
+  var els = document.querySelectorAll('pre code')
+
+  function addLangData(block) {
+    var outer = block.parentElement.parentElement.parentElement;
+    var lang = block.getAttribute('data-lang');
+    for (var i = 0; i < outer.classList.length; i++) {
+      var cls = outer.classList[i];
+      if (cls.startsWith('language-')) {
+        lang = cls;
+        break;
+      }
+    }
+    if (!lang) {
+      cls = block.getAttribute('class');
+      lang = cls ? cls.replace('hljs ', '') : '';
+    }
+    if (lang.startsWith('language-')) {
+      lang = lang.substr(9);
+    }
+    block.setAttribute('class', 'hljs ' + lang);
+    block.parentNode.setAttribute('data-lang', lang);
+  }
+
+  function addBadge(block) {
+    var enabled = ('true' || 'true').toLowerCase();
+    if (enabled == 'true') {
+      var pre = block.parentElement;
+      pre.classList.add('badge');
+    }
+  }
+
+  function handle(block) {
+    addLangData(block);
+    addBadge(block)
+    hljs.highlightBlock(block);
+  }
+
+  for (var i = 0; i < els.length; i++) {
+    var el = els[i];
+    handle(el);
+  }
+});
+</script>
+
+<style>
+  /* code language badge */
+  pre.badge::before {
+    content: attr(data-lang);
+    color: #fff;
+    background-color: #ff4e00;
+    padding: 0 .5em;
+    border-radius: 0 2px;
+    text-transform: uppercase;
+    text-align: center;
+    min-width: 32px;
+    display: inline-block;
+    position: absolute;
+    right: 0;
+  }
+
+  /* fix wrong badge display for firefox browser */
+  code > table pre::before {
+    display: none;
+  }
+</style>
+<script src="//cdnjs.cloudflare.com/ajax/libs/photoswipe/5.3.7/umd/photoswipe-lightbox.umd.min.js" async></script>
+<script src="//cdnjs.cloudflare.com/ajax/libs/photoswipe/5.3.7/umd/photoswipe.umd.min.js" async></script>
+<link href="//cdnjs.cloudflare.com/ajax/libs/photoswipe/5.3.7/photoswipe.min.css" rel="stylesheet">
+<style>
+  .pswp .pswp__container .pswp__img {
+    background-color: white;
+  }
+</style>
+
+<script>
+  function initPhotoSwipe() {
+    let customOptions = {};
+
+    try {
+      const data = ``.replaceAll("=>", ":");
+      customOptions = JSON.parse(data);
+    } catch (e) {
+      console.info("Invalid custom photo previewer options! " + e.message);
+    }
+
+    // Define object and gallery options
+    const options = Object.assign(
+      {
+        gallery: "section.main",
+        children: "a.photo-swipe",
+        photo_scale: 2,
+        // dynamic import is not supported in UMD version
+        pswpModule: PhotoSwipe,
+      },
+      customOptions
+    );
+
+    const galleryEl = document.querySelector(options.gallery);
+    if (!galleryEl) {
+      return;
+    }
+
+    const imgEls = [];
+    const els = galleryEl.querySelectorAll("img:not(.emoji)");
+    els.forEach((el) => {
+      if (el.src.trim() == "") {
+        return;
+      }
+      if (!imgEls.includes(el)) {
+        imgEls.push(el);
+      }
+    });
+
+    if (imgEls.length === 0) {
+      return;
+    }
+
+    imgEls.forEach((imgEl) => {
+      imgEl.outerHTML = `
+      <a class="photo-swipe"
+        href="${imgEl.src}"
+        data-pswp-width="${
+          Math.max(imgEl.naturalWidth, imgEl.width) * options.photo_scale
+        }"
+        data-pswp-height="${
+          Math.max(imgEl.naturalHeight, imgEl.height) * options.photo_scale
+        }"
+        data-pswp-caption="${imgEl.getAttribute("caption") || imgEl.alt}"
+        target="_blank">
+        ${imgEl.outerHTML}
+      </a>`;
+    });
+
+    // Initialize PhotoSwipe 5
+    var lightbox = new PhotoSwipeLightbox(options);
+
+    lightbox.init();
+  }
+
+  window.addEventListener("load", initPhotoSwipe);
+</script>
+</head>
+<body>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<header class="site-header " role="banner">
+
+  <div class="wrapper">
+    <div class="site-header-inner">
+<span class="site-brand"><a class="site-brand-inner" rel="author" href="/">
+  <img class="site-favicon" title="wtopps" src="" onerror="this.style.display='none'">
+  wtopps
+</a>
+</span><nav class="site-nav">
+          <input type="checkbox" id="nav-trigger" class="nav-trigger">
+          <label for="nav-trigger">
+            <span class="menu-icon">
+              <svg viewbox="0 0 18 15" width="18px" height="15px">
+                <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"></path>
+              </svg>
+            </span>
+          </label>
+
+          <div class="trigger">
+<a class="page-link" href="/about.html">ABOUT</a><a class="page-link" href="/archives.html">ARCHIVES</a><a class="page-link" href="/categories.html">CATEGORIES</a><a class="page-link" href="/">HOME</a><a class="page-link" href="/tags.html">TAGS</a>
+
+
+
+
+
+
+
+
+
+<div class="page-link" style="display: inline;">
+
+
+
+<div id="google_translate_element" style="display: none;">
+</div>
+
+<div class="ct-language">
+  <ul class="list-unstyled ct-language-dropdown">
+    
+      <li>
+        <a href="#" class="lang-select" data-lang="en">
+          
+          <img src="https://cdn.countryflags.com/thumbs/united-states-of-america/flag-400.png" title="English">
+          
+        </a>
+      </li>
+    
+      <li>
+        <a href="#" class="lang-select" data-lang="fr">
+          
+          <img src="https://cdn.countryflags.com/thumbs/france/flag-400.png" title="French">
+          
+        </a>
+      </li>
+    
+      <li>
+        <a href="#" class="lang-select" data-lang="zh-CN">
+          
+          <img src="https://cdn.countryflags.com/thumbs/china/flag-400.png" title="Chinese(Simple)">
+          
+        </a>
+      </li>
+    
+      <li>
+        <a href="#" class="lang-select" data-lang="ja">
+          
+          <img src="https://cdn.countryflags.com/thumbs/japan/flag-400.png" title="Japanese">
+          
+        </a>
+      </li>
+    
+      <li>
+        <a href="#" class="lang-select" data-lang="ko">
+          
+          <img src="https://cdn.countryflags.com/thumbs/south-korea/flag-400.png" title="Korean">
+          
+        </a>
+      </li>
+    
+      <li>
+        <a href="#" class="lang-select" data-lang="ru">
+          
+          <img src="https://cdn.countryflags.com/thumbs/russia/flag-400.png" title="Russian">
+          
+        </a>
+      </li>
+    
+  </ul>
+</div>
+
+<script type="text/javascript">
+function googleTranslateElementInit() {
+  new google.translate.TranslateElement({
+    pageLanguage: 'en',
+    autoDisplay: false,
+    layout: google.translate.TranslateElement.InlineLayout.VERTICAL
+  }, 'google_translate_element');
+
+  // Links to cross-origin destinations are unsafe
+  var gll = document.getElementsByClassName('goog-logo-link')[0];
+  if (gll) {
+    gll.setAttribute('rel', 'noopener');
+  }
+
+  function restoreLang() {
+    var iframe = document.getElementsByClassName('goog-te-banner-frame')[0];
+    if (!iframe) return;
+
+    var innerDoc = iframe.contentDocument || iframe.contentWindow.document;
+    var restore_el = innerDoc.getElementsByTagName("button");
+
+    for (var i = 0; i < restore_el.length; i++) {
+      if (restore_el[i].id.indexOf("restore") >= 0) {
+        restore_el[i].click();
+        var close_el = innerDoc.getElementsByClassName("goog-close-link");
+        close_el[0].click();
+        return;
+      }
+    }
+  }
+
+  function triggerHtmlEvent(element, eventName) {
+    var event;
+    if (document.createEvent) {
+      event = document.createEvent('HTMLEvents');
+      event.initEvent(eventName, true, true);
+      element.dispatchEvent(event);
+    } else {
+      event = document.createEventObject();
+      event.eventType = eventName;
+      element.fireEvent('on' + event.eventType, event);
+    }
+  }
+
+  var googleCombo = document.querySelector("select.goog-te-combo");
+  var langSelect = document.querySelector('.ct-language');
+  langSelect.addEventListener('click', function(event) {
+    if (!event.target) {
+      return;
+    }
+
+    var selected = document.querySelector('.ct-language .ct-language-selected');
+    if (selected) {
+      selected.classList.remove('ct-language-selected');
+    }
+
+    var target = event.target;
+    while (target && target !== langSelect ) {
+      if (target.matches('.lang-select')) {
+        break;
+      }
+      target = target.parentElement;
+    }
+
+    if (target && target.matches('.lang-select')) {
+      var lang = target.getAttribute('data-lang');
+      if (googleCombo.value == lang) {
+        restoreLang();
+      } else {
+        target.parentElement.classList.add('ct-language-selected');
+        googleCombo.value = lang;
+        triggerHtmlEvent(googleCombo, 'change');
+      }
+    }
+
+    event.preventDefault();
+  });
+}
+</script>
+
+<script type="text/javascript" src="https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit" async></script>
+</div>
+</div>
+        </nav>
+</div>
+  </div>
+</header>
+
+<script>
+  function initHeader() {
+    var lastScrollY = getScrollPos().y;
+    var documentElement = document.documentElement;
+
+    function storeScrollData() {
+      var y = getScrollPos().y;var scrollStatus = "";
+
+      if (y <= 0) {
+        scrollStatus = "top";
+      } else if ((window.innerHeight + y) >= document.body.offsetHeight) {
+        scrollStatus = "bottom";
+      } else {
+        var isScrollDown = (y - lastScrollY > 0) ? true : false;
+        scrollStatus = isScrollDown ? "down" : "up";
+      }
+
+      lastScrollY = y;
+      documentElement.setAttribute("data-scroll-status", scrollStatus);
+    }
+
+    window.addEventListener('scroll', function(e) {
+      storeScrollData();
+    });
+
+    storeScrollData();
+  }
+  document.addEventListener('DOMContentLoaded', initHeader);
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<script>
+  function hashLocate(hashValue) {
+    hashValue = hashValue.replace(/^.*#h-/, '');
+    hashValue = decodeURIComponent(hashValue);
+    var element = document.getElementById(hashValue);
+
+    if (!element) {
+      return;
+    }
+
+    var header = document.querySelector('header.site-header');
+    var headerRect = header.getBoundingClientRect();
+    var headerTop = Math.floor(headerRect.top);
+    var headerHeight = Math.floor(headerRect.height);
+    var scrollPos = getScrollPos();
+    var offsetY = element.offsetTop - (headerTop + headerHeight + 20);
+
+    if (offsetY == scrollPos.y) {
+      return;
+    }
+
+    if (headerTop == 0  && offsetY > scrollPos.y) {
+      offsetY += headerHeight + 2;
+    } else if (headerTop < 0  && offsetY < scrollPos.y) {
+      offsetY -= headerHeight - 2;
+    }
+
+    smoothScrollTo(offsetY);
+  }
+
+  // The first event occurred
+  window.addEventListener('load', function(event) {
+    if (window.location.hash) {
+      hashLocate(window.location.hash);
+    }
+  });
+
+  // The first event occurred
+  window.addEventListener('click', function(event) {
+    if (event.target.tagName.toLowerCase() == 'a') {
+      hashLocate(event.target.getAttribute('href'));
+    }
+  });
+</script>
+<div class="theme-toggle">
+  <input type="checkbox" id="theme-switch">
+  <label for="theme-switch">
+    <div class="toggle"></div>
+    <div class="names">
+      <p class="light">Light</p>
+      <p class="dark">Dark</p>
+    </div>
+  </label>
+</div>
+
+
+
+
+<script>
+  (function() {
+    var sw = document.getElementById('theme-switch');
+    var html = document.getElementsByTagName('html')[0];
+    var nightModeOption = ('auto' || 'auto').toLowerCase();
+    var storage = nightModeOption === 'manual'
+        ? localStorage
+        : sessionStorage;
+    var themeData = loadThemeData();
+
+    function saveThemeData(data) {
+      storage.setItem('theme', JSON.stringify(data));
+    }
+
+    function loadThemeData() {
+      var data = storage.getItem('theme');
+      try {
+        data = JSON.parse(data ? data : '');
+      } catch(e) {
+        data = { nightShift: undefined, autoToggleAt: 0 };
+        saveThemeData(data);
+      }
+      return data;
+    }
+
+    function handleThemeToggle(nightShift) {
+      themeData.nightShift = nightShift;
+      saveThemeData(themeData);
+      html.dataset.theme = nightShift ? 'dark' : 'light';
+      setTimeout(function() {
+        sw.checked = nightShift ? true : false;
+      }, 50);
+    }
+
+    function autoThemeToggle() {
+      // Next time point of theme toggle
+      var now = new Date();
+      var toggleAt = new Date();
+      var hours = now.getHours();
+      var nightShift = hours >= 19 || hours <=7;
+
+      if (nightShift) {
+        if (hours > 7) {
+          toggleAt.setDate(toggleAt.getDate() + 1);
+        }
+        toggleAt.setHours(7);
+      } else {
+        toggleAt.setHours(19);
+      }
+
+      toggleAt.setMinutes(0);
+      toggleAt.setSeconds(0);
+      toggleAt.setMilliseconds(0)
+
+      var delay = toggleAt.getTime() - now.getTime();
+
+      // auto toggle theme mode
+      setTimeout(function() {
+        handleThemeToggle(!nightShift);
+      }, delay);
+
+      return {
+        nightShift: nightShift,
+        toggleAt: toggleAt.getTime()
+      };
+    }
+
+    // Listen the theme toggle event
+    sw.addEventListener('change', function(event) {
+      handleThemeToggle(event.target.checked);
+    });
+
+    if (nightModeOption == 'auto') {
+      var data = autoThemeToggle();
+
+      // Toggle theme by local setting
+      if (data.toggleAt > themeData.autoToggleAt) {
+        themeData.autoToggleAt = data.toggleAt;
+        handleThemeToggle(data.nightShift);
+      } else {
+        handleThemeToggle(themeData.nightShift);
+      }
+    } else if (nightModeOption == 'manual') {
+      handleThemeToggle(themeData.nightShift);
+    } else {
+      var nightShift = themeData.nightShift;
+      if (nightShift === undefined) {
+        nightShift = nightModeOption === 'on';
+      }
+      handleThemeToggle(nightShift);
+    }
+  })();
+</script>
+<div id="click-to-top" class="click-to-top">
+  <i class="fa fa-arrow-up"></i>
+</div>
+<script>
+  (function () {
+    const clickToTop = document.getElementById('click-to-top');
+    window.addEventListener('scroll', () => {
+      if (window.scrollY > 100) {
+        clickToTop.classList.add('show')
+      }else {
+        clickToTop.classList.remove('show')
+      }
+    });
+    clickToTop.addEventListener('click', () => {
+      window.smoothScrollTo(0);
+    });
+  })();
+</script>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <div class="framework">
+  <section class="main">
+
+     <div class="post">
+  <section>
+
+
+
+
+
+
+
+
+
+<header class="post-header">
+  <h1 class="post-title p-name" itemprop="name headline">SQL小菜之TOP N查找问题.</h1>
+  <h2 class="post-subtitle">SQL小菜之TOP N查找问题.</h2>
+
+  <div class="post-meta">
+    <time class="dt-published" datetime="2025-03-17T00:00:00+08:00" itemprop="datePublished"><i class="fa fa-calendar"></i> Mar 17, 2025
+    </time>
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <span class="post-reading-time left-vsplit"><i class="fa fa-clock-o"></i> About 5 mins</span>
+  </div>
+<div class="post-tags"><a class="post-tag" href="/tags.html#MySQL">#MySQL</a></div></header>
+<article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+
+    <div class="post-content e-content" itemprop="articleBody">
+
+      <p><img src="https://github.com/wtopps/wtopps.github.io/blob/master/images/MySQL%20Skill.jpeg?raw=true" alt="banner"></p>
+
+<h1 id="前言">前言</h1>
+
+<p>SQL的编写是后端面试中非常常见，其中TOP N查找问题也是高频出现的问题，今天我们来看两道SQL TOPN问题。</p>
+
+<h1 id="问题">问题</h1>
+
+<p>我们有一张雇员表Employee：</p>
+
+<div class="language-sql highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">CREATE</span> <span class="k">TABLE</span> <span class="nv">`Employee`</span> <span class="p">(</span>
+  <span class="nv">`id`</span> <span class="nb">int</span> <span class="k">DEFAULT</span> <span class="k">NULL</span><span class="p">,</span>
+  <span class="nv">`salary`</span> <span class="nb">int</span> <span class="k">DEFAULT</span> <span class="k">NULL</span><span class="p">,</span>
+  <span class="nv">`department`</span> <span class="nb">varchar</span><span class="p">(</span><span class="mi">16</span><span class="p">)</span> <span class="k">DEFAULT</span> <span class="k">NULL</span>
+<span class="p">)</span> <span class="n">ENGINE</span><span class="o">=</span><span class="n">InnoDB</span> <span class="k">DEFAULT</span> <span class="n">CHARSET</span><span class="o">=</span><span class="n">utf8mb4</span> <span class="k">COLLATE</span><span class="o">=</span><span class="n">utf8mb4_0900_ai_ci</span>
+</code></pre></div></div>
+
+<p>Question1：</p>
+
+<div class="language-sql highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="err">查询并返回</span> <span class="n">Employee</span> <span class="err">表中第二高的</span> <span class="err">不同</span> <span class="err">薪水</span> <span class="err">。如果不存在第二高的薪水，</span>
+<span class="err">查询应该返回</span> <span class="k">null</span><span class="err">。</span>
+
+<span class="err">查询结果如下例所示。</span>
+
+<span class="err">示例</span><span class="mi">1</span><span class="err">：</span>
+<span class="err">输入：</span>
+<span class="n">Employee</span> <span class="err">表：</span>
+<span class="o">+</span><span class="c1">----+--------+</span>
+<span class="o">|</span> <span class="n">id</span> <span class="o">|</span> <span class="n">salary</span> <span class="o">|</span>
+<span class="o">+</span><span class="c1">----+--------+</span>
+<span class="o">|</span> <span class="mi">1</span>  <span class="o">|</span> <span class="mi">100</span>    <span class="o">|</span>
+<span class="o">|</span> <span class="mi">2</span>  <span class="o">|</span> <span class="mi">200</span>    <span class="o">|</span>
+<span class="o">|</span> <span class="mi">3</span>  <span class="o">|</span> <span class="mi">300</span>    <span class="o">|</span>
+<span class="o">+</span><span class="c1">----+--------+</span>
+<span class="err">输出：</span>
+<span class="o">+</span><span class="c1">---------------------+</span>
+<span class="o">|</span> <span class="n">SecondHighestSalary</span> <span class="o">|</span>
+<span class="o">+</span><span class="c1">---------------------+</span>
+<span class="o">|</span> <span class="mi">200</span>                 <span class="o">|</span>
+<span class="o">+</span><span class="c1">---------------------+</span>
+
+<span class="err">示例</span><span class="mi">2</span><span class="err">：</span>
+<span class="err">输入：</span>
+<span class="n">Employee</span> <span class="err">表：</span>
+<span class="o">+</span><span class="c1">----+--------+</span>
+<span class="o">|</span> <span class="n">id</span> <span class="o">|</span> <span class="n">salary</span> <span class="o">|</span>
+<span class="o">+</span><span class="c1">----+--------+</span>
+<span class="o">|</span> <span class="mi">1</span>  <span class="o">|</span> <span class="mi">100</span>    <span class="o">|</span>
+<span class="o">+</span><span class="c1">----+--------+</span>
+<span class="err">输出：</span>
+<span class="o">+</span><span class="c1">---------------------+</span>
+<span class="o">|</span> <span class="n">SecondHighestSalary</span> <span class="o">|</span>
+<span class="o">+</span><span class="c1">---------------------+</span>
+<span class="o">|</span> <span class="k">null</span>                <span class="o">|</span>
+<span class="o">+</span><span class="c1">---------------------+</span>
+</code></pre></div></div>
+
+<p>这就是最典型一道TOP N查找问题，本题要求我们查找第二高薪水的记录，我们来将问题进行拆解：</p>
+
+<p>如果要查找第二高的记录，那是不是找到第一高的记录，然后在小于该记录的结果集中，找到最大的那一个，就是我们想要的结果。</p>
+
+<p>OK，思路明确，开始写SQL，先找到第一高那条记录：</p>
+
+<div class="language-sql highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">select</span> <span class="k">max</span><span class="p">(</span><span class="k">distinct</span><span class="p">(</span><span class="n">salary</span><span class="p">))</span> <span class="k">from</span> <span class="n">Employee</span>
+</code></pre></div></div>
+
+<p>因为题干中没有强调记录不重复，因此需要进行去重，接下来第二步，从比它小的结果集中找到最大的那个，就是我们想要的答案：</p>
+
+<div class="language-sql highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">select</span> <span class="k">max</span><span class="p">(</span><span class="k">distinct</span><span class="p">(</span><span class="n">salary</span><span class="p">))</span> <span class="k">from</span> <span class="n">Employee</span> 
+<span class="k">where</span> <span class="n">salary</span> <span class="o">&lt;</span> <span class="p">(</span><span class="k">select</span> <span class="k">max</span><span class="p">(</span><span class="k">distinct</span><span class="p">(</span><span class="n">salary</span><span class="p">))</span> <span class="k">from</span> <span class="n">Employee</span><span class="p">)</span>
+</code></pre></div></div>
+
+<p>我们同时要考虑一些异常的情况，例如表中如果仅有一条记录，那么结果需要输出null：</p>
+
+<div class="language-sql highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">select</span> <span class="n">ifNull</span><span class="p">((</span><span class="k">max</span><span class="p">(</span><span class="k">distinct</span><span class="p">(</span><span class="n">salary</span><span class="p">))),</span> <span class="k">null</span><span class="p">)</span> <span class="k">as</span> <span class="s1">'SecondHighestSalary'</span> <span class="k">from</span> <span class="n">Employee</span> 
+<span class="k">where</span> <span class="n">salary</span> <span class="o">&lt;</span> <span class="p">(</span><span class="k">select</span> <span class="k">max</span><span class="p">(</span><span class="k">distinct</span><span class="p">(</span><span class="n">salary</span><span class="p">))</span> <span class="k">from</span> <span class="n">Employee</span><span class="p">);</span>
+</code></pre></div></div>
+
+<p>针对这道题，这个SQL可以解决问题，那么题目换一下，如果不是找第二高的记录呢？如果找第三高，怎么办？</p>
+
+<p>上面的SQL就不能满足我们的需求了，换一个思路，如果要找第N高的记录，我们是不是可以对结果集进行排序，然后把前面的记录丢弃，剩下的结果集取第一个，就是我们想要的结果了？诶？这不就是limit offset么？</p>
+
+<div class="language-sql highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">select</span> <span class="n">ifNull</span><span class="p">(</span>
+  <span class="p">(</span><span class="k">select</span> <span class="k">distinct</span><span class="p">(</span><span class="n">salary</span><span class="p">)</span> <span class="k">from</span> <span class="n">Employee</span> <span class="k">order</span> <span class="k">by</span> <span class="n">salary</span> <span class="k">desc</span> <span class="k">limit</span> <span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">),</span> <span class="k">null</span><span class="p">)</span> 
+<span class="k">as</span> <span class="n">SecondHighestSalary</span><span class="p">;</span>
+</code></pre></div></div>
+
+<p>使用limit offset的方式，可以解决大部分简单的TOP N问题了，那么如果修改一下题目，再加入部门的维度，希望找到每个部门中，薪水第二高的记录，上面的解法，似乎就没有办法做到了，那么是否还有其他的解决方法呢？</p>
+
+<p>MySQL在8.0版本中加入了<code class="language-plaintext highlighter-rouge">窗口函数</code>，专门为了解决排行问题，来看一下dense_rank()的使用语法：</p>
+
+<div class="language-sql highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">DENSE_RANK</span><span class="p">()</span> <span class="n">OVER</span> <span class="p">(</span>
+    <span class="p">[</span><span class="k">PARTITION</span> <span class="k">BY</span> <span class="n">column1</span><span class="p">,</span> <span class="n">column2</span><span class="p">,</span> <span class="p">...]</span>
+    <span class="k">ORDER</span> <span class="k">BY</span> <span class="n">column1</span> <span class="p">[</span><span class="k">ASC</span><span class="o">|</span><span class="k">DESC</span><span class="p">],</span> <span class="n">column2</span> <span class="p">[</span><span class="k">ASC</span><span class="o">|</span><span class="k">DESC</span><span class="p">]</span>
+<span class="p">)</span>
+</code></pre></div></div>
+
+<p>看起来有点乱哈，没关系，我们来看个示例来帮你理解dense_rank()。</p>
+
+<p>上面的问题，如果用dense_rank()解决：</p>
+
+<div class="language-sql highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">select</span> <span class="p">(</span>
+	<span class="k">select</span> <span class="k">distinct</span> <span class="n">salary</span> <span class="k">from</span> <span class="p">(</span>
+    	<span class="k">select</span> <span class="n">dense_rank</span><span class="p">()</span> <span class="n">over</span> <span class="p">(</span> <span class="k">order</span> <span class="k">by</span> <span class="n">salary</span> <span class="k">desc</span><span class="p">)</span> <span class="k">as</span> <span class="n">rn</span><span class="p">,</span> <span class="n">u</span><span class="p">.</span><span class="o">*</span> <span class="k">from</span> <span class="n">Employee</span> <span class="n">u</span>
+    <span class="p">)</span> <span class="n">t</span> <span class="k">where</span> <span class="n">t</span><span class="p">.</span><span class="n">rn</span> <span class="o">=</span> <span class="mi">2</span><span class="p">)</span> <span class="k">as</span> <span class="n">SecondHighestSalary</span><span class="p">;</span>
+</code></pre></div></div>
+
+<p>单看上面的SQL你可能还是会一脸懵逼，没关系，让我们来拆解一下SQL，先看最中间的核心子查询：</p>
+
+<div class="language-sql highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">select</span> <span class="n">dense_rank</span><span class="p">()</span> <span class="n">over</span> <span class="p">(</span> <span class="k">order</span> <span class="k">by</span> <span class="n">salary</span> <span class="k">desc</span><span class="p">)</span> <span class="k">as</span> <span class="n">rn</span><span class="p">,</span> <span class="n">u</span><span class="p">.</span><span class="o">*</span> <span class="k">from</span> <span class="n">Employee</span> <span class="n">u</span><span class="p">;</span>
+
+<span class="o">+</span><span class="c1">----+------+--------+------------+</span>
+<span class="o">|</span> <span class="n">rn</span> <span class="o">|</span> <span class="n">id</span>   <span class="o">|</span> <span class="n">salary</span> <span class="o">|</span> <span class="n">department</span> <span class="o">|</span>
+<span class="o">+</span><span class="c1">----+------+--------+------------+</span>
+<span class="o">|</span>  <span class="mi">1</span> <span class="o">|</span>    <span class="mi">4</span> <span class="o">|</span>    <span class="mi">400</span> <span class="o">|</span> <span class="err">二部</span>       <span class="o">|</span>
+<span class="o">|</span>  <span class="mi">2</span> <span class="o">|</span>    <span class="mi">3</span> <span class="o">|</span>    <span class="mi">300</span> <span class="o">|</span> <span class="err">二部</span>       <span class="o">|</span>
+<span class="o">|</span>  <span class="mi">3</span> <span class="o">|</span>    <span class="mi">2</span> <span class="o">|</span>    <span class="mi">200</span> <span class="o">|</span> <span class="err">一部</span>       <span class="o">|</span>
+<span class="o">|</span>  <span class="mi">3</span> <span class="o">|</span>    <span class="mi">2</span> <span class="o">|</span>    <span class="mi">200</span> <span class="o">|</span> <span class="err">一部</span>       <span class="o">|</span>
+<span class="o">|</span>  <span class="mi">4</span> <span class="o">|</span>    <span class="mi">1</span> <span class="o">|</span>    <span class="mi">100</span> <span class="o">|</span> <span class="err">一部</span>       <span class="o">|</span>
+<span class="o">+</span><span class="c1">----+------+--------+------------+</span>
+</code></pre></div></div>
+
+<p>可以发现dense_rank()对结果集进行了排序处理，并输出了根据目标字段排序的记录的排名序号，那么再回头看上面的SQL就非常好理解了，我们需要找到排名第二的记录，通过where限定，即可达到预期结果。</p>
+
+<p>再回到上上个问题，如果我们希望查找每个部门中，薪水第二高的记录，怎么做？</p>
+
+<p>聪明的你肯定想到，对部门字段进行group by，再找到第二高的记录，幸运的是，dense_rank()提供了根据字段进行分组的功能，就是<code class="language-plaintext highlighter-rouge">PARTITION BY</code>参数，那么来看一下SQL该怎么写：</p>
+
+<div class="language-sql highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">SELECT</span> <span class="n">t</span><span class="p">.</span><span class="n">department</span><span class="p">,</span> <span class="n">t</span><span class="p">.</span><span class="n">salary</span> <span class="k">FROM</span> <span class="p">(</span>
+    <span class="k">SELECT</span> 
+        <span class="n">salary</span><span class="p">,</span>
+        <span class="n">department</span><span class="p">,</span>
+        <span class="n">DENSE_RANK</span><span class="p">()</span> <span class="n">OVER</span> <span class="p">(</span><span class="k">PARTITION</span> <span class="k">BY</span> <span class="n">department</span> <span class="k">ORDER</span> <span class="k">BY</span> <span class="n">salary</span> <span class="k">DESC</span><span class="p">)</span> <span class="k">as</span> <span class="n">rn</span>
+    <span class="k">FROM</span> <span class="n">Employee</span>
+<span class="p">)</span> <span class="n">t</span> 
+<span class="k">WHERE</span> <span class="n">rn</span> <span class="o">=</span> <span class="mi">2</span><span class="p">;</span>
+</code></pre></div></div>
+
+<h1 id="dense_rankrow_number-和-rank对比">DENSE_RANK()、ROW_NUMBER() 和 RANK()对比</h1>
+
+<p>最后，我们来看一下MySQL中关于处理排名相关的几个函数，DENSE_RANK、ROW_NUMBER 和 RANK 是 SQL 中三种不同的窗口排名函数，它们的主要区别在于处理相同值（并列）的方式：</p>
+
+<ol>
+  <li>ROW_NUMBER()
+    <ul>
+      <li>为每一行分配唯一的序号，从 1 开始递增</li>
+      <li>对于相同的值，按照它们在结果集中出现的顺序分配不同的序号</li>
+      <li>结果总是连续的数字，不会出现间隔</li>
+    </ul>
+  </li>
+  <li>RANK()
+    <ul>
+      <li>为每一行分配排名，从 1 开始</li>
+      <li>对于相同的值，分配相同的排名</li>
+      <li>排名可能会有间隔，因为相同值后的下一个排名会跳过已用的编号</li>
+      <li>例如：1, 2, 2, 4, 5…（注意跳过了 3）</li>
+    </ul>
+  </li>
+  <li>DENSE_RANK()
+    <ul>
+      <li>为每一行分配”密集排名”，从 1 开始</li>
+      <li>对于相同的值，分配相同的排名</li>
+      <li>排名始终是连续的，不会有间隔</li>
+      <li>例如：1, 2, 2, 3, 4…（无跳过）</li>
+    </ul>
+  </li>
+</ol>
+
+<h1 id="结语">结语</h1>
+
+<p>本篇，我们简单的探讨了SQL问题中非常经典的TOP N查找问题，学习了关于该种问题的几种解法，希望对你有所帮助。</p>
+
+
+
+    </div>
+
+</article>
+<div class="post-nav">
+<a class="previous" href="/redis/2025/01/23/Redis%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81%E5%AE%9E%E7%8E%B0%E6%8C%87%E5%8C%97.html" title="Redis分布式锁实现指北">Redis分布式锁实现指北</a><a class="next" href="/java/2025/03/26/CompletableFuture%E4%BD%A0%E9%9C%80%E8%A6%81%E7%9F%A5%E9%81%93%E7%9A%84%E4%BA%8B%E6%83%85.html" title="CompletableFuture你需要知道的事情.">CompletableFuture你需要知道的事情.</a>
+</div>
+<div class="post-related">
+      <div>Related Articles</div>
+      <ul>
+        <li class="top-post">
+          <a class="post-link" href="/redis/2025/04/17/%E5%85%B3%E4%BA%8EValkey%E4%BD%A0%E9%9C%80%E8%A6%81%E7%9F%A5%E9%81%93%E7%9A%84%E4%BA%8B%E6%83%85.html" title="关于Valkey你需要知道的事情">
+            关于Valkey你需要知道的事情<span class="post-badges">
+  <span class="post-badge badge-top">TOP</span>
+  <span class="post-badge badge-new">NEW</span>
+</span>
+</a>
+        </li>
+<li class="top-post">
+          <a class="post-link" href="/mysql/2024/09/25/MySQL%E4%B8%BB%E9%94%AE%E8%87%AA%E5%A2%9E%E6%9C%89%E5%87%A0%E7%A7%8D%E6%A8%A1%E5%BC%8F.html" title="MySQL主键自增有几种模式？">
+            MySQL主键自增有几种模式？<span class="post-badges">
+  <span class="post-badge badge-top">TOP</span>
+  <span class="post-badge badge-new">NEW</span>
+</span>
+</a>
+        </li>
+<li class="top-post">
+          <a class="post-link" href="/mysql/2025/05/27/%E5%85%B3%E4%BA%8EMySQL8.4LTS%E4%BD%A0%E5%BA%94%E8%AF%A5%E7%9F%A5%E9%81%93%E7%9A%84%E4%BA%8B%E6%83%85.html" title="关于MySQL8.4LTS你应该知道的事情">
+            关于MySQL8.4LTS你应该知道的事情<span class="post-badges">
+  <span class="post-badge badge-top">TOP</span>
+  <span class="post-badge badge-new">NEW</span>
+</span>
+</a>
+        </li>
+<li class="top-post">
+          <a class="post-link" href="/java/2025/03/26/CompletableFuture%E4%BD%A0%E9%9C%80%E8%A6%81%E7%9F%A5%E9%81%93%E7%9A%84%E4%BA%8B%E6%83%85.html" title="CompletableFuture你需要知道的事情.">
+            CompletableFuture你需要知道的事情.<span class="post-badges">
+  <span class="post-badge badge-top">TOP</span>
+  <span class="post-badge badge-new">NEW</span>
+</span>
+</a>
+        </li>
+</ul>
+    </div>
+<div class="post-comments"></div></section>
+</div>
+
+
+  </section>
+  <section class="sidebar" style="margin-left: 15px;">
+    <!-- Get sidebar items --><style type="text/css" media="screen">
+.post-menu ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+</style>
+
+<div class="post-menu">
+  <div class="post-menu-title">TOC</div>
+  <div class="post-menu-content"></div>
+</div>
+
+<script>
+  function generateContent() {
+    var menu = document.querySelector(".post-menu");
+    var menuContent =  menu.querySelector(".post-menu-content");
+    var headings = document.querySelector(".post-content").querySelectorAll("h2, h3, h4, h5, h6");
+
+    // Hide menu when no headings
+    if (headings.length === 0) {
+      return menu.style.display = "none";
+    }
+
+    // Generate post menu
+    var menuHTML = '';
+    for (var i = 0; i < headings.length; i++) {
+      var h = headings[i];
+      menuHTML += (
+        '<li class="h-' + h.tagName.toLowerCase() + '">'
+        + '<a href="#h-' + h.getAttribute('id') + '">' + h.textContent + '</a></li>');
+    }
+
+    menuContent.innerHTML = '<ul>' + menuHTML + '</ul>';
+
+    // The header element
+    var header = document.querySelector('header.site-header');
+
+    function doMenuCollapse(index, over_items) {
+      var items = menuContent.firstChild.children;
+
+      if (over_items == undefined) {
+        over_items = 20;
+      }
+
+      if (items.length < over_items) {
+        return;
+      }
+
+      var activeItem = items[index];
+      var beginItem = activeItem
+      var endItem = activeItem
+      var beginIndex = index;
+      var endIndex = index + 1;
+      while (beginIndex >= 0
+        && !items[beginIndex].classList.contains('h-h2')) {
+        beginIndex -= 1;
+      }
+      while (endIndex < items.length
+        && !items[endIndex].classList.contains('h-h2')) {
+        endIndex += 1;
+      }
+      for (var i = 0; i < beginIndex; i++) {
+        item = items[i]
+        if (!item.classList.contains('h-h2')) {
+          item.style.display = 'none';
+        }
+      }
+      for (var i = beginIndex + 1; i < endIndex; i++) {
+        item = items[i]
+        // if (!item.classList.contains('h-h2')) {
+          item.style.display = '';
+        // }
+      }
+      for (var i = endIndex; i < items.length; i++) {
+        item = items[i]
+        if (!item.classList.contains('h-h2')) {
+          item.style.display = 'none';
+        }
+      }
+    }
+
+    // Init menu collapsed
+    doMenuCollapse(-1);
+
+    // Active the menu item
+    window.addEventListener('scroll', function (event) {
+      var lastActive = menuContent.querySelector('.active');
+      var changed = true;
+      var activeIndex = -1;
+      for (var i = headings.length - 1; i >= 0; i--) {
+        var h = headings[i];
+        var headingRect = h.getBoundingClientRect();
+        var headerRect = header.getBoundingClientRect();
+        var headerTop = Math.floor(headerRect.top);
+        var headerHeight = Math.floor(headerRect.height);
+        var headerHeight = headerTop + headerHeight + 20;
+        if (headingRect.top <= headerHeight) {
+          var id = 'h-' + h.getAttribute('id');
+          var a = menuContent.querySelector('a[href="#' + id  + '"]');
+          var curActive = a.parentNode;
+          if (curActive) {
+            curActive.classList.add('active');
+            activeIndex = i;
+          }
+          if (lastActive == curActive) {
+            changed = false;
+          }
+          break;
+        }
+      }
+      if (changed) {
+        if (lastActive) {
+          lastActive.classList.remove('active');
+        }
+        doMenuCollapse(activeIndex);
+      }
+      event.preventDefault();
+    });
+  }
+  generateContent();
+</script>
+</section>
+</div>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/"></data>
+
+  <div class="wrapper">
+    <div class="site-footer-inner">
+<div>Unpublished Work <span class="copyleft">©</span> 2017-2025 GitHub User</div>
+      <div>Powered by <a title="Jekyll is a simple, blog-aware, static site
+      generator." href="https://jekyllrb.com/">Jekyll</a> &amp; <a title="Yat, yet
+      another theme." href="https://github.com/jeffreytse/jekyll-theme-yat">Yat Theme</a>.</div>
+      <div class="footer-col rss-subscribe">Subscribe <a href="/feed.xml">via RSS</a>
+</div>
+    </div>
+  </div>
+</footer>
+</body>
+</html>

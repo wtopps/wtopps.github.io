@@ -1,0 +1,271 @@
+<p><img src="https://raw.githubusercontent.com/wtopps/wtopps.github.io/refs/heads/master/images/Valkey.webp" alt="banner" /></p>
+
+<h2 id="前言">前言</h2>
+
+<blockquote>
+  <p>Valkey is an open source (BSD) high-performance key/value datastore that supports a variety of workloads such as caching, message queues, and can act as a primary database. The project is backed by the Linux Foundation, ensuring it will remain open source forever.</p>
+</blockquote>
+
+<p>Valkey 是 Redis 的一个开源分支（fork），由 Linux 基金会支持，于 2024 年 3 月因 Redis 许可证从 BSD 3-clause 转为更严格的源代码可用许可证（RSALv2 和 SSPLv1）而创建。Valkey 基于 Redis 7.2.4 版本，旨在保持开源特性并进一步优化性能和功能。</p>
+
+<p>看到这里你可能满头问号，什么是<strong>BSD 3-clause</strong>协议，什么又是<b>RSALv2 和 SSPLv1</b>协议？</p>
+
+<h2 id="bsd-3-clause-vs-rsalv2--ssplv1">BSD 3-clause VS RSALv2 &amp; SSPLv1</h2>
+
+<h3 id="bsd协议的前世今生">BSD协议的前世今生</h3>
+
+<blockquote>
+  <p>BSD许可证（英语：Berkeley Software Distribution license）是自由软件中使用最广泛的许可证之一。BSD就是遵照这个许可证来发布，也因此而得名 BSD许可证。</p>
+
+  <p>BSD包最初所有者是加州大学的董事会，这是由于 BSD 源自加州大学伯克利分校。BSD开始后，BSD许可证得以修正，使得以后许多BSD变种，都采用类似风格的条款。</p>
+
+  <p>跟其他条款相比，从GNU通用公共许可证（GPL）到限制重重的著作权（Copyright），BSD许可证比较宽松，甚至跟公有领域更为接近。事实上，BSD许可证被认为是copycenter（中间著作权），介乎标准的copyright与GPL的copyleft之间。”Take it down to the copy center and make as many copies as you want”[1]。可以说，GPL强迫后续版本必须一样是自由软件，BSD的后续版本可以选择要继续是BSD或其他自由软件条款或封闭软件等等。——Wikipedia</p>
+</blockquote>
+
+<p>BSD 3-Clause 许可证（<strong>BSD 3-Clause License</strong>，又称 <strong>Revised BSD License</strong> 或 <strong>New BSD License</strong>）是一种 <strong>高度宽松的开源许可证</strong>，允许用户自由使用、修改和分发代码，几乎没有任何使用限制（包括商业用途）。它是 Berkeley Software Distribution（BSD）操作系统及其衍生软件的传统许可证。</p>
+
+<p><strong>核心条款（3个主要条件）</strong></p>
+
+<p>许可证名称中的 “3-Clause” 指它包含 <strong>3 个基本约束条件</strong>：</p>
+
+<ol>
+  <li><strong>保留原始版权声明</strong>（Redistributions must retain the original copyright notice）
+    <ul>
+      <li>任何分发或修改后的代码必须 <strong>包含原始作者的版权声明</strong>。</li>
+    </ul>
+  </li>
+  <li><strong>保留许可证文本</strong>（Redistributions must include the license text）
+    <ul>
+      <li>所有副本（无论是二进制还是源代码）必须附带 <strong>完整的 BSD 3-Clause 许可证文本</strong>。</li>
+    </ul>
+  </li>
+  <li><strong>禁止使用作者名进行推广</strong>（Neither the name of the copyright holder nor the names of its contributors may be used to endorse or promote products derived from this software without specific prior written permission）
+    <ul>
+      <li>不得使用原作者或贡献者的名字 <strong>为衍生作品背书或营销</strong>，除非获得明确书面许可。</li>
+    </ul>
+  </li>
+</ol>
+
+<p>BSD 3-Clause由于极其宽松的限制，允许闭源、商用，无需回报社区，因而受到了商业公司的大力追捧。</p>
+
+<h3 id="rsalv2--ssplv1协议的前世今生">RSALv2 &amp; SSPLv1协议的前世今生</h3>
+
+<p><strong>RSALv2</strong>全称<em>Redis Source Available License</em>，是由Redis公司为主导，核心目标是限制云厂商商业化托管服务因而推出的协议，可以说是专门为了云厂商而制定的协议，RSALv2限制了云厂商（如AWS/Azure）将其作为托管服务商业化提供（需与Redis签订商业协议），但允许其他企业内部使用或开发专有软件。</p>
+
+<p><strong>SSPLv1</strong>全称<em>Redis Source Available License</em>，是由MongoDB为主导，防止SaaS厂商规避开源贡献而制定的协议。</p>
+
+<p>其要求 <strong>任何提供SSPL软件作为服务的行为</strong> 必须开源整个服务栈的代码（包括管理工具、监控系统等），非SaaS场景下可自由使用（如本地部署）。</p>
+
+<p>OK，说了这么多，你可能也看晕了，下面用一张图标来进行一个总结：</p>
+
+<p><img src="https://github.com/wtopps/wtopps.github.io/blob/master/images/License%20Compare.png?raw=true" alt="License" /></p>
+
+<table>
+  <thead>
+    <tr>
+      <th><strong>义务</strong></th>
+      <th>RSALv2</th>
+      <th>SSPLv1</th>
+      <th>BSD 3-Clause</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>保留版权声明</td>
+      <td>✅</td>
+      <td>✅</td>
+      <td>✅</td>
+    </tr>
+    <tr>
+      <td>允许修改/闭源</td>
+      <td>✅（非云场景）</td>
+      <td>✅（非SaaS场景）</td>
+      <td>✅</td>
+    </tr>
+    <tr>
+      <td>云/SaaS触发条款</td>
+      <td>❌云托管</td>
+      <td>❌SaaS需开源</td>
+      <td>无限制</td>
+    </tr>
+    <tr>
+      <td>专利授权</td>
+      <td>有（限制性）</td>
+      <td>有</td>
+      <td>无</td>
+    </tr>
+  </tbody>
+</table>
+
+<p><strong>Redis</strong>自 2024 年 3 月起，采用 RSALv2 和 SSPLv1 许可证，限制了云服务提供商和某些商业场景的自由使用，引发社区不满，导致 Valkey 的诞生。</p>
+
+<h1 id="valkey的优势">Valkey的优势</h1>
+
+<h2 id="与-redis-的兼容性与迁移简便性">与 Redis 的兼容性与迁移简便性</h2>
+
+<p>作为 Redis 7.2.4 的直接分支，Valkey 保留完全兼容性，支持 Redis 的 API、命令和数据结构（如字符串、哈希、列表、集合等）。迁移只需更改连接配置（如 YAML 文件中的一行），无需修改代码。AWS ElastiCache 和 MemoryDB 支持无缝迁移。但是需要注意的是，Redis 提供专有模块（如 RedisBloom、RedisGraph、RedisTimeSeries），Valkey 当前不支持，但社区正在开发替代方案。</p>
+
+<h2 id="性能优化">性能优化</h2>
+
+<h4 id="多线程支持">多线程支持</h4>
+
+<p>Valkey 引入了多线程 I/O 和命令执行，充分利用多核处理器，显著提升写密集型工作负载的吞吐量。Valkey 8.0 发布宣称可达 100 万请求每秒（RPS），比 Redis 开源版本（7.2.4）快 3 倍。</p>
+
+<p>More Detail：https://aws.amazon.com/cn/blogs/china/valkey-performance-testing-exploring-version-changes-and-cloud-hosting-performance-improvements/</p>
+
+<p><img src="https://s3.cn-north-1.amazonaws.com.cn/awschinablog/valkey-performance-testing-exploring-version-changes-and-cloud-hosting-performance-improvements1.jpg" alt="AWS压测对比和分析" /></p>
+
+<h4 id="异步-io">异步 I/O</h4>
+
+<p>Valkey 通过异步 I/O 线程降低延迟，提升实时应用响应速度，优于 Redis 的单线程主导架构。</p>
+
+<p>Valkey 的多线程和异步 I/O 使高吞吐量场景（如实时分析、电商库存更新）表现更优，尤其适合现代硬件。</p>
+
+<h3 id="内存效率">内存效率</h3>
+
+<p><strong>新字典结构</strong>：Valkey 优化了字典结构，减少内存占用，适合大规模数据集场景。</p>
+
+<p><strong>内存密度提升</strong>：Valkey 8.0 通过 AWS 的贡献提高了集群内存密度，优化了内存密集型工作负载。</p>
+
+<p><b>内存管理</b>：Redis 的内存管理较为传统，在大数据集或高并发场景下内存效率较低，Valkey 的内存优化降低运营成本，适合缓存、会话存储等内存敏感应用。</p>
+
+<h3 id="集群监控">集群监控</h3>
+
+<p><strong>每槽指标</strong>：Valkey 提供按槽（per-slot）粒度的性能和使用模式指标，帮助管理员主动识别和解决性能瓶颈。</p>
+
+<p>Redis 的监控功能较为基础，缺乏细粒度指标，难以满足复杂应用的监控需求，Valkey 的高级观测性对需要深入性能分析的场景（如大规模缓存或实时数据处理）有显著优势。</p>
+
+<h3 id="实验性功能rdma-支持">实验性功能：RDMA 支持</h3>
+
+<p>Redis 开源版本不原生支持 RDMA，限制了其在高性能计算场景的应用，而Valkey提供实验性 RDMA（远程直接内存访问）支持，可在特定高性能环境中大幅提升性能。</p>
+
+<p>这里需要简单介绍一下什么是RDMA技术。</p>
+
+<h4 id="传统-redis-的数据处理瓶颈">传统 Redis 的数据处理瓶颈</h4>
+
+<p>典型请求路径（TCP/IP 模式）</p>
+
+<p>当客户端发送一个 <code class="language-plaintext highlighter-rouge">GET key</code> 请求时，Redis Server 端的处理流程如下：</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>1. 网卡接收 TCP 报文 → 内核协议栈（TCP/IP 解包）→ 数据拷贝到内核缓冲区
+2. 内核通过系统调用（read()）将数据拷到用户态（Redis 进程）
+3. Redis 主线程解析命令（如识别 "GET"）
+4. 从内存哈希表中查找 `key` 对应的值
+5. 反向重复上述步骤：用户态 → 内核 → 网卡 → 客户端
+</code></pre></div></div>
+
+<p><strong>关键瓶颈</strong>：</p>
+
+<ul>
+  <li><strong>数据拷贝</strong>：至少 2 次内核态↔用户态拷贝（即使使用零拷贝技术如 <code class="language-plaintext highlighter-rouge">sendfile</code>，命令解析仍需用户态介入）。</li>
+  <li><strong>CPU 开销</strong>：协议栈处理（校验和、序列号等）占大量 CPU 周期（尤其在 10Gbps+ 高带宽场景）。</li>
+</ul>
+
+<h4 id="valkey-的-rdma-如何绕过这些瓶颈">Valkey 的 RDMA 如何绕过这些瓶颈？</h4>
+
+<p><strong>RDMA 的 Server 端角色</strong></p>
+
+<p>RDMA 在 Valkey Server 端的核心创新是：
+ <strong>将内存中的键值数据直接暴露给网卡</strong>，客户端可通过 RDMA 协议 <strong>直接读取或修改 Server 内存</strong>，无需经过传统内核协议栈和 Redis 主线程的解析。</p>
+
+<p><strong>具体绕过机制</strong></p>
+
+<p>以 <code class="language-plaintext highlighter-rouge">GET key</code> 为例，RDMA 模式下的流程：</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>1. 客户端预先与 Server 协商好：
+   - Key 的内存地址（通过注册的 Memory Region）
+   - 权限（只读/读写）
+   
+2. 客户端网卡直接发起 RDMA READ 操作：
+   - 通过 RoCE/InfiniBand 协议包，指定目标地址（Server 内存中 `key` 的位置）
+   - 数据从 Server 内存 → 客户端内存，全程无需 Server 的 CPU 参与
+
+3. Server 的 RDMA 网卡自主完成数据传输：
+   - 校验权限和地址合法性（通过保护域 Protection Domain）
+   - 直接访问内存数据并返回
+</code></pre></div></div>
+
+<p><strong>关键突破</strong>：</p>
+
+<ul>
+  <li><strong>零拷贝</strong>：数据不经过内核，也不触发 Server 的 CPU 中断。</li>
+  <li><strong>零解析</strong>：客户端需提前知道 Key 的内存布局（依赖预注册的元数据），跳过命令解析步骤。</li>
+</ul>
+
+<table>
+  <thead>
+    <tr>
+      <th><strong>步骤</strong></th>
+      <th><strong>TCP/IP 模式</strong></th>
+      <th><strong>RDMA 模式</strong></th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>网络协议处理</td>
+      <td>内核 TCP/IP 栈</td>
+      <td>网卡硬件处理（RoCE/IB）</td>
+    </tr>
+    <tr>
+      <td>数据处理线程</td>
+      <td>Redis 主线程参与</td>
+      <td>无 CPU 参与（完全网卡卸载）</td>
+    </tr>
+    <tr>
+      <td>数据路径</td>
+      <td>用户态 ↔ 内核态多次拷贝</td>
+      <td>网卡 ↔ 内存直通</td>
+    </tr>
+    <tr>
+      <td>延迟分布</td>
+      <td>毫秒级（CPU 调度抖动）</td>
+      <td>微秒级（硬件确定性强）</td>
+    </tr>
+  </tbody>
+</table>
+
+<h4 id="rdma目前的限制">RDMA目前的限制</h4>
+
+<ol>
+  <li>仅支持简单 KV 操作
+    <ul>
+      <li><code class="language-plaintext highlighter-rouge">GET/SET</code> 可直接映射为 RDMA READ/WRITE。</li>
+      <li>复杂命令（如 <code class="language-plaintext highlighter-rouge">INCR</code>、<code class="language-plaintext highlighter-rouge">LPUSH</code>）仍需走 TCP 路径（需 CPU 执行逻辑）。</li>
+    </ul>
+  </li>
+  <li>客户端需改造
+    <ul>
+      <li>传统 Redis 客户端无法直接使用，需集成 RDMA 库（如 <code class="language-plaintext highlighter-rouge">libibverbs</code>）。</li>
+    </ul>
+  </li>
+  <li>安全边界模糊
+    <ul>
+      <li>Server 内存直接暴露给客户端，依赖网络隔离和硬件校验（如 P_Key）。</li>
+    </ul>
+  </li>
+  <li>网卡支持
+    <ul>
+      <li>必须使用支持的RDMA 网卡</li>
+    </ul>
+  </li>
+</ol>
+
+<h3 id="社区的支持">社区的支持</h3>
+
+<p><strong>Valkey</strong>由 Linux 基金会托管，得到 AWS、Google Cloud、Oracle、Snap Inc. 等公司支持，贡献者包括 Redis 原核心开发者（如 Madelyn Olson 和 Binbin Zhu）。Valkey 8.1（2025 年 4 月发布）显示出快速迭代能力，性能提升 10%，TLS 连接管理更高效。</p>
+
+<p><strong>Redis</strong> 由Redis公司进行维护，商业支持强大，但社区贡献受限，核心开发主要由公司控制。 Valkey 的社区驱动模式和广泛行业支持确保长期开发活力和快速功能迭代，降低对单一厂商的依赖。</p>
+
+<p>综上，我们简单总结一下Valkey：</p>
+
+<ol>
+  <li>完全开源的 BSD 许可证，得到广泛行业支持。</li>
+  <li>多线程、异步 I/O 和内存优化带来显著性能提升（最高 100 万 RPS）。</li>
+  <li>改进的集群管理（自动故障转移、可靠槽迁移）。</li>
+  <li>细粒度观测性和实验性 RDMA 支持。</li>
+  <li>与 Redis 的高兼容性，迁移成本低。</li>
+</ol>
+
+<h2 id="结语">结语</h2>
+
+<p>Redis经过多年的发展，在互联网行业内的地位牢不可破，但Valkey作为社区的新宠儿，在多家云厂商的推崇下，发展前景也是非常的可期，不过真的要在生产环境将Redis替换为Valkey，还有待验证，我们可以持续观望社区的动态。</p>

@@ -1,0 +1,1255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="google-translate-customization" content="108d9124921d80c3-80e20d618ff053c8-g4f02ec6f3dba68b7-c">
+<!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>关于Redis8.0你需要知道的事情 | wtopps</title>
+<meta name="generator" content="Jekyll v4.3.4">
+<meta property="og:title" content="关于Redis8.0你需要知道的事情">
+<meta name="author" content="GitHub User">
+<meta property="og:locale" content="en_US">
+<meta name="description" content="Write an awesome description for your new site here. You can edit this line in _config.yml. It will appear in your document head meta (for Google search results) and in your feed.xml site description.">
+<meta property="og:description" content="Write an awesome description for your new site here. You can edit this line in _config.yml. It will appear in your document head meta (for Google search results) and in your feed.xml site description.">
+<link rel="canonical" href="http://localhost:4000/redis/2025/05/15/%E5%85%B3%E4%BA%8ERedis8.0%E4%BD%A0%E9%9C%80%E8%A6%81%E7%9F%A5%E9%81%93%E7%9A%84%E4%BA%8B%E6%83%85.html">
+<meta property="og:url" content="http://localhost:4000/redis/2025/05/15/%E5%85%B3%E4%BA%8ERedis8.0%E4%BD%A0%E9%9C%80%E8%A6%81%E7%9F%A5%E9%81%93%E7%9A%84%E4%BA%8B%E6%83%85.html">
+<meta property="og:site_name" content="wtopps">
+<meta property="og:type" content="article">
+<meta property="article:published_time" content="2025-05-15T00:00:00+08:00">
+<meta name="twitter:card" content="summary">
+<meta property="twitter:title" content="关于Redis8.0你需要知道的事情">
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"GitHub User"},"dateModified":"2025-05-15T00:00:00+08:00","datePublished":"2025-05-15T00:00:00+08:00","description":"Write an awesome description for your new site here. You can edit this line in _config.yml. It will appear in your document head meta (for Google search results) and in your feed.xml site description.","headline":"关于Redis8.0你需要知道的事情","mainEntityOfPage":{"@type":"WebPage","@id":"http://localhost:4000/redis/2025/05/15/%E5%85%B3%E4%BA%8ERedis8.0%E4%BD%A0%E9%9C%80%E8%A6%81%E7%9F%A5%E9%81%93%E7%9A%84%E4%BA%8B%E6%83%85.html"},"url":"http://localhost:4000/redis/2025/05/15/%E5%85%B3%E4%BA%8ERedis8.0%E4%BD%A0%E9%9C%80%E8%A6%81%E7%9F%A5%E9%81%93%E7%9A%84%E4%BA%8B%E6%83%85.html"}</script>
+<!-- End Jekyll SEO tag -->
+<link rel="icon" href="">
+  <link rel="canonical" href="http://localhost:4000">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/typeface-noto-sans@0.0.72/index.min.css">
+  <link rel="stylesheet" href="/assets/css/main.css">
+  <script src="/assets/js/main.js"></script><link type="application/atom+xml" rel="alternate" href="http://localhost:4000/feed.xml" title="wtopps">
+<link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/styles/default.min.css">
+<script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/highlight.min.js"></script>
+<!-- and it's easy to individually load additional languages -->
+<script charset="UTF-8" src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/languages/go.min.js" async></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<script>
+// Init highlight js
+document.addEventListener('DOMContentLoaded', function(event) {
+  var els = document.querySelectorAll('pre code')
+
+  function addLangData(block) {
+    var outer = block.parentElement.parentElement.parentElement;
+    var lang = block.getAttribute('data-lang');
+    for (var i = 0; i < outer.classList.length; i++) {
+      var cls = outer.classList[i];
+      if (cls.startsWith('language-')) {
+        lang = cls;
+        break;
+      }
+    }
+    if (!lang) {
+      cls = block.getAttribute('class');
+      lang = cls ? cls.replace('hljs ', '') : '';
+    }
+    if (lang.startsWith('language-')) {
+      lang = lang.substr(9);
+    }
+    block.setAttribute('class', 'hljs ' + lang);
+    block.parentNode.setAttribute('data-lang', lang);
+  }
+
+  function addBadge(block) {
+    var enabled = ('true' || 'true').toLowerCase();
+    if (enabled == 'true') {
+      var pre = block.parentElement;
+      pre.classList.add('badge');
+    }
+  }
+
+  function handle(block) {
+    addLangData(block);
+    addBadge(block)
+    hljs.highlightBlock(block);
+  }
+
+  for (var i = 0; i < els.length; i++) {
+    var el = els[i];
+    handle(el);
+  }
+});
+</script>
+
+<style>
+  /* code language badge */
+  pre.badge::before {
+    content: attr(data-lang);
+    color: #fff;
+    background-color: #ff4e00;
+    padding: 0 .5em;
+    border-radius: 0 2px;
+    text-transform: uppercase;
+    text-align: center;
+    min-width: 32px;
+    display: inline-block;
+    position: absolute;
+    right: 0;
+  }
+
+  /* fix wrong badge display for firefox browser */
+  code > table pre::before {
+    display: none;
+  }
+</style>
+<script src="//cdnjs.cloudflare.com/ajax/libs/photoswipe/5.3.7/umd/photoswipe-lightbox.umd.min.js" async></script>
+<script src="//cdnjs.cloudflare.com/ajax/libs/photoswipe/5.3.7/umd/photoswipe.umd.min.js" async></script>
+<link href="//cdnjs.cloudflare.com/ajax/libs/photoswipe/5.3.7/photoswipe.min.css" rel="stylesheet">
+<style>
+  .pswp .pswp__container .pswp__img {
+    background-color: white;
+  }
+</style>
+
+<script>
+  function initPhotoSwipe() {
+    let customOptions = {};
+
+    try {
+      const data = ``.replaceAll("=>", ":");
+      customOptions = JSON.parse(data);
+    } catch (e) {
+      console.info("Invalid custom photo previewer options! " + e.message);
+    }
+
+    // Define object and gallery options
+    const options = Object.assign(
+      {
+        gallery: "section.main",
+        children: "a.photo-swipe",
+        photo_scale: 2,
+        // dynamic import is not supported in UMD version
+        pswpModule: PhotoSwipe,
+      },
+      customOptions
+    );
+
+    const galleryEl = document.querySelector(options.gallery);
+    if (!galleryEl) {
+      return;
+    }
+
+    const imgEls = [];
+    const els = galleryEl.querySelectorAll("img:not(.emoji)");
+    els.forEach((el) => {
+      if (el.src.trim() == "") {
+        return;
+      }
+      if (!imgEls.includes(el)) {
+        imgEls.push(el);
+      }
+    });
+
+    if (imgEls.length === 0) {
+      return;
+    }
+
+    imgEls.forEach((imgEl) => {
+      imgEl.outerHTML = `
+      <a class="photo-swipe"
+        href="${imgEl.src}"
+        data-pswp-width="${
+          Math.max(imgEl.naturalWidth, imgEl.width) * options.photo_scale
+        }"
+        data-pswp-height="${
+          Math.max(imgEl.naturalHeight, imgEl.height) * options.photo_scale
+        }"
+        data-pswp-caption="${imgEl.getAttribute("caption") || imgEl.alt}"
+        target="_blank">
+        ${imgEl.outerHTML}
+      </a>`;
+    });
+
+    // Initialize PhotoSwipe 5
+    var lightbox = new PhotoSwipeLightbox(options);
+
+    lightbox.init();
+  }
+
+  window.addEventListener("load", initPhotoSwipe);
+</script>
+</head>
+<body>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<header class="site-header " role="banner">
+
+  <div class="wrapper">
+    <div class="site-header-inner">
+<span class="site-brand"><a class="site-brand-inner" rel="author" href="/">
+  <img class="site-favicon" title="wtopps" src="" onerror="this.style.display='none'">
+  wtopps
+</a>
+</span><nav class="site-nav">
+          <input type="checkbox" id="nav-trigger" class="nav-trigger">
+          <label for="nav-trigger">
+            <span class="menu-icon">
+              <svg viewbox="0 0 18 15" width="18px" height="15px">
+                <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"></path>
+              </svg>
+            </span>
+          </label>
+
+          <div class="trigger">
+<a class="page-link" href="/about.html">ABOUT</a><a class="page-link" href="/archives.html">ARCHIVES</a><a class="page-link" href="/categories.html">CATEGORIES</a><a class="page-link" href="/">HOME</a><a class="page-link" href="/tags.html">TAGS</a>
+
+
+
+
+
+
+
+
+
+<div class="page-link" style="display: inline;">
+
+
+
+<div id="google_translate_element" style="display: none;">
+</div>
+
+<div class="ct-language">
+  <ul class="list-unstyled ct-language-dropdown">
+    
+      <li>
+        <a href="#" class="lang-select" data-lang="en">
+          
+          <img src="https://cdn.countryflags.com/thumbs/united-states-of-america/flag-400.png" title="English">
+          
+        </a>
+      </li>
+    
+      <li>
+        <a href="#" class="lang-select" data-lang="fr">
+          
+          <img src="https://cdn.countryflags.com/thumbs/france/flag-400.png" title="French">
+          
+        </a>
+      </li>
+    
+      <li>
+        <a href="#" class="lang-select" data-lang="zh-CN">
+          
+          <img src="https://cdn.countryflags.com/thumbs/china/flag-400.png" title="Chinese(Simple)">
+          
+        </a>
+      </li>
+    
+      <li>
+        <a href="#" class="lang-select" data-lang="ja">
+          
+          <img src="https://cdn.countryflags.com/thumbs/japan/flag-400.png" title="Japanese">
+          
+        </a>
+      </li>
+    
+      <li>
+        <a href="#" class="lang-select" data-lang="ko">
+          
+          <img src="https://cdn.countryflags.com/thumbs/south-korea/flag-400.png" title="Korean">
+          
+        </a>
+      </li>
+    
+      <li>
+        <a href="#" class="lang-select" data-lang="ru">
+          
+          <img src="https://cdn.countryflags.com/thumbs/russia/flag-400.png" title="Russian">
+          
+        </a>
+      </li>
+    
+  </ul>
+</div>
+
+<script type="text/javascript">
+function googleTranslateElementInit() {
+  new google.translate.TranslateElement({
+    pageLanguage: 'en',
+    autoDisplay: false,
+    layout: google.translate.TranslateElement.InlineLayout.VERTICAL
+  }, 'google_translate_element');
+
+  // Links to cross-origin destinations are unsafe
+  var gll = document.getElementsByClassName('goog-logo-link')[0];
+  if (gll) {
+    gll.setAttribute('rel', 'noopener');
+  }
+
+  function restoreLang() {
+    var iframe = document.getElementsByClassName('goog-te-banner-frame')[0];
+    if (!iframe) return;
+
+    var innerDoc = iframe.contentDocument || iframe.contentWindow.document;
+    var restore_el = innerDoc.getElementsByTagName("button");
+
+    for (var i = 0; i < restore_el.length; i++) {
+      if (restore_el[i].id.indexOf("restore") >= 0) {
+        restore_el[i].click();
+        var close_el = innerDoc.getElementsByClassName("goog-close-link");
+        close_el[0].click();
+        return;
+      }
+    }
+  }
+
+  function triggerHtmlEvent(element, eventName) {
+    var event;
+    if (document.createEvent) {
+      event = document.createEvent('HTMLEvents');
+      event.initEvent(eventName, true, true);
+      element.dispatchEvent(event);
+    } else {
+      event = document.createEventObject();
+      event.eventType = eventName;
+      element.fireEvent('on' + event.eventType, event);
+    }
+  }
+
+  var googleCombo = document.querySelector("select.goog-te-combo");
+  var langSelect = document.querySelector('.ct-language');
+  langSelect.addEventListener('click', function(event) {
+    if (!event.target) {
+      return;
+    }
+
+    var selected = document.querySelector('.ct-language .ct-language-selected');
+    if (selected) {
+      selected.classList.remove('ct-language-selected');
+    }
+
+    var target = event.target;
+    while (target && target !== langSelect ) {
+      if (target.matches('.lang-select')) {
+        break;
+      }
+      target = target.parentElement;
+    }
+
+    if (target && target.matches('.lang-select')) {
+      var lang = target.getAttribute('data-lang');
+      if (googleCombo.value == lang) {
+        restoreLang();
+      } else {
+        target.parentElement.classList.add('ct-language-selected');
+        googleCombo.value = lang;
+        triggerHtmlEvent(googleCombo, 'change');
+      }
+    }
+
+    event.preventDefault();
+  });
+}
+</script>
+
+<script type="text/javascript" src="https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit" async></script>
+</div>
+</div>
+        </nav>
+</div>
+  </div>
+</header>
+
+<script>
+  function initHeader() {
+    var lastScrollY = getScrollPos().y;
+    var documentElement = document.documentElement;
+
+    function storeScrollData() {
+      var y = getScrollPos().y;var scrollStatus = "";
+
+      if (y <= 0) {
+        scrollStatus = "top";
+      } else if ((window.innerHeight + y) >= document.body.offsetHeight) {
+        scrollStatus = "bottom";
+      } else {
+        var isScrollDown = (y - lastScrollY > 0) ? true : false;
+        scrollStatus = isScrollDown ? "down" : "up";
+      }
+
+      lastScrollY = y;
+      documentElement.setAttribute("data-scroll-status", scrollStatus);
+    }
+
+    window.addEventListener('scroll', function(e) {
+      storeScrollData();
+    });
+
+    storeScrollData();
+  }
+  document.addEventListener('DOMContentLoaded', initHeader);
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<script>
+  function hashLocate(hashValue) {
+    hashValue = hashValue.replace(/^.*#h-/, '');
+    hashValue = decodeURIComponent(hashValue);
+    var element = document.getElementById(hashValue);
+
+    if (!element) {
+      return;
+    }
+
+    var header = document.querySelector('header.site-header');
+    var headerRect = header.getBoundingClientRect();
+    var headerTop = Math.floor(headerRect.top);
+    var headerHeight = Math.floor(headerRect.height);
+    var scrollPos = getScrollPos();
+    var offsetY = element.offsetTop - (headerTop + headerHeight + 20);
+
+    if (offsetY == scrollPos.y) {
+      return;
+    }
+
+    if (headerTop == 0  && offsetY > scrollPos.y) {
+      offsetY += headerHeight + 2;
+    } else if (headerTop < 0  && offsetY < scrollPos.y) {
+      offsetY -= headerHeight - 2;
+    }
+
+    smoothScrollTo(offsetY);
+  }
+
+  // The first event occurred
+  window.addEventListener('load', function(event) {
+    if (window.location.hash) {
+      hashLocate(window.location.hash);
+    }
+  });
+
+  // The first event occurred
+  window.addEventListener('click', function(event) {
+    if (event.target.tagName.toLowerCase() == 'a') {
+      hashLocate(event.target.getAttribute('href'));
+    }
+  });
+</script>
+<div class="theme-toggle">
+  <input type="checkbox" id="theme-switch">
+  <label for="theme-switch">
+    <div class="toggle"></div>
+    <div class="names">
+      <p class="light">Light</p>
+      <p class="dark">Dark</p>
+    </div>
+  </label>
+</div>
+
+
+
+
+<script>
+  (function() {
+    var sw = document.getElementById('theme-switch');
+    var html = document.getElementsByTagName('html')[0];
+    var nightModeOption = ('auto' || 'auto').toLowerCase();
+    var storage = nightModeOption === 'manual'
+        ? localStorage
+        : sessionStorage;
+    var themeData = loadThemeData();
+
+    function saveThemeData(data) {
+      storage.setItem('theme', JSON.stringify(data));
+    }
+
+    function loadThemeData() {
+      var data = storage.getItem('theme');
+      try {
+        data = JSON.parse(data ? data : '');
+      } catch(e) {
+        data = { nightShift: undefined, autoToggleAt: 0 };
+        saveThemeData(data);
+      }
+      return data;
+    }
+
+    function handleThemeToggle(nightShift) {
+      themeData.nightShift = nightShift;
+      saveThemeData(themeData);
+      html.dataset.theme = nightShift ? 'dark' : 'light';
+      setTimeout(function() {
+        sw.checked = nightShift ? true : false;
+      }, 50);
+    }
+
+    function autoThemeToggle() {
+      // Next time point of theme toggle
+      var now = new Date();
+      var toggleAt = new Date();
+      var hours = now.getHours();
+      var nightShift = hours >= 19 || hours <=7;
+
+      if (nightShift) {
+        if (hours > 7) {
+          toggleAt.setDate(toggleAt.getDate() + 1);
+        }
+        toggleAt.setHours(7);
+      } else {
+        toggleAt.setHours(19);
+      }
+
+      toggleAt.setMinutes(0);
+      toggleAt.setSeconds(0);
+      toggleAt.setMilliseconds(0)
+
+      var delay = toggleAt.getTime() - now.getTime();
+
+      // auto toggle theme mode
+      setTimeout(function() {
+        handleThemeToggle(!nightShift);
+      }, delay);
+
+      return {
+        nightShift: nightShift,
+        toggleAt: toggleAt.getTime()
+      };
+    }
+
+    // Listen the theme toggle event
+    sw.addEventListener('change', function(event) {
+      handleThemeToggle(event.target.checked);
+    });
+
+    if (nightModeOption == 'auto') {
+      var data = autoThemeToggle();
+
+      // Toggle theme by local setting
+      if (data.toggleAt > themeData.autoToggleAt) {
+        themeData.autoToggleAt = data.toggleAt;
+        handleThemeToggle(data.nightShift);
+      } else {
+        handleThemeToggle(themeData.nightShift);
+      }
+    } else if (nightModeOption == 'manual') {
+      handleThemeToggle(themeData.nightShift);
+    } else {
+      var nightShift = themeData.nightShift;
+      if (nightShift === undefined) {
+        nightShift = nightModeOption === 'on';
+      }
+      handleThemeToggle(nightShift);
+    }
+  })();
+</script>
+<div id="click-to-top" class="click-to-top">
+  <i class="fa fa-arrow-up"></i>
+</div>
+<script>
+  (function () {
+    const clickToTop = document.getElementById('click-to-top');
+    window.addEventListener('scroll', () => {
+      if (window.scrollY > 100) {
+        clickToTop.classList.add('show')
+      }else {
+        clickToTop.classList.remove('show')
+      }
+    });
+    clickToTop.addEventListener('click', () => {
+      window.smoothScrollTo(0);
+    });
+  })();
+</script>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <div class="framework">
+  <section class="main">
+
+     <div class="post">
+  <section>
+
+
+
+
+
+
+
+
+
+<header class="post-header">
+  <h1 class="post-title p-name" itemprop="name headline">关于Redis8.0你需要知道的事情</h1>
+  <h2 class="post-subtitle">关于Redis8.0你需要知道的事情</h2>
+
+  <div class="post-meta">
+    <time class="dt-published" datetime="2025-05-15T00:00:00+08:00" itemprop="datePublished"><i class="fa fa-calendar"></i> May 15, 2025
+    </time>
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <span class="post-reading-time left-vsplit"><i class="fa fa-clock-o"></i> About 2 mins</span>
+  </div>
+<div class="post-tags"><a class="post-tag" href="/tags.html#Redis">#Redis</a></div></header>
+<article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+
+    <div class="post-content e-content" itemprop="articleBody">
+
+      <p><img src="https://github.com/wtopps/wtopps.github.io/blob/master/images/Redis8%20release.png?raw=true" alt="banner"></p>
+
+<h2 id="redis-80-is-coming">Redis 8.0 is Coming</h2>
+
+<p>近日，Redis宣布8.0版本正式发布。</p>
+
+<p>官方宣称Redis 8 是迄今为止性能最强、可扩展性最高的 Redis 版本。它拥有超过 30 项性能改进，包括命令速度提升高达 87%，每秒操作吞吐量提升高达 2 倍，复制速度提升高达 18%，以及通过 Redis 查询引擎提供高达 16 倍的查询处理能力。本次发布新增了 8 种数据结构，包括<strong>向量集合 (vector set)、JSON、时间序列</strong>以及五种概率结构，包括<strong>布隆过滤器、布谷鸟过滤器、计数最小化草图、top-k 和 t-digest</strong>（其中一些之前作为单独的 Redis 模块提供）。这些新的数据结构可以帮助用户更好地解决当前用例，并为下一代快速和实时应用构建。</p>
+
+<ul>
+  <li>布隆过滤器与布谷鸟过滤器 (<strong>Bloom</strong> filter &amp; <strong>Cuckoo</strong> filter)：用于检查给定值是否已出现在数据流中</li>
+  <li>计数最小化草图 (<strong>Count-min</strong> <strong>sketch)</strong>：用于估计给定值在数据流中出现的次数</li>
+  <li>
+<strong>top-k</strong>：查找数据流中最频繁的值</li>
+  <li>
+<strong>t-digest</strong>：用于查询数据流中哪些值的比例小于 / 大于给定值</li>
+</ul>
+
+<p>值得注意的是，Redis8.0调整了其开源协议，采用了OSI （Open Source Initiative）认证的 AGPLv3 许可证，并保留了现有的 RSALv2 和 SSPLv1 许可证选项，这一战略性的许可转变旨在重建与开源社区的信任，同时继续保护软件免受未经授权的商业利用。</p>
+
+<p>下面我们来对Redis8.0的新特效一一进行详解。</p>
+
+<p>https://redis.io/blog/redis-8-ga/</p>
+
+<h2 id="一name-change">一、Name Change</h2>
+
+<p>改名？难道不叫Redis了吗？事实并非如此，在Redis8.0中，将Redis Community Edition 和 Redis Stack 合并为一个名为 Redis Open Source的单一产品，一般来说，我们使用的Redis指的是Redis Community，如果你想要使用部布隆过滤器等特性，你需要安装额外的模块，也就是Redis Stack，两者的区别如下：</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>对比项</th>
+      <th>Redis Community Edition</th>
+      <th>Redis Stack</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>核心组件</strong></td>
+      <td>仅包含 Redis 开源数据库</td>
+      <td>Redis + 多个官方扩展模块</td>
+    </tr>
+    <tr>
+      <td><strong>包含的模块</strong></td>
+      <td>❌ 无</td>
+      <td>✅ RedisSearch（全文搜索）<br>✅ RedisJSON（JSON数据处理）<br>✅ RedisGraph（图数据库）<br>✅ RedisTimeseries（时间序列）<br>✅ RedisBloom（概率数据结构）</td>
+    </tr>
+    <tr>
+      <td><strong>许可证</strong></td>
+      <td>BSD-3（完全自由使用）</td>
+      <td>Redis Source Available License (RSAL)<br>（部分使用受限）</td>
+    </tr>
+    <tr>
+      <td><strong>适用场景</strong></td>
+      <td>纯 Redis KV 存储</td>
+      <td>增强型 Redis，支持搜索、JSON、时序、图数据</td>
+    </tr>
+    <tr>
+      <td><strong>商业支持</strong></td>
+      <td>❌ 无官方支持</td>
+      <td>❌ 无官方支持（需购买 Redis Enterprise）</td>
+    </tr>
+    <tr>
+      <td><strong>云托管</strong></td>
+      <td>✅ 可商用</td>
+      <td>❌ 禁止 SaaS 提供商托管（如 AWS Elasticache 不能直接使用）</td>
+    </tr>
+    <tr>
+      <td><strong>定位</strong></td>
+      <td>Redis 基础版</td>
+      <td>Redis “瑞士军刀” 增强版</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>Redis 8.0 将之前 Redis Stack 中的核心模块（RedisJSON, RediSearch, RedisTimeSeries, RedisBloom）整合到了 Redis Open Source 的核心中。 这意味着这些功能不再需要作为额外的模块安装，而是 Redis Open Source 的内置功能。</p>
+
+<h2 id="二new-data-structures">二、New Data Structures</h2>
+
+<h3 id="vector-sets-beta">Vector Sets (Beta)</h3>
+
+<p>Vector Sets (Beta) 是一种新的数据类型，目前处于测试阶段，专为高维向量搜索而设计，这是AI和机器学习工作负载的关键组成部分。</p>
+
+<p>Vector Sets扩展了 Sorted Sets 的概念，允许存储和查询高维向量嵌入，从而增强了 Redis 在语义搜索和推荐系统等人工智能用例中的能力。</p>
+
+<p>Vector Sets 支持使用余弦或欧几里得距离在 AI 模型中进行相似性搜索，并且设计上与 ML 框架和嵌入输出兼容，它与 Redis Query Engine 中现有的向量搜索功能相辅相成。由于 Vector Sets 仍处于测试阶段 ，其 API 或功能在未来版本中可能会发生变化。</p>
+
+<p>目前阶段，在生产环境中使用时应非常谨慎，具体的使用效果还需要社区的验证。</p>
+
+<h3 id="json">JSON</h3>
+
+<p>JSON是日常开发中再常见不过的数据结果了，在之前的版本中，对于JSON，只能将JSON作为文本存储在String或者Hash中，在业务代码中进行逻辑处理，较为繁琐，Redis 8.0新增了对JSON结构的支持，允许将 JSON 文档存储为 Redis 中的键，从而改进了传统 Redis 用例的处理方式，同时提供了使用 JSONPath 语言来检索和操作文档的命令，可以对 JSON 结构中的特定元素进行细粒度和高效的访问，并且支持对 JSON 文档的部分进行原子更新，而无需先检索整个文档。</p>
+
+<p>原生JSON的支持显著增强了 Redis 处理现代数据格式的能力，JSON格式在 Web 应用程序和 API 中非常常见。这减少了客户端的序列化/反序列化需求，从而提高了性能和开发人员体验。通过直接支持 JSON，Redis 更自然地适用于已经使用 JSON 作为主要数据交换格式的应用程序，简化了数据处理并提高了效率。</p>
+
+<p>Command Doc：https://redis.io/docs/latest/commands/json.set/</p>
+
+<h3 id="time-series">Time Series</h3>
+
+<p>提到时序数据库，你肯定第一反应会想到<em>Prometheus</em>，时序数据库目前是采集系统级监控数据的首选，Redis 8.0中也新增了时序数据结构的支持，允许非常快速地摄取和检索时间序列数据，并利用高效的压缩算法来最大限度地减少内存占用。它还支持定义压缩（下采样）规则，以实现高效的长期存储。</p>
+
+<h3 id="probabilistic-data-structures">Probabilistic Data Structures</h3>
+
+<p>除了已经提供的 HyperLogLog 之外，Redis 8 还引入了五个新的概率数据结构 。这些结构使用户能够更快地获得关于数据流和大型数据集的常见问题的答案 。它们在内存使用和处理速度方面具有显著的优势，但这是以牺牲绝对精度为代价的。新的结构包括用于检查元素是否存在的布隆过滤器和 Cuckoo 过滤器、用于估计元素频率的 Count-min sketch、用于查找最频繁元素的 Top-K 以及用于近似百分位数的 t-digest 6。</p>
+
+<p>这些概率数据结构的加入扩展了 Redis 在实时分析和数据流处理方面的能力，使得能够在资源消耗最小的情况下对大型数据集进行高效的近似查询。在不需要绝对精确的计数或成员检查的场景中，这些概率结构提供了一种高效的替代方案，允许以减少的内存开销更快地获得洞察。</p>
+
+<h2 id="significant-performance-improvements">Significant performance improvements</h2>
+
+<p>Redis 8.0宣称包含超过 30 项性能和资源利用率改进，此次发布实现了 Redis 单个新版本中最大的性能飞跃。</p>
+
+<p>与 Redis 7.2.5 相比，Redis 8 将某些命令的延迟降低了高达 87%。对 149 项测试的基准测试表明，90 个命令的运行速度更快，延迟更低，p50 延迟降低幅度从 5.4% 到 87.4% 不等。经过优化的特定命令包括 GET、EXISTS、LRANGE、HSET、XREAD、SCAN、ZADD、ZUNION、PFCOUNT 和 HSCAN。</p>
+
+<p><img src="https://redis.io/wp-content/uploads/2025/05/Redis-8.0-Blog-Post-Graph.png?&auto=webp&quality=85,75&amp;width=800" alt="performance"></p>
+
+<p>与之前的版本相比，Redis 8 的每秒操作吞吐量提高了高达 2 倍。吞吐量的显著提高增强了 Redis 处理高并发工作负载和高要求应用程序的能力。</p>
+
+<p>Redis 8.0 中新的复制机制的速度提高了高达 18%。此项改进缩短了初始同步和持续复制所需的时间，从而提高了 Redis 部署的可靠性和可用性。</p>
+
+<p>进行如此大的性能提升，核心基于新的内部架构的演进，Redis8.0中引入了一个新的 I/O 线程实现，具有读写线程，可实现更高的吞吐量，尤其是在多核环境中 。可以通过设置 io-threads 配置参数来启用此功能 。在多核英特尔 CPU 上设置为 8 时，测得的吞吐量提升范围为 37% 到 112%。新的异步 I/O 线程解决方案是事件驱动的，可以更好地并行处理客户端的读写操作，从而提高在高核心数服务器上的可扩展性。</p>
+
+<p>引入读写 I/O 线程标志着 Redis 在命令处理方面从传统的单线程模型发生了重大转变，使其能够更有效地利用现代多核架构来提高吞吐量。虽然 Redis 的单线程特性在简单性和避免锁竞争方面具有优势，但它在历史上限制了其在多核系统上的扩展能力。新的线程模型解决了这个限制。</p>
+
+<p>Redis 8.0 具有改进的复制机制，该机制更高效、更强大，并支持 AOF 偏移量。</p>
+
+<p>在复制过程中，同时启动两个复制流：一个用于传输主节点，另一个用于传输在此期间发生的更改流。这种新机制允许主节点在复制期间以更高的速率处理操作，减少了在主节点上保留更改所需的缓冲区大小，并加快了复制完成速度。</p>
+
+<p><img src="https://redis.io/wp-content/uploads/2025/05/Redis-8.0-Blog-Image.png?&auto=webp&quality=85,75&amp;width=800" alt="replica"></p>
+
+<p>根据Redis官方文档披露的测试数据，对10 GB数据集进行了完整的同步，其额外的流量为2684亿个写作操作，在复制过程中产生了25 GB的变化。有了新的复制机制，主节点可以在复制过程中以高7.5％的平均速度处理写操作。复制的时间也少18％，主节点上的峰值复制缓冲区大小降低了35％。</p>
+
+<h3 id="others">Others</h3>
+
+<p>除以上新特性之外，本次版本还有其他升级，在此简要介绍：</p>
+
+<ul>
+  <li>Query Engine 集成到核心组件，支持搜索、查询和向量工作负载的水平和垂直扩展，水平扩展支持在集群数据库中进行查询，从而允许管理具有索引的非常大的数据集，并通过扩展到更多 Redis 进程来支持更高的读写吞吐量。垂直扩展允许添加更多处理能力来提高查询吞吐量，从而实现比以前高达 16 倍的吞吐量。</li>
+  <li>增强功能的哈希命令：
+    <ul>
+      <li>HGETDEL：获取并删除哈希字段</li>
+      <li>HGETEX：获取哈希字段的值，并可选择设置过期时间</li>
+      <li>HSETEX：设置哈希字段的值并设置过期时间</li>
+    </ul>
+  </li>
+  <li>ACL增强以及安全漏洞的修复</li>
+</ul>
+
+<h2 id="ending">Ending</h2>
+
+<p>以上，就是Redis8.0的简要介绍，本文仅介绍了部分关于Redis8.0的新特性，关于更加详细的信息，还请参阅Redis官方文档。</p>
+
+<p>可以看到，Redis8.0是迄今为止最强大的Redis版本，如今的Redis已不是一个单单的缓存数据库，而是集缓存、搜索、向量、时序数据为一体的强大数据库，关于Redis8.0是实际表现，还是期待社区的更多反馈，也非常期待在生产环境早日使用Redis8.0。</p>
+
+<h3 id="references">References</h3>
+
+<p><code class="language-plaintext highlighter-rouge">[1]</code>: <em>https://redis.io/docs/latest/commands/json.set/</em></p>
+
+
+    </div>
+
+</article>
+<div class="post-nav">
+<a class="previous" href="/others/2025/04/28/Nacos%E9%85%8D%E7%BD%AE%E6%97%A0%E6%B3%95%E8%87%AA%E5%8A%A8%E5%88%B7%E6%96%B0%E9%97%AE%E9%A2%98%E6%8E%92%E6%9F%A5.html" title="Nacos配置无法自动刷新问题排查">Nacos配置无法自动刷新问题排查</a><a class="next" href="/mysql/2025/05/27/%E5%85%B3%E4%BA%8EMySQL8.4LTS%E4%BD%A0%E5%BA%94%E8%AF%A5%E7%9F%A5%E9%81%93%E7%9A%84%E4%BA%8B%E6%83%85.html" title="关于MySQL8.4LTS你应该知道的事情">关于MySQL8.4LTS你应该知道的事情</a>
+</div>
+<div class="post-related">
+      <div>Related Articles</div>
+      <ul>
+        <li class="top-post">
+          <a class="post-link" href="/redis/2024/09/25/Redis6.0-Client-Side%E7%BC%93%E5%AD%98%E6%98%AF%E4%BB%80%E4%B9%88.html" title="Redis6.0 Client-Side缓存是什么">
+            Redis6.0 Client-Side缓存是什么<span class="post-badges">
+  <span class="post-badge badge-top">TOP</span>
+  <span class="post-badge badge-new">NEW</span>
+</span>
+</a>
+        </li>
+<li class="top-post">
+          <a class="post-link" href="/java/2024/09/25/Java-ThreadPoolExecutor%E7%BA%BF%E7%A8%8B%E6%B1%A0%E6%A6%82%E8%BF%B0.html" title="Java ThreadPoolExecutor线程池概述">
+            Java ThreadPoolExecutor线程池概述<span class="post-badges">
+  <span class="post-badge badge-top">TOP</span>
+  <span class="post-badge badge-new">NEW</span>
+</span>
+</a>
+        </li>
+<li class="top-post">
+          <a class="post-link" href="/others/2025/04/28/Nacos%E9%85%8D%E7%BD%AE%E6%97%A0%E6%B3%95%E8%87%AA%E5%8A%A8%E5%88%B7%E6%96%B0%E9%97%AE%E9%A2%98%E6%8E%92%E6%9F%A5.html" title="Nacos配置无法自动刷新问题排查">
+            Nacos配置无法自动刷新问题排查<span class="post-badges">
+  <span class="post-badge badge-top">TOP</span>
+  <span class="post-badge badge-new">NEW</span>
+</span>
+</a>
+        </li>
+<li class="top-post">
+          <a class="post-link" href="/java/2025/03/26/CompletableFuture%E4%BD%A0%E9%9C%80%E8%A6%81%E7%9F%A5%E9%81%93%E7%9A%84%E4%BA%8B%E6%83%85.html" title="CompletableFuture你需要知道的事情.">
+            CompletableFuture你需要知道的事情.<span class="post-badges">
+  <span class="post-badge badge-top">TOP</span>
+  <span class="post-badge badge-new">NEW</span>
+</span>
+</a>
+        </li>
+</ul>
+    </div>
+<div class="post-comments"></div></section>
+</div>
+
+
+  </section>
+  <section class="sidebar" style="margin-left: 15px;">
+    <!-- Get sidebar items --><style type="text/css" media="screen">
+.post-menu ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+</style>
+
+<div class="post-menu">
+  <div class="post-menu-title">TOC</div>
+  <div class="post-menu-content"></div>
+</div>
+
+<script>
+  function generateContent() {
+    var menu = document.querySelector(".post-menu");
+    var menuContent =  menu.querySelector(".post-menu-content");
+    var headings = document.querySelector(".post-content").querySelectorAll("h2, h3, h4, h5, h6");
+
+    // Hide menu when no headings
+    if (headings.length === 0) {
+      return menu.style.display = "none";
+    }
+
+    // Generate post menu
+    var menuHTML = '';
+    for (var i = 0; i < headings.length; i++) {
+      var h = headings[i];
+      menuHTML += (
+        '<li class="h-' + h.tagName.toLowerCase() + '">'
+        + '<a href="#h-' + h.getAttribute('id') + '">' + h.textContent + '</a></li>');
+    }
+
+    menuContent.innerHTML = '<ul>' + menuHTML + '</ul>';
+
+    // The header element
+    var header = document.querySelector('header.site-header');
+
+    function doMenuCollapse(index, over_items) {
+      var items = menuContent.firstChild.children;
+
+      if (over_items == undefined) {
+        over_items = 20;
+      }
+
+      if (items.length < over_items) {
+        return;
+      }
+
+      var activeItem = items[index];
+      var beginItem = activeItem
+      var endItem = activeItem
+      var beginIndex = index;
+      var endIndex = index + 1;
+      while (beginIndex >= 0
+        && !items[beginIndex].classList.contains('h-h2')) {
+        beginIndex -= 1;
+      }
+      while (endIndex < items.length
+        && !items[endIndex].classList.contains('h-h2')) {
+        endIndex += 1;
+      }
+      for (var i = 0; i < beginIndex; i++) {
+        item = items[i]
+        if (!item.classList.contains('h-h2')) {
+          item.style.display = 'none';
+        }
+      }
+      for (var i = beginIndex + 1; i < endIndex; i++) {
+        item = items[i]
+        // if (!item.classList.contains('h-h2')) {
+          item.style.display = '';
+        // }
+      }
+      for (var i = endIndex; i < items.length; i++) {
+        item = items[i]
+        if (!item.classList.contains('h-h2')) {
+          item.style.display = 'none';
+        }
+      }
+    }
+
+    // Init menu collapsed
+    doMenuCollapse(-1);
+
+    // Active the menu item
+    window.addEventListener('scroll', function (event) {
+      var lastActive = menuContent.querySelector('.active');
+      var changed = true;
+      var activeIndex = -1;
+      for (var i = headings.length - 1; i >= 0; i--) {
+        var h = headings[i];
+        var headingRect = h.getBoundingClientRect();
+        var headerRect = header.getBoundingClientRect();
+        var headerTop = Math.floor(headerRect.top);
+        var headerHeight = Math.floor(headerRect.height);
+        var headerHeight = headerTop + headerHeight + 20;
+        if (headingRect.top <= headerHeight) {
+          var id = 'h-' + h.getAttribute('id');
+          var a = menuContent.querySelector('a[href="#' + id  + '"]');
+          var curActive = a.parentNode;
+          if (curActive) {
+            curActive.classList.add('active');
+            activeIndex = i;
+          }
+          if (lastActive == curActive) {
+            changed = false;
+          }
+          break;
+        }
+      }
+      if (changed) {
+        if (lastActive) {
+          lastActive.classList.remove('active');
+        }
+        doMenuCollapse(activeIndex);
+      }
+      event.preventDefault();
+    });
+  }
+  generateContent();
+</script>
+</section>
+</div>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/"></data>
+
+  <div class="wrapper">
+    <div class="site-footer-inner">
+<div>Unpublished Work <span class="copyleft">©</span> 2017-2025 GitHub User</div>
+      <div>Powered by <a title="Jekyll is a simple, blog-aware, static site
+      generator." href="https://jekyllrb.com/">Jekyll</a> &amp; <a title="Yat, yet
+      another theme." href="https://github.com/jeffreytse/jekyll-theme-yat">Yat Theme</a>.</div>
+      <div class="footer-col rss-subscribe">Subscribe <a href="/feed.xml">via RSS</a>
+</div>
+    </div>
+  </div>
+</footer>
+</body>
+</html>

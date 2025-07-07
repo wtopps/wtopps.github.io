@@ -1,0 +1,1533 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="google-translate-customization" content="108d9124921d80c3-80e20d618ff053c8-g4f02ec6f3dba68b7-c">
+<!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>CompletableFuture你需要知道的事情. | wtopps</title>
+<meta name="generator" content="Jekyll v4.3.4">
+<meta property="og:title" content="CompletableFuture你需要知道的事情.">
+<meta name="author" content="GitHub User">
+<meta property="og:locale" content="en_US">
+<meta name="description" content="Write an awesome description for your new site here. You can edit this line in _config.yml. It will appear in your document head meta (for Google search results) and in your feed.xml site description.">
+<meta property="og:description" content="Write an awesome description for your new site here. You can edit this line in _config.yml. It will appear in your document head meta (for Google search results) and in your feed.xml site description.">
+<link rel="canonical" href="http://localhost:4000/java/2025/03/26/CompletableFuture%E4%BD%A0%E9%9C%80%E8%A6%81%E7%9F%A5%E9%81%93%E7%9A%84%E4%BA%8B%E6%83%85.html">
+<meta property="og:url" content="http://localhost:4000/java/2025/03/26/CompletableFuture%E4%BD%A0%E9%9C%80%E8%A6%81%E7%9F%A5%E9%81%93%E7%9A%84%E4%BA%8B%E6%83%85.html">
+<meta property="og:site_name" content="wtopps">
+<meta property="og:type" content="article">
+<meta property="article:published_time" content="2025-03-26T00:00:00+08:00">
+<meta name="twitter:card" content="summary">
+<meta property="twitter:title" content="CompletableFuture你需要知道的事情.">
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"GitHub User"},"dateModified":"2025-03-26T00:00:00+08:00","datePublished":"2025-03-26T00:00:00+08:00","description":"Write an awesome description for your new site here. You can edit this line in _config.yml. It will appear in your document head meta (for Google search results) and in your feed.xml site description.","headline":"CompletableFuture你需要知道的事情.","mainEntityOfPage":{"@type":"WebPage","@id":"http://localhost:4000/java/2025/03/26/CompletableFuture%E4%BD%A0%E9%9C%80%E8%A6%81%E7%9F%A5%E9%81%93%E7%9A%84%E4%BA%8B%E6%83%85.html"},"url":"http://localhost:4000/java/2025/03/26/CompletableFuture%E4%BD%A0%E9%9C%80%E8%A6%81%E7%9F%A5%E9%81%93%E7%9A%84%E4%BA%8B%E6%83%85.html"}</script>
+<!-- End Jekyll SEO tag -->
+<link rel="icon" href="">
+  <link rel="canonical" href="http://localhost:4000">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/typeface-noto-sans@0.0.72/index.min.css">
+  <link rel="stylesheet" href="/assets/css/main.css">
+  <script src="/assets/js/main.js"></script><link type="application/atom+xml" rel="alternate" href="http://localhost:4000/feed.xml" title="wtopps">
+<link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/styles/default.min.css">
+<script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/highlight.min.js"></script>
+<!-- and it's easy to individually load additional languages -->
+<script charset="UTF-8" src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/languages/go.min.js" async></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<script>
+// Init highlight js
+document.addEventListener('DOMContentLoaded', function(event) {
+  var els = document.querySelectorAll('pre code')
+
+  function addLangData(block) {
+    var outer = block.parentElement.parentElement.parentElement;
+    var lang = block.getAttribute('data-lang');
+    for (var i = 0; i < outer.classList.length; i++) {
+      var cls = outer.classList[i];
+      if (cls.startsWith('language-')) {
+        lang = cls;
+        break;
+      }
+    }
+    if (!lang) {
+      cls = block.getAttribute('class');
+      lang = cls ? cls.replace('hljs ', '') : '';
+    }
+    if (lang.startsWith('language-')) {
+      lang = lang.substr(9);
+    }
+    block.setAttribute('class', 'hljs ' + lang);
+    block.parentNode.setAttribute('data-lang', lang);
+  }
+
+  function addBadge(block) {
+    var enabled = ('true' || 'true').toLowerCase();
+    if (enabled == 'true') {
+      var pre = block.parentElement;
+      pre.classList.add('badge');
+    }
+  }
+
+  function handle(block) {
+    addLangData(block);
+    addBadge(block)
+    hljs.highlightBlock(block);
+  }
+
+  for (var i = 0; i < els.length; i++) {
+    var el = els[i];
+    handle(el);
+  }
+});
+</script>
+
+<style>
+  /* code language badge */
+  pre.badge::before {
+    content: attr(data-lang);
+    color: #fff;
+    background-color: #ff4e00;
+    padding: 0 .5em;
+    border-radius: 0 2px;
+    text-transform: uppercase;
+    text-align: center;
+    min-width: 32px;
+    display: inline-block;
+    position: absolute;
+    right: 0;
+  }
+
+  /* fix wrong badge display for firefox browser */
+  code > table pre::before {
+    display: none;
+  }
+</style>
+<script src="//cdnjs.cloudflare.com/ajax/libs/photoswipe/5.3.7/umd/photoswipe-lightbox.umd.min.js" async></script>
+<script src="//cdnjs.cloudflare.com/ajax/libs/photoswipe/5.3.7/umd/photoswipe.umd.min.js" async></script>
+<link href="//cdnjs.cloudflare.com/ajax/libs/photoswipe/5.3.7/photoswipe.min.css" rel="stylesheet">
+<style>
+  .pswp .pswp__container .pswp__img {
+    background-color: white;
+  }
+</style>
+
+<script>
+  function initPhotoSwipe() {
+    let customOptions = {};
+
+    try {
+      const data = ``.replaceAll("=>", ":");
+      customOptions = JSON.parse(data);
+    } catch (e) {
+      console.info("Invalid custom photo previewer options! " + e.message);
+    }
+
+    // Define object and gallery options
+    const options = Object.assign(
+      {
+        gallery: "section.main",
+        children: "a.photo-swipe",
+        photo_scale: 2,
+        // dynamic import is not supported in UMD version
+        pswpModule: PhotoSwipe,
+      },
+      customOptions
+    );
+
+    const galleryEl = document.querySelector(options.gallery);
+    if (!galleryEl) {
+      return;
+    }
+
+    const imgEls = [];
+    const els = galleryEl.querySelectorAll("img:not(.emoji)");
+    els.forEach((el) => {
+      if (el.src.trim() == "") {
+        return;
+      }
+      if (!imgEls.includes(el)) {
+        imgEls.push(el);
+      }
+    });
+
+    if (imgEls.length === 0) {
+      return;
+    }
+
+    imgEls.forEach((imgEl) => {
+      imgEl.outerHTML = `
+      <a class="photo-swipe"
+        href="${imgEl.src}"
+        data-pswp-width="${
+          Math.max(imgEl.naturalWidth, imgEl.width) * options.photo_scale
+        }"
+        data-pswp-height="${
+          Math.max(imgEl.naturalHeight, imgEl.height) * options.photo_scale
+        }"
+        data-pswp-caption="${imgEl.getAttribute("caption") || imgEl.alt}"
+        target="_blank">
+        ${imgEl.outerHTML}
+      </a>`;
+    });
+
+    // Initialize PhotoSwipe 5
+    var lightbox = new PhotoSwipeLightbox(options);
+
+    lightbox.init();
+  }
+
+  window.addEventListener("load", initPhotoSwipe);
+</script>
+</head>
+<body>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<header class="site-header " role="banner">
+
+  <div class="wrapper">
+    <div class="site-header-inner">
+<span class="site-brand"><a class="site-brand-inner" rel="author" href="/">
+  <img class="site-favicon" title="wtopps" src="" onerror="this.style.display='none'">
+  wtopps
+</a>
+</span><nav class="site-nav">
+          <input type="checkbox" id="nav-trigger" class="nav-trigger">
+          <label for="nav-trigger">
+            <span class="menu-icon">
+              <svg viewbox="0 0 18 15" width="18px" height="15px">
+                <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"></path>
+              </svg>
+            </span>
+          </label>
+
+          <div class="trigger">
+<a class="page-link" href="/about.html">ABOUT</a><a class="page-link" href="/archives.html">ARCHIVES</a><a class="page-link" href="/categories.html">CATEGORIES</a><a class="page-link" href="/">HOME</a><a class="page-link" href="/tags.html">TAGS</a>
+
+
+
+
+
+
+
+
+
+<div class="page-link" style="display: inline;">
+
+
+
+<div id="google_translate_element" style="display: none;">
+</div>
+
+<div class="ct-language">
+  <ul class="list-unstyled ct-language-dropdown">
+    
+      <li>
+        <a href="#" class="lang-select" data-lang="en">
+          
+          <img src="https://cdn.countryflags.com/thumbs/united-states-of-america/flag-400.png" title="English">
+          
+        </a>
+      </li>
+    
+      <li>
+        <a href="#" class="lang-select" data-lang="fr">
+          
+          <img src="https://cdn.countryflags.com/thumbs/france/flag-400.png" title="French">
+          
+        </a>
+      </li>
+    
+      <li>
+        <a href="#" class="lang-select" data-lang="zh-CN">
+          
+          <img src="https://cdn.countryflags.com/thumbs/china/flag-400.png" title="Chinese(Simple)">
+          
+        </a>
+      </li>
+    
+      <li>
+        <a href="#" class="lang-select" data-lang="ja">
+          
+          <img src="https://cdn.countryflags.com/thumbs/japan/flag-400.png" title="Japanese">
+          
+        </a>
+      </li>
+    
+      <li>
+        <a href="#" class="lang-select" data-lang="ko">
+          
+          <img src="https://cdn.countryflags.com/thumbs/south-korea/flag-400.png" title="Korean">
+          
+        </a>
+      </li>
+    
+      <li>
+        <a href="#" class="lang-select" data-lang="ru">
+          
+          <img src="https://cdn.countryflags.com/thumbs/russia/flag-400.png" title="Russian">
+          
+        </a>
+      </li>
+    
+  </ul>
+</div>
+
+<script type="text/javascript">
+function googleTranslateElementInit() {
+  new google.translate.TranslateElement({
+    pageLanguage: 'en',
+    autoDisplay: false,
+    layout: google.translate.TranslateElement.InlineLayout.VERTICAL
+  }, 'google_translate_element');
+
+  // Links to cross-origin destinations are unsafe
+  var gll = document.getElementsByClassName('goog-logo-link')[0];
+  if (gll) {
+    gll.setAttribute('rel', 'noopener');
+  }
+
+  function restoreLang() {
+    var iframe = document.getElementsByClassName('goog-te-banner-frame')[0];
+    if (!iframe) return;
+
+    var innerDoc = iframe.contentDocument || iframe.contentWindow.document;
+    var restore_el = innerDoc.getElementsByTagName("button");
+
+    for (var i = 0; i < restore_el.length; i++) {
+      if (restore_el[i].id.indexOf("restore") >= 0) {
+        restore_el[i].click();
+        var close_el = innerDoc.getElementsByClassName("goog-close-link");
+        close_el[0].click();
+        return;
+      }
+    }
+  }
+
+  function triggerHtmlEvent(element, eventName) {
+    var event;
+    if (document.createEvent) {
+      event = document.createEvent('HTMLEvents');
+      event.initEvent(eventName, true, true);
+      element.dispatchEvent(event);
+    } else {
+      event = document.createEventObject();
+      event.eventType = eventName;
+      element.fireEvent('on' + event.eventType, event);
+    }
+  }
+
+  var googleCombo = document.querySelector("select.goog-te-combo");
+  var langSelect = document.querySelector('.ct-language');
+  langSelect.addEventListener('click', function(event) {
+    if (!event.target) {
+      return;
+    }
+
+    var selected = document.querySelector('.ct-language .ct-language-selected');
+    if (selected) {
+      selected.classList.remove('ct-language-selected');
+    }
+
+    var target = event.target;
+    while (target && target !== langSelect ) {
+      if (target.matches('.lang-select')) {
+        break;
+      }
+      target = target.parentElement;
+    }
+
+    if (target && target.matches('.lang-select')) {
+      var lang = target.getAttribute('data-lang');
+      if (googleCombo.value == lang) {
+        restoreLang();
+      } else {
+        target.parentElement.classList.add('ct-language-selected');
+        googleCombo.value = lang;
+        triggerHtmlEvent(googleCombo, 'change');
+      }
+    }
+
+    event.preventDefault();
+  });
+}
+</script>
+
+<script type="text/javascript" src="https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit" async></script>
+</div>
+</div>
+        </nav>
+</div>
+  </div>
+</header>
+
+<script>
+  function initHeader() {
+    var lastScrollY = getScrollPos().y;
+    var documentElement = document.documentElement;
+
+    function storeScrollData() {
+      var y = getScrollPos().y;var scrollStatus = "";
+
+      if (y <= 0) {
+        scrollStatus = "top";
+      } else if ((window.innerHeight + y) >= document.body.offsetHeight) {
+        scrollStatus = "bottom";
+      } else {
+        var isScrollDown = (y - lastScrollY > 0) ? true : false;
+        scrollStatus = isScrollDown ? "down" : "up";
+      }
+
+      lastScrollY = y;
+      documentElement.setAttribute("data-scroll-status", scrollStatus);
+    }
+
+    window.addEventListener('scroll', function(e) {
+      storeScrollData();
+    });
+
+    storeScrollData();
+  }
+  document.addEventListener('DOMContentLoaded', initHeader);
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<script>
+  function hashLocate(hashValue) {
+    hashValue = hashValue.replace(/^.*#h-/, '');
+    hashValue = decodeURIComponent(hashValue);
+    var element = document.getElementById(hashValue);
+
+    if (!element) {
+      return;
+    }
+
+    var header = document.querySelector('header.site-header');
+    var headerRect = header.getBoundingClientRect();
+    var headerTop = Math.floor(headerRect.top);
+    var headerHeight = Math.floor(headerRect.height);
+    var scrollPos = getScrollPos();
+    var offsetY = element.offsetTop - (headerTop + headerHeight + 20);
+
+    if (offsetY == scrollPos.y) {
+      return;
+    }
+
+    if (headerTop == 0  && offsetY > scrollPos.y) {
+      offsetY += headerHeight + 2;
+    } else if (headerTop < 0  && offsetY < scrollPos.y) {
+      offsetY -= headerHeight - 2;
+    }
+
+    smoothScrollTo(offsetY);
+  }
+
+  // The first event occurred
+  window.addEventListener('load', function(event) {
+    if (window.location.hash) {
+      hashLocate(window.location.hash);
+    }
+  });
+
+  // The first event occurred
+  window.addEventListener('click', function(event) {
+    if (event.target.tagName.toLowerCase() == 'a') {
+      hashLocate(event.target.getAttribute('href'));
+    }
+  });
+</script>
+<div class="theme-toggle">
+  <input type="checkbox" id="theme-switch">
+  <label for="theme-switch">
+    <div class="toggle"></div>
+    <div class="names">
+      <p class="light">Light</p>
+      <p class="dark">Dark</p>
+    </div>
+  </label>
+</div>
+
+
+
+
+<script>
+  (function() {
+    var sw = document.getElementById('theme-switch');
+    var html = document.getElementsByTagName('html')[0];
+    var nightModeOption = ('auto' || 'auto').toLowerCase();
+    var storage = nightModeOption === 'manual'
+        ? localStorage
+        : sessionStorage;
+    var themeData = loadThemeData();
+
+    function saveThemeData(data) {
+      storage.setItem('theme', JSON.stringify(data));
+    }
+
+    function loadThemeData() {
+      var data = storage.getItem('theme');
+      try {
+        data = JSON.parse(data ? data : '');
+      } catch(e) {
+        data = { nightShift: undefined, autoToggleAt: 0 };
+        saveThemeData(data);
+      }
+      return data;
+    }
+
+    function handleThemeToggle(nightShift) {
+      themeData.nightShift = nightShift;
+      saveThemeData(themeData);
+      html.dataset.theme = nightShift ? 'dark' : 'light';
+      setTimeout(function() {
+        sw.checked = nightShift ? true : false;
+      }, 50);
+    }
+
+    function autoThemeToggle() {
+      // Next time point of theme toggle
+      var now = new Date();
+      var toggleAt = new Date();
+      var hours = now.getHours();
+      var nightShift = hours >= 19 || hours <=7;
+
+      if (nightShift) {
+        if (hours > 7) {
+          toggleAt.setDate(toggleAt.getDate() + 1);
+        }
+        toggleAt.setHours(7);
+      } else {
+        toggleAt.setHours(19);
+      }
+
+      toggleAt.setMinutes(0);
+      toggleAt.setSeconds(0);
+      toggleAt.setMilliseconds(0)
+
+      var delay = toggleAt.getTime() - now.getTime();
+
+      // auto toggle theme mode
+      setTimeout(function() {
+        handleThemeToggle(!nightShift);
+      }, delay);
+
+      return {
+        nightShift: nightShift,
+        toggleAt: toggleAt.getTime()
+      };
+    }
+
+    // Listen the theme toggle event
+    sw.addEventListener('change', function(event) {
+      handleThemeToggle(event.target.checked);
+    });
+
+    if (nightModeOption == 'auto') {
+      var data = autoThemeToggle();
+
+      // Toggle theme by local setting
+      if (data.toggleAt > themeData.autoToggleAt) {
+        themeData.autoToggleAt = data.toggleAt;
+        handleThemeToggle(data.nightShift);
+      } else {
+        handleThemeToggle(themeData.nightShift);
+      }
+    } else if (nightModeOption == 'manual') {
+      handleThemeToggle(themeData.nightShift);
+    } else {
+      var nightShift = themeData.nightShift;
+      if (nightShift === undefined) {
+        nightShift = nightModeOption === 'on';
+      }
+      handleThemeToggle(nightShift);
+    }
+  })();
+</script>
+<div id="click-to-top" class="click-to-top">
+  <i class="fa fa-arrow-up"></i>
+</div>
+<script>
+  (function () {
+    const clickToTop = document.getElementById('click-to-top');
+    window.addEventListener('scroll', () => {
+      if (window.scrollY > 100) {
+        clickToTop.classList.add('show')
+      }else {
+        clickToTop.classList.remove('show')
+      }
+    });
+    clickToTop.addEventListener('click', () => {
+      window.smoothScrollTo(0);
+    });
+  })();
+</script>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <div class="framework">
+  <section class="main">
+
+     <div class="post">
+  <section>
+
+
+
+
+
+
+
+
+
+<header class="post-header">
+  <h1 class="post-title p-name" itemprop="name headline">CompletableFuture你需要知道的事情.</h1>
+  <h2 class="post-subtitle">CompletableFuture你需要知道的事情.</h2>
+
+  <div class="post-meta">
+    <time class="dt-published" datetime="2025-03-26T00:00:00+08:00" itemprop="datePublished"><i class="fa fa-calendar"></i> Mar 26, 2025
+    </time>
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <span class="post-reading-time left-vsplit"><i class="fa fa-clock-o"></i> About 14 mins</span>
+  </div>
+<div class="post-tags"><a class="post-tag" href="/tags.html#Java">#Java</a></div></header>
+<article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+
+    <div class="post-content e-content" itemprop="articleBody">
+
+      <p><img src="https://github.com/wtopps/wtopps.github.io/blob/master/images/CompletableFuture.jpeg?raw=true" alt="banner"></p>
+
+<h1 id="问题">问题</h1>
+
+<p>面试官：请使用多线程分别打印“Hello World”，当全部线程执行完成后，打印“Finish”。</p>
+
+<p><img src="https://github.com/wtopps/wtopps.github.io/blob/master/images/please%20show%20yourself.jpeg?raw=true" alt="please show yourself"></p>
+
+<p>这是一道非常经典的面试题，Java的面试中高频出现，主要考察多线程的使用和join()的应用，我们来尝试实现一下：</p>
+
+<p><img src="https://github.com/wtopps/wtopps.github.io/blob/master/images/%E9%9C%B2%E4%B8%80%E6%89%8B.jpg?raw=true" alt="露一手"></p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">public</span> <span class="kd">class</span> <span class="nc">ThreadJoinDemo</span> <span class="o">{</span>
+
+    <span class="kd">public</span> <span class="kd">static</span> <span class="kt">void</span> <span class="nf">main</span><span class="o">(</span><span class="nc">String</span><span class="o">[]</span> <span class="n">args</span><span class="o">)</span> <span class="kd">throws</span> <span class="nc">Exception</span> <span class="o">{</span>
+        <span class="nc">Thread</span> <span class="n">threadA</span> <span class="o">=</span> <span class="k">new</span> <span class="nc">MyThread</span><span class="o">();</span>
+        <span class="nc">Thread</span> <span class="n">threadB</span> <span class="o">=</span> <span class="k">new</span> <span class="nc">MyThread</span><span class="o">();</span>
+        <span class="n">threadA</span><span class="o">.</span><span class="na">setName</span><span class="o">(</span><span class="s">"threadA"</span><span class="o">);</span>
+        <span class="n">threadB</span><span class="o">.</span><span class="na">setName</span><span class="o">(</span><span class="s">"threadB"</span><span class="o">);</span>
+        <span class="n">threadA</span><span class="o">.</span><span class="na">start</span><span class="o">();</span>
+        <span class="n">threadB</span><span class="o">.</span><span class="na">start</span><span class="o">();</span>
+        <span class="n">threadA</span><span class="o">.</span><span class="na">join</span><span class="o">();</span>
+        <span class="n">threadB</span><span class="o">.</span><span class="na">join</span><span class="o">();</span>
+        <span class="nc">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">"Finish"</span><span class="o">);</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+
+<span class="kd">class</span> <span class="nc">MyThread</span> <span class="kd">extends</span> <span class="nc">Thread</span> <span class="o">{</span>
+
+    <span class="nd">@Override</span>
+    <span class="kd">public</span> <span class="kt">void</span> <span class="nf">run</span><span class="o">()</span> <span class="o">{</span>
+        <span class="nc">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">"Hello World"</span><span class="o">);</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<p>输出结果：</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Hello World
+Hello World
+Finish
+</code></pre></div></div>
+
+<p>面试官：小伙子不错，你还有没有更优雅的实现方式？</p>
+
+<p><img src="https://github.com/wtopps/wtopps.github.io/blob/master/images/%E8%BF%99%E4%B8%AA%E5%8F%AF%E4%BB%A5%E6%9C%89.png?raw=true" alt="这个可以有"></p>
+
+<h1 id="completablefuture">CompletableFuture</h1>
+
+<h2 id="一概述">一、概述</h2>
+
+<p>CompletableFuture 是 Java 8 引入的一个强大的异步编程工具，它实现了 Future 和 CompletionStage 接口，提供了丰富的异步操作和组合能力。相比传统的 Future，CompletableFuture 具有以下优势：</p>
+
+<ol>
+  <li>支持显式完成（手动设置结果）</li>
+  <li>提供丰富的回调机制</li>
+  <li>支持链式调用和组合操作</li>
+  <li>内置异常处理机制</li>
+  <li>支持多个 CompletableFuture 的组合</li>
+</ol>
+
+<p>回到上面的问题，如果使用CompletableFuture如何实现？</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nc">List</span><span class="o">&lt;</span><span class="nc">CompletableFuture</span><span class="o">&lt;</span><span class="nc">Void</span><span class="o">&gt;&gt;</span> <span class="n">futures</span> <span class="o">=</span> <span class="nc">Arrays</span><span class="o">.</span><span class="na">asList</span><span class="o">(</span>
+    <span class="nc">CompletableFuture</span><span class="o">.</span><span class="na">runAsync</span><span class="o">(()</span> <span class="o">-&gt;</span> <span class="nc">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">"Hello World"</span><span class="o">)),</span>
+    <span class="nc">CompletableFuture</span><span class="o">.</span><span class="na">runAsync</span><span class="o">(()</span> <span class="o">-&gt;</span> <span class="nc">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">"Hello World"</span><span class="o">))</span>
+<span class="o">);</span>
+<span class="nc">CompletableFuture</span><span class="o">.</span><span class="na">allOf</span><span class="o">(</span><span class="n">futures</span><span class="o">.</span><span class="na">toArray</span><span class="o">(</span><span class="k">new</span> <span class="nc">CompletableFuture</span><span class="o">[</span><span class="mi">0</span><span class="o">])).</span><span class="na">join</span><span class="o">();</span>
+<span class="nc">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">"Finish"</span><span class="o">));</span>
+</code></pre></div></div>
+
+<p><img src="https://github.com/wtopps/wtopps.github.io/blob/master/images/%E4%BC%98%E9%9B%85.gif?raw=true" alt="优雅"></p>
+
+<p>下面我们来一起了解一下CompletableFuture的细节。</p>
+
+<h2 id="二核心实现细节">二、核心实现细节</h2>
+
+<h3 id="1-基本结构">1. 基本结构</h3>
+
+<p>CompletableFuture 的核心字段包括：</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>volatile Object result;       // 结果或异常的包装
+volatile Completion stack;    // 依赖此 Future 的操作栈
+</code></pre></div></div>
+
+<h3 id="2-完成机制">2. 完成机制</h3>
+
+<p>CompletableFuture 可以通过以下方式完成：</p>
+
+<ul>
+  <li>
+<code class="language-plaintext highlighter-rouge">complete(T value)</code>：正常完成</li>
+  <li>
+<code class="language-plaintext highlighter-rouge">completeExceptionally(Throwable ex)</code>：异常完成</li>
+  <li>
+<code class="language-plaintext highlighter-rouge">cancel(boolean mayInterruptIfRunning)</code>：取消任务</li>
+</ul>
+
+<h3 id="3-依赖关系管理">3. 依赖关系管理</h3>
+
+<p>CompletableFuture 使用 <code class="language-plaintext highlighter-rouge">Completion</code> 链表来管理依赖关系。当一个 CompletableFuture 完成时，它会触发所有依赖它的操作。</p>
+
+<h3 id="4-线程池使用">4. 线程池使用</h3>
+
+<p>默认情况下，CompletableFuture 使用 <code class="language-plaintext highlighter-rouge">ForkJoinPool.commonPool()</code> 作为异步执行的线程池。可以通过提供自定义的 <code class="language-plaintext highlighter-rouge">Executor</code> 来改变这一行为。</p>
+
+<h2 id="三核心-api-和使用技巧">三、核心 API 和使用技巧</h2>
+
+<h3 id="1-创建-completablefuture">1. 创建 CompletableFuture</h3>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">// 1. 使用静态工厂方法创建已完成的 Future</span>
+<span class="nc">CompletableFuture</span><span class="o">&lt;</span><span class="nc">String</span><span class="o">&gt;</span> <span class="n">completedFuture</span> <span class="o">=</span> <span class="nc">CompletableFuture</span><span class="o">.</span><span class="na">completedFuture</span><span class="o">(</span><span class="s">"Hello"</span><span class="o">);</span>
+
+<span class="c1">// 2. 创建异步任务</span>
+<span class="nc">CompletableFuture</span><span class="o">&lt;</span><span class="nc">Void</span><span class="o">&gt;</span> <span class="n">runAsyncFuture</span> <span class="o">=</span> <span class="nc">CompletableFuture</span><span class="o">.</span><span class="na">runAsync</span><span class="o">(()</span> <span class="o">-&gt;</span> <span class="o">{</span>
+    <span class="c1">// 无返回值的异步任务</span>
+<span class="o">});</span>
+
+<span class="nc">CompletableFuture</span><span class="o">&lt;</span><span class="nc">String</span><span class="o">&gt;</span> <span class="n">supplyAsyncFuture</span> <span class="o">=</span> <span class="nc">CompletableFuture</span><span class="o">.</span><span class="na">supplyAsync</span><span class="o">(()</span> <span class="o">-&gt;</span> <span class="o">{</span>
+    <span class="c1">// 有返回值的异步任务</span>
+    <span class="k">return</span> <span class="s">"Result"</span><span class="o">;</span>
+<span class="o">});</span>
+
+<span class="c1">// 3. 使用自定义线程池</span>
+<span class="nc">ExecutorService</span> <span class="n">executor</span> <span class="o">=</span> <span class="nc">Executors</span><span class="o">.</span><span class="na">newFixedThreadPool</span><span class="o">(</span><span class="mi">10</span><span class="o">);</span>
+<span class="nc">CompletableFuture</span><span class="o">&lt;</span><span class="nc">String</span><span class="o">&gt;</span> <span class="n">customExecutorFuture</span> <span class="o">=</span> <span class="nc">CompletableFuture</span><span class="o">.</span><span class="na">supplyAsync</span><span class="o">(()</span> <span class="o">-&gt;</span> <span class="o">{</span>
+    <span class="k">return</span> <span class="s">"Result with custom executor"</span><span class="o">;</span>
+<span class="o">},</span> <span class="n">executor</span><span class="o">);</span>
+</code></pre></div></div>
+
+<h3 id="2-结果处理和转换">2. 结果处理和转换</h3>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">// thenApply - 同步转换结果</span>
+<span class="nc">CompletableFuture</span><span class="o">&lt;</span><span class="nc">String</span><span class="o">&gt;</span> <span class="n">future</span> <span class="o">=</span> <span class="nc">CompletableFuture</span><span class="o">.</span><span class="na">supplyAsync</span><span class="o">(()</span> <span class="o">-&gt;</span> <span class="s">"Hello"</span><span class="o">)</span>
+    <span class="o">.</span><span class="na">thenApply</span><span class="o">(</span><span class="n">s</span> <span class="o">-&gt;</span> <span class="n">s</span> <span class="o">+</span> <span class="s">" World"</span><span class="o">)</span>
+    <span class="o">.</span><span class="na">thenApply</span><span class="o">(</span><span class="nl">String:</span><span class="o">:</span><span class="n">toUpperCase</span><span class="o">);</span>
+
+<span class="c1">// thenApplyAsync - 异步转换结果</span>
+<span class="n">future</span><span class="o">.</span><span class="na">thenApplyAsync</span><span class="o">(</span><span class="n">s</span> <span class="o">-&gt;</span> <span class="n">s</span> <span class="o">+</span> <span class="s">"!"</span><span class="o">);</span>
+
+<span class="c1">// thenAccept - 消费结果但不返回新值</span>
+<span class="n">future</span><span class="o">.</span><span class="na">thenAccept</span><span class="o">(</span><span class="nc">System</span><span class="o">.</span><span class="na">out</span><span class="o">::</span><span class="n">println</span><span class="o">);</span>
+
+<span class="c1">// thenRun - 不消费结果，只执行操作</span>
+<span class="n">future</span><span class="o">.</span><span class="na">thenRun</span><span class="o">(()</span> <span class="o">-&gt;</span> <span class="nc">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">"Operation completed"</span><span class="o">));</span>
+</code></pre></div></div>
+
+<h3 id="3-组合多个-future">3. 组合多个 Future</h3>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">// thenCompose - 扁平化 Future</span>
+<span class="nc">CompletableFuture</span><span class="o">&lt;</span><span class="nc">String</span><span class="o">&gt;</span> <span class="n">future1</span> <span class="o">=</span> <span class="nc">CompletableFuture</span><span class="o">.</span><span class="na">supplyAsync</span><span class="o">(()</span> <span class="o">-&gt;</span> <span class="s">"Hello"</span><span class="o">);</span>
+<span class="nc">CompletableFuture</span><span class="o">&lt;</span><span class="nc">String</span><span class="o">&gt;</span> <span class="n">future2</span> <span class="o">=</span> <span class="n">future1</span><span class="o">.</span><span class="na">thenCompose</span><span class="o">(</span><span class="n">s</span> <span class="o">-&gt;</span> 
+    <span class="nc">CompletableFuture</span><span class="o">.</span><span class="na">supplyAsync</span><span class="o">(()</span> <span class="o">-&gt;</span> <span class="n">s</span> <span class="o">+</span> <span class="s">" World"</span><span class="o">));</span>
+
+<span class="c1">// thenCombine - 合并两个独立 Future 的结果</span>
+<span class="nc">CompletableFuture</span><span class="o">&lt;</span><span class="nc">String</span><span class="o">&gt;</span> <span class="n">future3</span> <span class="o">=</span> <span class="nc">CompletableFuture</span><span class="o">.</span><span class="na">supplyAsync</span><span class="o">(()</span> <span class="o">-&gt;</span> <span class="s">"Hello"</span><span class="o">);</span>
+<span class="nc">CompletableFuture</span><span class="o">&lt;</span><span class="nc">String</span><span class="o">&gt;</span> <span class="n">future4</span> <span class="o">=</span> <span class="nc">CompletableFuture</span><span class="o">.</span><span class="na">supplyAsync</span><span class="o">(()</span> <span class="o">-&gt;</span> <span class="s">"World"</span><span class="o">);</span>
+<span class="nc">CompletableFuture</span><span class="o">&lt;</span><span class="nc">String</span><span class="o">&gt;</span> <span class="n">combined</span> <span class="o">=</span> <span class="n">future3</span><span class="o">.</span><span class="na">thenCombine</span><span class="o">(</span><span class="n">future4</span><span class="o">,</span> <span class="o">(</span><span class="n">s1</span><span class="o">,</span> <span class="n">s2</span><span class="o">)</span> <span class="o">-&gt;</span> <span class="n">s1</span> <span class="o">+</span> <span class="s">" "</span> <span class="o">+</span> <span class="n">s2</span><span class="o">);</span>
+
+<span class="c1">// allOf - 等待所有 Future 完成</span>
+<span class="nc">CompletableFuture</span><span class="o">&lt;</span><span class="nc">Void</span><span class="o">&gt;</span> <span class="n">all</span> <span class="o">=</span> <span class="nc">CompletableFuture</span><span class="o">.</span><span class="na">allOf</span><span class="o">(</span><span class="n">future1</span><span class="o">,</span> <span class="n">future2</span><span class="o">,</span> <span class="n">future3</span><span class="o">);</span>
+
+<span class="c1">// anyOf - 等待任意一个 Future 完成</span>
+<span class="nc">CompletableFuture</span><span class="o">&lt;</span><span class="nc">Object</span><span class="o">&gt;</span> <span class="n">any</span> <span class="o">=</span> <span class="nc">CompletableFuture</span><span class="o">.</span><span class="na">anyOf</span><span class="o">(</span><span class="n">future1</span><span class="o">,</span> <span class="n">future2</span><span class="o">,</span> <span class="n">future3</span><span class="o">);</span>
+</code></pre></div></div>
+
+<p>关于allOf()方法，有一点需要注意，allOf()方法的注释是这样描述的：</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Returns a new CompletableFuture that is completed when all of the given CompletableFutures complete. If any of the given CompletableFutures complete exceptionally, then the returned CompletableFuture also does so, with a CompletionException holding this exception as its cause. Otherwise, the results, if any, of the given CompletableFutures are not reflected in the returned CompletableFuture, but may be obtained by inspecting them individually. If no CompletableFutures are provided, returns a CompletableFuture completed with the value null.
+</code></pre></div></div>
+
+<p>看完第一句话，可能会理解为，哦这个方法是等待所有的Future完成后，才返回结果呀，其实非也。</p>
+
+<p>这句注释需要仔细理解：</p>
+
+<p><strong>“Returns a new CompletableFuture that is completed when all of the given CompletableFutures complete”</strong></p>
+
+<p>关键在于：</p>
+
+<ol>
+  <li>“Returns a new CompletableFuture” - 立即返回一个新的Future对象</li>
+  <li>“is completed when…” - 这个新Future在所有子Future完成时才会完成</li>
+</ol>
+
+<p>可以做一个实验进行验证：</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">// 创建几个任务</span>
+<span class="nc">CompletableFuture</span><span class="o">&lt;</span><span class="nc">String</span><span class="o">&gt;</span> <span class="n">future1</span> <span class="o">=</span> <span class="nc">CompletableFuture</span><span class="o">.</span><span class="na">supplyAsync</span><span class="o">(()</span> <span class="o">-&gt;</span> <span class="o">{</span>
+    <span class="n">sleep</span><span class="o">(</span><span class="mi">1000</span><span class="o">);</span>
+    <span class="k">return</span> <span class="s">"Task 1"</span><span class="o">;</span>
+<span class="o">});</span>
+<span class="nc">CompletableFuture</span><span class="o">&lt;</span><span class="nc">String</span><span class="o">&gt;</span> <span class="n">future2</span> <span class="o">=</span> <span class="nc">CompletableFuture</span><span class="o">.</span><span class="na">supplyAsync</span><span class="o">(()</span> <span class="o">-&gt;</span> <span class="o">{</span>
+    <span class="n">sleep</span><span class="o">(</span><span class="mi">2000</span><span class="o">);</span>
+    <span class="k">return</span> <span class="s">"Task 2"</span><span class="o">;</span>
+<span class="o">});</span>
+
+<span class="c1">// allOf返回的新Future</span>
+<span class="nc">CompletableFuture</span><span class="o">&lt;</span><span class="nc">Void</span><span class="o">&gt;</span> <span class="n">allFuture</span> <span class="o">=</span> <span class="nc">CompletableFuture</span><span class="o">.</span><span class="na">allOf</span><span class="o">(</span><span class="n">future1</span><span class="o">,</span> <span class="n">future2</span><span class="o">);</span>
+<span class="c1">// 这行代码立即返回，不会等待</span>
+
+<span class="c1">// 新Future的状态</span>
+<span class="nc">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">"Is completed: "</span> <span class="o">+</span> <span class="n">allFuture</span><span class="o">.</span><span class="na">isDone</span><span class="o">());</span>  <span class="c1">// false</span>
+<span class="c1">// 等待2秒后</span>
+<span class="nc">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">"Is completed: "</span> <span class="o">+</span> <span class="n">allFuture</span><span class="o">.</span><span class="na">isDone</span><span class="o">());</span>  <span class="c1">// true</span>
+</code></pre></div></div>
+
+<p>如果你希望全部的Future执行完成之前，主线程进行阻塞等待结果，你需要这样：</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nc">CompletableFuture</span><span class="o">&lt;</span><span class="nc">Void</span><span class="o">&gt;</span> <span class="n">all</span> <span class="o">=</span> <span class="nc">CompletableFuture</span><span class="o">.</span><span class="na">allOf</span><span class="o">(</span><span class="n">future1</span><span class="o">,</span> <span class="n">future2</span><span class="o">,</span> <span class="n">future3</span><span class="o">);</span>
+<span class="n">all</span><span class="o">.</span><span class="na">join</span><span class="o">();</span>
+</code></pre></div></div>
+
+<h3 id="4-异常处理">4. 异常处理</h3>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nc">CompletableFuture</span><span class="o">.</span><span class="na">supplyAsync</span><span class="o">(()</span> <span class="o">-&gt;</span> <span class="o">{</span>
+    <span class="k">if</span> <span class="o">(</span><span class="nc">Math</span><span class="o">.</span><span class="na">random</span><span class="o">()</span> <span class="o">&gt;</span> <span class="mf">0.5</span><span class="o">)</span> <span class="o">{</span>
+        <span class="k">throw</span> <span class="k">new</span> <span class="nf">RuntimeException</span><span class="o">(</span><span class="s">"Error"</span><span class="o">);</span>
+    <span class="o">}</span>
+    <span class="k">return</span> <span class="s">"Success"</span><span class="o">;</span>
+<span class="o">})</span>
+<span class="o">.</span><span class="na">exceptionally</span><span class="o">(</span><span class="n">ex</span> <span class="o">-&gt;</span> <span class="o">{</span>
+    <span class="nc">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">"Exception: "</span> <span class="o">+</span> <span class="n">ex</span><span class="o">.</span><span class="na">getMessage</span><span class="o">());</span>
+    <span class="k">return</span> <span class="s">"Recovered"</span><span class="o">;</span>
+<span class="o">})</span>
+<span class="o">.</span><span class="na">handle</span><span class="o">((</span><span class="n">result</span><span class="o">,</span> <span class="n">ex</span><span class="o">)</span> <span class="o">-&gt;</span> <span class="o">{</span>
+    <span class="k">if</span> <span class="o">(</span><span class="n">ex</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+        <span class="k">return</span> <span class="s">"Handled error: "</span> <span class="o">+</span> <span class="n">ex</span><span class="o">.</span><span class="na">getMessage</span><span class="o">();</span>
+    <span class="o">}</span>
+    <span class="k">return</span> <span class="s">"Handled result: "</span> <span class="o">+</span> <span class="n">result</span><span class="o">;</span>
+<span class="o">});</span>
+</code></pre></div></div>
+
+<h3 id="5-完成控制">5. 完成控制</h3>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nc">CompletableFuture</span><span class="o">&lt;</span><span class="nc">String</span><span class="o">&gt;</span> <span class="n">future</span> <span class="o">=</span> <span class="k">new</span> <span class="nc">CompletableFuture</span><span class="o">&lt;&gt;();</span>
+
+<span class="c1">// 手动完成</span>
+<span class="n">future</span><span class="o">.</span><span class="na">complete</span><span class="o">(</span><span class="s">"Manual completion"</span><span class="o">);</span>
+
+<span class="c1">// 手动异常完成</span>
+<span class="n">future</span><span class="o">.</span><span class="na">completeExceptionally</span><span class="o">(</span><span class="k">new</span> <span class="nc">RuntimeException</span><span class="o">(</span><span class="s">"Failed"</span><span class="o">));</span>
+
+<span class="c1">// 超时完成</span>
+<span class="n">future</span><span class="o">.</span><span class="na">completeOnTimeout</span><span class="o">(</span><span class="s">"Default"</span><span class="o">,</span> <span class="mi">1</span><span class="o">,</span> <span class="nc">TimeUnit</span><span class="o">.</span><span class="na">SECONDS</span><span class="o">);</span>
+
+<span class="c1">// 或超时</span>
+<span class="n">future</span><span class="o">.</span><span class="na">orTimeout</span><span class="o">(</span><span class="mi">1</span><span class="o">,</span> <span class="nc">TimeUnit</span><span class="o">.</span><span class="na">SECONDS</span><span class="o">);</span>
+</code></pre></div></div>
+
+<h2 id="四高级使用技巧">四、高级使用技巧</h2>
+
+<h3 id="1-流水线模式">1. 流水线模式</h3>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nc">CompletableFuture</span><span class="o">.</span><span class="na">supplyAsync</span><span class="o">(()</span> <span class="o">-&gt;</span> <span class="n">fetchData</span><span class="o">())</span>
+    <span class="o">.</span><span class="na">thenApply</span><span class="o">(</span><span class="n">data</span> <span class="o">-&gt;</span> <span class="n">processData</span><span class="o">(</span><span class="n">data</span><span class="o">))</span>
+    <span class="o">.</span><span class="na">thenApply</span><span class="o">(</span><span class="n">processedData</span> <span class="o">-&gt;</span> <span class="n">storeData</span><span class="o">(</span><span class="n">processedData</span><span class="o">))</span>
+    <span class="o">.</span><span class="na">thenAccept</span><span class="o">(</span><span class="n">storedId</span> <span class="o">-&gt;</span> <span class="n">logSuccess</span><span class="o">(</span><span class="n">storedId</span><span class="o">))</span>
+    <span class="o">.</span><span class="na">exceptionally</span><span class="o">(</span><span class="n">ex</span> <span class="o">-&gt;</span> <span class="o">{</span>
+        <span class="n">logError</span><span class="o">(</span><span class="n">ex</span><span class="o">);</span>
+        <span class="k">return</span> <span class="kc">null</span><span class="o">;</span>
+    <span class="o">});</span>
+</code></pre></div></div>
+
+<h3 id="2-异步超时控制">2. 异步超时控制</h3>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">public</span> <span class="kd">static</span> <span class="o">&lt;</span><span class="no">T</span><span class="o">&gt;</span> <span class="nc">CompletableFuture</span><span class="o">&lt;</span><span class="no">T</span><span class="o">&gt;</span> <span class="nf">withTimeout</span><span class="o">(</span><span class="nc">CompletableFuture</span><span class="o">&lt;</span><span class="no">T</span><span class="o">&gt;</span> <span class="n">future</span><span class="o">,</span> 
+        <span class="kt">long</span> <span class="n">timeout</span><span class="o">,</span> <span class="nc">TimeUnit</span> <span class="n">unit</span><span class="o">,</span> <span class="no">T</span> <span class="n">defaultValue</span><span class="o">)</span> <span class="o">{</span>
+    <span class="k">return</span> <span class="n">future</span><span class="o">.</span><span class="na">applyToEither</span><span class="o">(</span>
+        <span class="nc">CompletableFuture</span><span class="o">.</span><span class="na">supplyAsync</span><span class="o">(()</span> <span class="o">-&gt;</span> <span class="n">defaultValue</span><span class="o">)</span>
+            <span class="o">.</span><span class="na">completeOnTimeout</span><span class="o">(</span><span class="n">defaultValue</span><span class="o">,</span> <span class="n">timeout</span><span class="o">,</span> <span class="n">unit</span><span class="o">),</span>
+        <span class="nc">Function</span><span class="o">.</span><span class="na">identity</span><span class="o">()</span>
+    <span class="o">);</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<h3 id="3-批量操作">3. 批量操作</h3>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nc">List</span><span class="o">&lt;</span><span class="nc">CompletableFuture</span><span class="o">&lt;</span><span class="nc">String</span><span class="o">&gt;&gt;</span> <span class="n">futures</span> <span class="o">=</span> <span class="n">urls</span><span class="o">.</span><span class="na">stream</span><span class="o">()</span>
+    <span class="o">.</span><span class="na">map</span><span class="o">(</span><span class="n">url</span> <span class="o">-&gt;</span> <span class="nc">CompletableFuture</span><span class="o">.</span><span class="na">supplyAsync</span><span class="o">(()</span> <span class="o">-&gt;</span> <span class="n">fetchUrl</span><span class="o">(</span><span class="n">url</span><span class="o">)))</span>
+    <span class="o">.</span><span class="na">collect</span><span class="o">(</span><span class="nc">Collectors</span><span class="o">.</span><span class="na">toList</span><span class="o">());</span>
+
+<span class="nc">CompletableFuture</span><span class="o">&lt;</span><span class="nc">Void</span><span class="o">&gt;</span> <span class="n">allDone</span> <span class="o">=</span> <span class="nc">CompletableFuture</span><span class="o">.</span><span class="na">allOf</span><span class="o">(</span><span class="n">futures</span><span class="o">.</span><span class="na">toArray</span><span class="o">(</span><span class="k">new</span> <span class="nc">CompletableFuture</span><span class="o">[</span><span class="mi">0</span><span class="o">]));</span>
+
+<span class="nc">CompletableFuture</span><span class="o">&lt;</span><span class="nc">List</span><span class="o">&lt;</span><span class="nc">String</span><span class="o">&gt;&gt;</span> <span class="n">allResults</span> <span class="o">=</span> <span class="n">allDone</span><span class="o">.</span><span class="na">thenApply</span><span class="o">(</span><span class="n">v</span> <span class="o">-&gt;</span> 
+    <span class="n">futures</span><span class="o">.</span><span class="na">stream</span><span class="o">()</span>
+        <span class="o">.</span><span class="na">map</span><span class="o">(</span><span class="nl">CompletableFuture:</span><span class="o">:</span><span class="n">join</span><span class="o">)</span>
+        <span class="o">.</span><span class="na">collect</span><span class="o">(</span><span class="nc">Collectors</span><span class="o">.</span><span class="na">toList</span><span class="o">()));</span>
+</code></pre></div></div>
+
+<h3 id="4-取消传播">4. 取消传播</h3>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nc">CompletableFuture</span><span class="o">&lt;</span><span class="nc">String</span><span class="o">&gt;</span> <span class="n">future1</span> <span class="o">=</span> <span class="nc">CompletableFuture</span><span class="o">.</span><span class="na">supplyAsync</span><span class="o">(()</span> <span class="o">-&gt;</span> <span class="o">{</span>
+    <span class="k">try</span> <span class="o">{</span>
+        <span class="nc">Thread</span><span class="o">.</span><span class="na">sleep</span><span class="o">(</span><span class="mi">1000</span><span class="o">);</span>
+        <span class="k">return</span> <span class="s">"Result"</span><span class="o">;</span>
+    <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="nc">InterruptedException</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
+        <span class="k">throw</span> <span class="k">new</span> <span class="nf">RuntimeException</span><span class="o">(</span><span class="n">e</span><span class="o">);</span>
+    <span class="o">}</span>
+<span class="o">});</span>
+
+<span class="nc">CompletableFuture</span><span class="o">&lt;</span><span class="nc">String</span><span class="o">&gt;</span> <span class="n">future2</span> <span class="o">=</span> <span class="n">future1</span><span class="o">.</span><span class="na">thenApply</span><span class="o">(</span><span class="n">s</span> <span class="o">-&gt;</span> <span class="n">s</span> <span class="o">+</span> <span class="s">" processed"</span><span class="o">);</span>
+
+<span class="c1">// 取消第一个 future 会导致依赖它的 future 也被取消</span>
+<span class="n">future1</span><span class="o">.</span><span class="na">cancel</span><span class="o">(</span><span class="kc">true</span><span class="o">);</span>
+</code></pre></div></div>
+
+<h2 id="五性能优化和注意事项">五、性能优化和注意事项</h2>
+
+<ol>
+  <li>
+<strong>线程池选择</strong>：根据任务类型选择合适的线程池
+    <ul>
+      <li>CPU密集型：使用有界线程池（如 <code class="language-plaintext highlighter-rouge">Executors.newFixedThreadPool</code>）</li>
+      <li>IO密集型：使用无界线程池（如 <code class="language-plaintext highlighter-rouge">Executors.newCachedThreadPool</code>）</li>
+    </ul>
+  </li>
+  <li>
+<strong>避免阻塞</strong>：不要在回调中进行阻塞操作</li>
+  <li>
+<strong>合理使用异步</strong>：并非所有操作都需要异步，简单的转换可以直接用同步方法</li>
+  <li>
+<strong>资源清理</strong>：长时间运行的 CompletableFuture 链可能会持有资源，需要适当清理</li>
+  <li>
+<strong>异常处理</strong>：确保所有可能的异常路径都被处理</li>
+  <li>
+<strong>避免嵌套过深</strong>：过深的 CompletableFuture 链会影响可读性</li>
+</ol>
+
+<h2 id="六常见问题解决方案">六、常见问题解决方案</h2>
+
+<h3 id="1-如何获取多个-future-的结果">1. 如何获取多个 Future 的结果？</h3>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nc">List</span><span class="o">&lt;</span><span class="nc">CompletableFuture</span><span class="o">&lt;</span><span class="nc">String</span><span class="o">&gt;&gt;</span> <span class="n">futures</span> <span class="o">=</span> <span class="o">...;</span>
+<span class="nc">CompletableFuture</span><span class="o">&lt;</span><span class="nc">Void</span><span class="o">&gt;</span> <span class="n">allFutures</span> <span class="o">=</span> <span class="nc">CompletableFuture</span><span class="o">.</span><span class="na">allOf</span><span class="o">(</span>
+    <span class="n">futures</span><span class="o">.</span><span class="na">toArray</span><span class="o">(</span><span class="k">new</span> <span class="nc">CompletableFuture</span><span class="o">[</span><span class="mi">0</span><span class="o">]));</span>
+
+<span class="nc">CompletableFuture</span><span class="o">&lt;</span><span class="nc">List</span><span class="o">&lt;</span><span class="nc">String</span><span class="o">&gt;&gt;</span> <span class="n">allResults</span> <span class="o">=</span> <span class="n">allFutures</span><span class="o">.</span><span class="na">thenApply</span><span class="o">(</span><span class="n">v</span> <span class="o">-&gt;</span>
+    <span class="n">futures</span><span class="o">.</span><span class="na">stream</span><span class="o">()</span>
+        <span class="o">.</span><span class="na">map</span><span class="o">(</span><span class="nl">CompletableFuture:</span><span class="o">:</span><span class="n">join</span><span class="o">)</span>
+        <span class="o">.</span><span class="na">collect</span><span class="o">(</span><span class="nc">Collectors</span><span class="o">.</span><span class="na">toList</span><span class="o">()));</span>
+
+
+<span class="c1">// 使用CompletableFuture并行处理图片上传</span>
+<span class="nc">List</span><span class="o">&lt;</span><span class="nc">CompletableFuture</span><span class="o">&lt;</span><span class="nc">JSONObject</span><span class="o">&gt;&gt;</span> <span class="n">futures</span> <span class="o">=</span> <span class="n">images</span><span class="o">.</span><span class="na">stream</span><span class="o">()</span>
+        <span class="o">.</span><span class="na">map</span><span class="o">(</span><span class="n">imageInfo</span> <span class="o">-&gt;</span> <span class="nc">CompletableFuture</span><span class="o">.</span><span class="na">supplyAsync</span><span class="o">(()</span> <span class="o">-&gt;</span> <span class="o">{</span>
+            <span class="k">return</span> <span class="nf">uploadCorePic</span><span class="o">();</span>
+        <span class="o">}))</span>
+        <span class="o">.</span><span class="na">collect</span><span class="o">(</span><span class="nc">Collectors</span><span class="o">.</span><span class="na">toList</span><span class="o">());</span>
+
+<span class="c1">// 等待所有图片上传完成</span>
+<span class="nc">JSONArray</span> <span class="n">picArray</span> <span class="o">=</span> <span class="k">new</span> <span class="nc">JSONArray</span><span class="o">();</span>
+<span class="nc">CompletableFuture</span><span class="o">.</span><span class="na">allOf</span><span class="o">(</span><span class="n">futures</span><span class="o">.</span><span class="na">toArray</span><span class="o">(</span><span class="k">new</span> <span class="nc">CompletableFuture</span><span class="o">[</span><span class="mi">0</span><span class="o">])).</span><span class="na">join</span><span class="o">();</span>
+<span class="n">futures</span><span class="o">.</span><span class="na">stream</span><span class="o">()</span>
+        <span class="o">.</span><span class="na">map</span><span class="o">(</span><span class="nl">CompletableFuture:</span><span class="o">:</span><span class="n">join</span><span class="o">)</span>
+        <span class="o">.</span><span class="na">filter</span><span class="o">(</span><span class="nl">Objects:</span><span class="o">:</span><span class="n">nonNull</span><span class="o">)</span>
+        <span class="o">.</span><span class="na">forEach</span><span class="o">(</span><span class="nl">picArray:</span><span class="o">:</span><span class="n">add</span><span class="o">);</span>
+</code></pre></div></div>
+
+<h3 id="2-如何实现重试机制">2. 如何实现重试机制？</h3>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">public</span> <span class="kd">static</span> <span class="o">&lt;</span><span class="no">T</span><span class="o">&gt;</span> <span class="nc">CompletableFuture</span><span class="o">&lt;</span><span class="no">T</span><span class="o">&gt;</span> <span class="nf">retry</span><span class="o">(</span><span class="nc">Supplier</span><span class="o">&lt;</span><span class="nc">CompletableFuture</span><span class="o">&lt;</span><span class="no">T</span><span class="o">&gt;&gt;</span> <span class="n">task</span><span class="o">,</span> 
+        <span class="kt">int</span> <span class="n">maxRetries</span><span class="o">,</span> <span class="kt">long</span> <span class="n">delay</span><span class="o">,</span> <span class="nc">TimeUnit</span> <span class="n">unit</span><span class="o">)</span> <span class="o">{</span>
+    <span class="nc">CompletableFuture</span><span class="o">&lt;</span><span class="no">T</span><span class="o">&gt;</span> <span class="n">future</span> <span class="o">=</span> <span class="n">task</span><span class="o">.</span><span class="na">get</span><span class="o">();</span>
+    <span class="k">for</span> <span class="o">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">maxRetries</span><span class="o">;</span> <span class="n">i</span><span class="o">++)</span> <span class="o">{</span>
+        <span class="n">future</span> <span class="o">=</span> <span class="n">future</span><span class="o">.</span><span class="na">exceptionally</span><span class="o">(</span><span class="n">ex</span> <span class="o">-&gt;</span> <span class="o">{</span>
+            <span class="k">try</span> <span class="o">{</span>
+                <span class="nc">Thread</span><span class="o">.</span><span class="na">sleep</span><span class="o">(</span><span class="n">unit</span><span class="o">.</span><span class="na">toMillis</span><span class="o">(</span><span class="n">delay</span><span class="o">));</span>
+            <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="nc">InterruptedException</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
+                <span class="nc">Thread</span><span class="o">.</span><span class="na">currentThread</span><span class="o">().</span><span class="na">interrupt</span><span class="o">();</span>
+            <span class="o">}</span>
+            <span class="k">return</span> <span class="n">task</span><span class="o">.</span><span class="na">get</span><span class="o">().</span><span class="na">join</span><span class="o">();</span>
+        <span class="o">});</span>
+    <span class="o">}</span>
+    <span class="k">return</span> <span class="n">future</span><span class="o">;</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<h3 id="3-如何实现优雅的超时回退">3. 如何实现优雅的超时回退？</h3>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">public</span> <span class="kd">static</span> <span class="o">&lt;</span><span class="no">T</span><span class="o">&gt;</span> <span class="nc">CompletableFuture</span><span class="o">&lt;</span><span class="no">T</span><span class="o">&gt;</span> <span class="nf">withFallback</span><span class="o">(</span>
+        <span class="nc">CompletableFuture</span><span class="o">&lt;</span><span class="no">T</span><span class="o">&gt;</span> <span class="n">future</span><span class="o">,</span> <span class="c1">// 原始任务</span>
+        <span class="kt">long</span> <span class="n">timeout</span><span class="o">,</span> <span class="nc">TimeUnit</span> <span class="n">unit</span><span class="o">,</span> <span class="c1">// 超时时间及其时间单位</span>
+        <span class="nc">Supplier</span><span class="o">&lt;</span><span class="no">T</span><span class="o">&gt;</span> <span class="n">fallback</span><span class="o">)</span> <span class="o">{</span>			 <span class="c1">// 降级逻辑</span>
+    <span class="kd">final</span> <span class="nc">CompletableFuture</span><span class="o">&lt;</span><span class="no">T</span><span class="o">&gt;</span> <span class="n">timeoutFuture</span> <span class="o">=</span> <span class="nc">CompletableFuture</span><span class="o">.</span><span class="na">supplyAsync</span><span class="o">(()</span> <span class="o">-&gt;</span> <span class="o">{</span>
+        <span class="k">try</span> <span class="o">{</span>
+            <span class="nc">Thread</span><span class="o">.</span><span class="na">sleep</span><span class="o">(</span><span class="n">unit</span><span class="o">.</span><span class="na">toMillis</span><span class="o">(</span><span class="n">timeout</span><span class="o">));</span>
+            <span class="k">return</span> <span class="n">fallback</span><span class="o">.</span><span class="na">get</span><span class="o">();</span>
+        <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="nc">InterruptedException</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
+            <span class="nc">Thread</span><span class="o">.</span><span class="na">currentThread</span><span class="o">().</span><span class="na">interrupt</span><span class="o">();</span>
+            <span class="k">return</span> <span class="n">fallback</span><span class="o">.</span><span class="na">get</span><span class="o">();</span>
+        <span class="o">}</span>
+    <span class="o">});</span>
+    <span class="k">return</span> <span class="n">future</span><span class="o">.</span><span class="na">applyToEither</span><span class="o">(</span><span class="n">timeoutFuture</span><span class="o">,</span> <span class="nc">Function</span><span class="o">.</span><span class="na">identity</span><span class="o">());</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<p>使用示例：</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">// 创建一个可能耗时的任务</span>
+<span class="nc">CompletableFuture</span><span class="o">&lt;</span><span class="nc">String</span><span class="o">&gt;</span> <span class="n">future</span> <span class="o">=</span> <span class="nc">CompletableFuture</span><span class="o">.</span><span class="na">supplyAsync</span><span class="o">(()</span> <span class="o">-&gt;</span> <span class="o">{</span>
+    <span class="k">try</span> <span class="o">{</span>
+        <span class="nc">Thread</span><span class="o">.</span><span class="na">sleep</span><span class="o">(</span><span class="mi">5000</span><span class="o">);</span>  <span class="c1">// 模拟耗时操作</span>
+        <span class="k">return</span> <span class="s">"任务正常完成"</span><span class="o">;</span>
+    <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="nc">InterruptedException</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
+        <span class="k">return</span> <span class="s">"被中断"</span><span class="o">;</span>
+    <span class="o">}</span>
+<span class="o">});</span>
+
+<span class="c1">// 使用withFallback添加3秒超时</span>
+<span class="nc">CompletableFuture</span><span class="o">&lt;</span><span class="nc">String</span><span class="o">&gt;</span> <span class="n">withTimeout</span> <span class="o">=</span> <span class="n">withFallback</span><span class="o">(</span>
+    <span class="n">future</span><span class="o">,</span>
+    <span class="mi">3</span><span class="o">,</span> <span class="nc">TimeUnit</span><span class="o">.</span><span class="na">SECONDS</span><span class="o">,</span>
+    <span class="o">()</span> <span class="o">-&gt;</span> <span class="s">"任务超时，返回降级结果"</span>
+<span class="o">);</span>
+
+<span class="c1">// 获取结果</span>
+<span class="nc">String</span> <span class="n">result</span> <span class="o">=</span> <span class="n">withTimeout</span><span class="o">.</span><span class="na">join</span><span class="o">();</span>
+<span class="nc">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="n">result</span><span class="o">);</span>  <span class="c1">// 会打印"任务超时，返回降级结果"</span>
+
+</code></pre></div></div>
+
+<p>执行示意图：</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>原始任务 future     ----5秒-----&gt; "任务正常完成"
+                            \
+                             \-- 采用先完成的结果
+                            /
+超时任务 timeoutFuture ----3秒-----&gt; "降级结果"
+</code></pre></div></div>
+
+<h2 id="七总结">七、总结</h2>
+
+<p>CompletableFuture 是 Java 异步编程的强大工具，通过合理使用可以构建高效、清晰的异步代码。掌握其核心概念、API 和最佳实践，可以帮助开发者编写更健壮、更易维护的并发应用程序。在实际使用中，应根据具体场景选择合适的组合方式，并注意资源管理和异常处理。</p>
+
+
+    </div>
+
+</article>
+<div class="post-nav">
+<a class="previous" href="/mysql/2025/03/17/SQL%E5%B0%8F%E8%8F%9C%E4%B9%8BTOP-N%E6%9F%A5%E6%89%BE%E9%97%AE%E9%A2%98.html" title="SQL小菜之TOP N查找问题.">SQL小菜之TOP N查找问题.</a><a class="next" href="/redis/2025/04/17/%E5%85%B3%E4%BA%8EValkey%E4%BD%A0%E9%9C%80%E8%A6%81%E7%9F%A5%E9%81%93%E7%9A%84%E4%BA%8B%E6%83%85.html" title="关于Valkey你需要知道的事情">关于Valkey你需要知道的事情</a>
+</div>
+<div class="post-related">
+      <div>Related Articles</div>
+      <ul>
+        <li class="top-post">
+          <a class="post-link" href="/redis/2025/04/17/%E5%85%B3%E4%BA%8EValkey%E4%BD%A0%E9%9C%80%E8%A6%81%E7%9F%A5%E9%81%93%E7%9A%84%E4%BA%8B%E6%83%85.html" title="关于Valkey你需要知道的事情">
+            关于Valkey你需要知道的事情<span class="post-badges">
+  <span class="post-badge badge-top">TOP</span>
+  <span class="post-badge badge-new">NEW</span>
+</span>
+</a>
+        </li>
+<li class="top-post">
+          <a class="post-link" href="/kafka/2025/07/07/%E5%85%B3%E4%BA%8EKafka%E5%88%86%E5%B1%82%E5%AD%98%E5%82%A8%E4%BD%A0%E5%BA%94%E8%AF%A5%E7%9F%A5%E9%81%93%E7%9A%84%E4%BA%8B%E6%83%85.html" title="关于Kafka分层存储你应该知道的事情">
+            关于Kafka分层存储你应该知道的事情<span class="post-badges">
+  <span class="post-badge badge-top">TOP</span>
+  <span class="post-badge badge-new">NEW</span>
+</span>
+</a>
+        </li>
+<li class="top-post">
+          <a class="post-link" href="/redis/2024/09/25/Redis6.0-Client-Side%E7%BC%93%E5%AD%98%E6%98%AF%E4%BB%80%E4%B9%88.html" title="Redis6.0 Client-Side缓存是什么">
+            Redis6.0 Client-Side缓存是什么<span class="post-badges">
+  <span class="post-badge badge-top">TOP</span>
+  <span class="post-badge badge-new">NEW</span>
+</span>
+</a>
+        </li>
+<li class="top-post">
+          <a class="post-link" href="/mysql/2024/09/25/MySQL%E4%B8%BA%E4%BB%80%E4%B9%88%E6%9C%89%E4%BA%86redolog%E8%BF%98%E9%9C%80%E8%A6%81double-write-buffer.html" title="MySQL为什么有了redolog还需要double write buffer">
+            MySQL为什么有了redolog还需要double write buffer<span class="post-badges">
+  <span class="post-badge badge-top">TOP</span>
+  <span class="post-badge badge-new">NEW</span>
+</span>
+</a>
+        </li>
+</ul>
+    </div>
+<div class="post-comments"></div></section>
+</div>
+
+
+  </section>
+  <section class="sidebar" style="margin-left: 15px;">
+    <!-- Get sidebar items --><style type="text/css" media="screen">
+.post-menu ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+</style>
+
+<div class="post-menu">
+  <div class="post-menu-title">TOC</div>
+  <div class="post-menu-content"></div>
+</div>
+
+<script>
+  function generateContent() {
+    var menu = document.querySelector(".post-menu");
+    var menuContent =  menu.querySelector(".post-menu-content");
+    var headings = document.querySelector(".post-content").querySelectorAll("h2, h3, h4, h5, h6");
+
+    // Hide menu when no headings
+    if (headings.length === 0) {
+      return menu.style.display = "none";
+    }
+
+    // Generate post menu
+    var menuHTML = '';
+    for (var i = 0; i < headings.length; i++) {
+      var h = headings[i];
+      menuHTML += (
+        '<li class="h-' + h.tagName.toLowerCase() + '">'
+        + '<a href="#h-' + h.getAttribute('id') + '">' + h.textContent + '</a></li>');
+    }
+
+    menuContent.innerHTML = '<ul>' + menuHTML + '</ul>';
+
+    // The header element
+    var header = document.querySelector('header.site-header');
+
+    function doMenuCollapse(index, over_items) {
+      var items = menuContent.firstChild.children;
+
+      if (over_items == undefined) {
+        over_items = 20;
+      }
+
+      if (items.length < over_items) {
+        return;
+      }
+
+      var activeItem = items[index];
+      var beginItem = activeItem
+      var endItem = activeItem
+      var beginIndex = index;
+      var endIndex = index + 1;
+      while (beginIndex >= 0
+        && !items[beginIndex].classList.contains('h-h2')) {
+        beginIndex -= 1;
+      }
+      while (endIndex < items.length
+        && !items[endIndex].classList.contains('h-h2')) {
+        endIndex += 1;
+      }
+      for (var i = 0; i < beginIndex; i++) {
+        item = items[i]
+        if (!item.classList.contains('h-h2')) {
+          item.style.display = 'none';
+        }
+      }
+      for (var i = beginIndex + 1; i < endIndex; i++) {
+        item = items[i]
+        // if (!item.classList.contains('h-h2')) {
+          item.style.display = '';
+        // }
+      }
+      for (var i = endIndex; i < items.length; i++) {
+        item = items[i]
+        if (!item.classList.contains('h-h2')) {
+          item.style.display = 'none';
+        }
+      }
+    }
+
+    // Init menu collapsed
+    doMenuCollapse(-1);
+
+    // Active the menu item
+    window.addEventListener('scroll', function (event) {
+      var lastActive = menuContent.querySelector('.active');
+      var changed = true;
+      var activeIndex = -1;
+      for (var i = headings.length - 1; i >= 0; i--) {
+        var h = headings[i];
+        var headingRect = h.getBoundingClientRect();
+        var headerRect = header.getBoundingClientRect();
+        var headerTop = Math.floor(headerRect.top);
+        var headerHeight = Math.floor(headerRect.height);
+        var headerHeight = headerTop + headerHeight + 20;
+        if (headingRect.top <= headerHeight) {
+          var id = 'h-' + h.getAttribute('id');
+          var a = menuContent.querySelector('a[href="#' + id  + '"]');
+          var curActive = a.parentNode;
+          if (curActive) {
+            curActive.classList.add('active');
+            activeIndex = i;
+          }
+          if (lastActive == curActive) {
+            changed = false;
+          }
+          break;
+        }
+      }
+      if (changed) {
+        if (lastActive) {
+          lastActive.classList.remove('active');
+        }
+        doMenuCollapse(activeIndex);
+      }
+      event.preventDefault();
+    });
+  }
+  generateContent();
+</script>
+</section>
+</div>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/"></data>
+
+  <div class="wrapper">
+    <div class="site-footer-inner">
+<div>Unpublished Work <span class="copyleft">©</span> 2017-2025 GitHub User</div>
+      <div>Powered by <a title="Jekyll is a simple, blog-aware, static site
+      generator." href="https://jekyllrb.com/">Jekyll</a> &amp; <a title="Yat, yet
+      another theme." href="https://github.com/jeffreytse/jekyll-theme-yat">Yat Theme</a>.</div>
+      <div class="footer-col rss-subscribe">Subscribe <a href="/feed.xml">via RSS</a>
+</div>
+    </div>
+  </div>
+</footer>
+</body>
+</html>

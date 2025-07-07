@@ -1,0 +1,1334 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="google-translate-customization" content="108d9124921d80c3-80e20d618ff053c8-g4f02ec6f3dba68b7-c">
+<!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>关于Kafka分层存储你应该知道的事情 | wtopps</title>
+<meta name="generator" content="Jekyll v4.3.4">
+<meta property="og:title" content="关于Kafka分层存储你应该知道的事情">
+<meta name="author" content="GitHub User">
+<meta property="og:locale" content="en_US">
+<meta name="description" content="Write an awesome description for your new site here. You can edit this line in _config.yml. It will appear in your document head meta (for Google search results) and in your feed.xml site description.">
+<meta property="og:description" content="Write an awesome description for your new site here. You can edit this line in _config.yml. It will appear in your document head meta (for Google search results) and in your feed.xml site description.">
+<link rel="canonical" href="http://localhost:4000/kafka/2025/07/07/%E5%85%B3%E4%BA%8EKafka%E5%88%86%E5%B1%82%E5%AD%98%E5%82%A8%E4%BD%A0%E5%BA%94%E8%AF%A5%E7%9F%A5%E9%81%93%E7%9A%84%E4%BA%8B%E6%83%85.html">
+<meta property="og:url" content="http://localhost:4000/kafka/2025/07/07/%E5%85%B3%E4%BA%8EKafka%E5%88%86%E5%B1%82%E5%AD%98%E5%82%A8%E4%BD%A0%E5%BA%94%E8%AF%A5%E7%9F%A5%E9%81%93%E7%9A%84%E4%BA%8B%E6%83%85.html">
+<meta property="og:site_name" content="wtopps">
+<meta property="og:type" content="article">
+<meta property="article:published_time" content="2025-07-07T00:00:00+08:00">
+<meta name="twitter:card" content="summary">
+<meta property="twitter:title" content="关于Kafka分层存储你应该知道的事情">
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"GitHub User"},"dateModified":"2025-07-07T00:00:00+08:00","datePublished":"2025-07-07T00:00:00+08:00","description":"Write an awesome description for your new site here. You can edit this line in _config.yml. It will appear in your document head meta (for Google search results) and in your feed.xml site description.","headline":"关于Kafka分层存储你应该知道的事情","mainEntityOfPage":{"@type":"WebPage","@id":"http://localhost:4000/kafka/2025/07/07/%E5%85%B3%E4%BA%8EKafka%E5%88%86%E5%B1%82%E5%AD%98%E5%82%A8%E4%BD%A0%E5%BA%94%E8%AF%A5%E7%9F%A5%E9%81%93%E7%9A%84%E4%BA%8B%E6%83%85.html"},"url":"http://localhost:4000/kafka/2025/07/07/%E5%85%B3%E4%BA%8EKafka%E5%88%86%E5%B1%82%E5%AD%98%E5%82%A8%E4%BD%A0%E5%BA%94%E8%AF%A5%E7%9F%A5%E9%81%93%E7%9A%84%E4%BA%8B%E6%83%85.html"}</script>
+<!-- End Jekyll SEO tag -->
+<link rel="icon" href="">
+  <link rel="canonical" href="http://localhost:4000">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/typeface-noto-sans@0.0.72/index.min.css">
+  <link rel="stylesheet" href="/assets/css/main.css">
+  <script src="/assets/js/main.js"></script><link type="application/atom+xml" rel="alternate" href="http://localhost:4000/feed.xml" title="wtopps">
+<link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/styles/default.min.css">
+<script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/highlight.min.js"></script>
+<!-- and it's easy to individually load additional languages -->
+<script charset="UTF-8" src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/languages/go.min.js" async></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<script>
+// Init highlight js
+document.addEventListener('DOMContentLoaded', function(event) {
+  var els = document.querySelectorAll('pre code')
+
+  function addLangData(block) {
+    var outer = block.parentElement.parentElement.parentElement;
+    var lang = block.getAttribute('data-lang');
+    for (var i = 0; i < outer.classList.length; i++) {
+      var cls = outer.classList[i];
+      if (cls.startsWith('language-')) {
+        lang = cls;
+        break;
+      }
+    }
+    if (!lang) {
+      cls = block.getAttribute('class');
+      lang = cls ? cls.replace('hljs ', '') : '';
+    }
+    if (lang.startsWith('language-')) {
+      lang = lang.substr(9);
+    }
+    block.setAttribute('class', 'hljs ' + lang);
+    block.parentNode.setAttribute('data-lang', lang);
+  }
+
+  function addBadge(block) {
+    var enabled = ('true' || 'true').toLowerCase();
+    if (enabled == 'true') {
+      var pre = block.parentElement;
+      pre.classList.add('badge');
+    }
+  }
+
+  function handle(block) {
+    addLangData(block);
+    addBadge(block)
+    hljs.highlightBlock(block);
+  }
+
+  for (var i = 0; i < els.length; i++) {
+    var el = els[i];
+    handle(el);
+  }
+});
+</script>
+
+<style>
+  /* code language badge */
+  pre.badge::before {
+    content: attr(data-lang);
+    color: #fff;
+    background-color: #ff4e00;
+    padding: 0 .5em;
+    border-radius: 0 2px;
+    text-transform: uppercase;
+    text-align: center;
+    min-width: 32px;
+    display: inline-block;
+    position: absolute;
+    right: 0;
+  }
+
+  /* fix wrong badge display for firefox browser */
+  code > table pre::before {
+    display: none;
+  }
+</style>
+<script src="//cdnjs.cloudflare.com/ajax/libs/photoswipe/5.3.7/umd/photoswipe-lightbox.umd.min.js" async></script>
+<script src="//cdnjs.cloudflare.com/ajax/libs/photoswipe/5.3.7/umd/photoswipe.umd.min.js" async></script>
+<link href="//cdnjs.cloudflare.com/ajax/libs/photoswipe/5.3.7/photoswipe.min.css" rel="stylesheet">
+<style>
+  .pswp .pswp__container .pswp__img {
+    background-color: white;
+  }
+</style>
+
+<script>
+  function initPhotoSwipe() {
+    let customOptions = {};
+
+    try {
+      const data = ``.replaceAll("=>", ":");
+      customOptions = JSON.parse(data);
+    } catch (e) {
+      console.info("Invalid custom photo previewer options! " + e.message);
+    }
+
+    // Define object and gallery options
+    const options = Object.assign(
+      {
+        gallery: "section.main",
+        children: "a.photo-swipe",
+        photo_scale: 2,
+        // dynamic import is not supported in UMD version
+        pswpModule: PhotoSwipe,
+      },
+      customOptions
+    );
+
+    const galleryEl = document.querySelector(options.gallery);
+    if (!galleryEl) {
+      return;
+    }
+
+    const imgEls = [];
+    const els = galleryEl.querySelectorAll("img:not(.emoji)");
+    els.forEach((el) => {
+      if (el.src.trim() == "") {
+        return;
+      }
+      if (!imgEls.includes(el)) {
+        imgEls.push(el);
+      }
+    });
+
+    if (imgEls.length === 0) {
+      return;
+    }
+
+    imgEls.forEach((imgEl) => {
+      imgEl.outerHTML = `
+      <a class="photo-swipe"
+        href="${imgEl.src}"
+        data-pswp-width="${
+          Math.max(imgEl.naturalWidth, imgEl.width) * options.photo_scale
+        }"
+        data-pswp-height="${
+          Math.max(imgEl.naturalHeight, imgEl.height) * options.photo_scale
+        }"
+        data-pswp-caption="${imgEl.getAttribute("caption") || imgEl.alt}"
+        target="_blank">
+        ${imgEl.outerHTML}
+      </a>`;
+    });
+
+    // Initialize PhotoSwipe 5
+    var lightbox = new PhotoSwipeLightbox(options);
+
+    lightbox.init();
+  }
+
+  window.addEventListener("load", initPhotoSwipe);
+</script>
+</head>
+<body>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<header class="site-header " role="banner">
+
+  <div class="wrapper">
+    <div class="site-header-inner">
+<span class="site-brand"><a class="site-brand-inner" rel="author" href="/">
+  <img class="site-favicon" title="wtopps" src="" onerror="this.style.display='none'">
+  wtopps
+</a>
+</span><nav class="site-nav">
+          <input type="checkbox" id="nav-trigger" class="nav-trigger">
+          <label for="nav-trigger">
+            <span class="menu-icon">
+              <svg viewbox="0 0 18 15" width="18px" height="15px">
+                <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"></path>
+              </svg>
+            </span>
+          </label>
+
+          <div class="trigger">
+<a class="page-link" href="/about.html">ABOUT</a><a class="page-link" href="/archives.html">ARCHIVES</a><a class="page-link" href="/categories.html">CATEGORIES</a><a class="page-link" href="/">HOME</a><a class="page-link" href="/tags.html">TAGS</a>
+
+
+
+
+
+
+
+
+
+<div class="page-link" style="display: inline;">
+
+
+
+<div id="google_translate_element" style="display: none;">
+</div>
+
+<div class="ct-language">
+  <ul class="list-unstyled ct-language-dropdown">
+    
+      <li>
+        <a href="#" class="lang-select" data-lang="en">
+          
+          <img src="https://cdn.countryflags.com/thumbs/united-states-of-america/flag-400.png" title="English">
+          
+        </a>
+      </li>
+    
+      <li>
+        <a href="#" class="lang-select" data-lang="fr">
+          
+          <img src="https://cdn.countryflags.com/thumbs/france/flag-400.png" title="French">
+          
+        </a>
+      </li>
+    
+      <li>
+        <a href="#" class="lang-select" data-lang="zh-CN">
+          
+          <img src="https://cdn.countryflags.com/thumbs/china/flag-400.png" title="Chinese(Simple)">
+          
+        </a>
+      </li>
+    
+      <li>
+        <a href="#" class="lang-select" data-lang="ja">
+          
+          <img src="https://cdn.countryflags.com/thumbs/japan/flag-400.png" title="Japanese">
+          
+        </a>
+      </li>
+    
+      <li>
+        <a href="#" class="lang-select" data-lang="ko">
+          
+          <img src="https://cdn.countryflags.com/thumbs/south-korea/flag-400.png" title="Korean">
+          
+        </a>
+      </li>
+    
+      <li>
+        <a href="#" class="lang-select" data-lang="ru">
+          
+          <img src="https://cdn.countryflags.com/thumbs/russia/flag-400.png" title="Russian">
+          
+        </a>
+      </li>
+    
+  </ul>
+</div>
+
+<script type="text/javascript">
+function googleTranslateElementInit() {
+  new google.translate.TranslateElement({
+    pageLanguage: 'en',
+    autoDisplay: false,
+    layout: google.translate.TranslateElement.InlineLayout.VERTICAL
+  }, 'google_translate_element');
+
+  // Links to cross-origin destinations are unsafe
+  var gll = document.getElementsByClassName('goog-logo-link')[0];
+  if (gll) {
+    gll.setAttribute('rel', 'noopener');
+  }
+
+  function restoreLang() {
+    var iframe = document.getElementsByClassName('goog-te-banner-frame')[0];
+    if (!iframe) return;
+
+    var innerDoc = iframe.contentDocument || iframe.contentWindow.document;
+    var restore_el = innerDoc.getElementsByTagName("button");
+
+    for (var i = 0; i < restore_el.length; i++) {
+      if (restore_el[i].id.indexOf("restore") >= 0) {
+        restore_el[i].click();
+        var close_el = innerDoc.getElementsByClassName("goog-close-link");
+        close_el[0].click();
+        return;
+      }
+    }
+  }
+
+  function triggerHtmlEvent(element, eventName) {
+    var event;
+    if (document.createEvent) {
+      event = document.createEvent('HTMLEvents');
+      event.initEvent(eventName, true, true);
+      element.dispatchEvent(event);
+    } else {
+      event = document.createEventObject();
+      event.eventType = eventName;
+      element.fireEvent('on' + event.eventType, event);
+    }
+  }
+
+  var googleCombo = document.querySelector("select.goog-te-combo");
+  var langSelect = document.querySelector('.ct-language');
+  langSelect.addEventListener('click', function(event) {
+    if (!event.target) {
+      return;
+    }
+
+    var selected = document.querySelector('.ct-language .ct-language-selected');
+    if (selected) {
+      selected.classList.remove('ct-language-selected');
+    }
+
+    var target = event.target;
+    while (target && target !== langSelect ) {
+      if (target.matches('.lang-select')) {
+        break;
+      }
+      target = target.parentElement;
+    }
+
+    if (target && target.matches('.lang-select')) {
+      var lang = target.getAttribute('data-lang');
+      if (googleCombo.value == lang) {
+        restoreLang();
+      } else {
+        target.parentElement.classList.add('ct-language-selected');
+        googleCombo.value = lang;
+        triggerHtmlEvent(googleCombo, 'change');
+      }
+    }
+
+    event.preventDefault();
+  });
+}
+</script>
+
+<script type="text/javascript" src="https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit" async></script>
+</div>
+</div>
+        </nav>
+</div>
+  </div>
+</header>
+
+<script>
+  function initHeader() {
+    var lastScrollY = getScrollPos().y;
+    var documentElement = document.documentElement;
+
+    function storeScrollData() {
+      var y = getScrollPos().y;var scrollStatus = "";
+
+      if (y <= 0) {
+        scrollStatus = "top";
+      } else if ((window.innerHeight + y) >= document.body.offsetHeight) {
+        scrollStatus = "bottom";
+      } else {
+        var isScrollDown = (y - lastScrollY > 0) ? true : false;
+        scrollStatus = isScrollDown ? "down" : "up";
+      }
+
+      lastScrollY = y;
+      documentElement.setAttribute("data-scroll-status", scrollStatus);
+    }
+
+    window.addEventListener('scroll', function(e) {
+      storeScrollData();
+    });
+
+    storeScrollData();
+  }
+  document.addEventListener('DOMContentLoaded', initHeader);
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<script>
+  function hashLocate(hashValue) {
+    hashValue = hashValue.replace(/^.*#h-/, '');
+    hashValue = decodeURIComponent(hashValue);
+    var element = document.getElementById(hashValue);
+
+    if (!element) {
+      return;
+    }
+
+    var header = document.querySelector('header.site-header');
+    var headerRect = header.getBoundingClientRect();
+    var headerTop = Math.floor(headerRect.top);
+    var headerHeight = Math.floor(headerRect.height);
+    var scrollPos = getScrollPos();
+    var offsetY = element.offsetTop - (headerTop + headerHeight + 20);
+
+    if (offsetY == scrollPos.y) {
+      return;
+    }
+
+    if (headerTop == 0  && offsetY > scrollPos.y) {
+      offsetY += headerHeight + 2;
+    } else if (headerTop < 0  && offsetY < scrollPos.y) {
+      offsetY -= headerHeight - 2;
+    }
+
+    smoothScrollTo(offsetY);
+  }
+
+  // The first event occurred
+  window.addEventListener('load', function(event) {
+    if (window.location.hash) {
+      hashLocate(window.location.hash);
+    }
+  });
+
+  // The first event occurred
+  window.addEventListener('click', function(event) {
+    if (event.target.tagName.toLowerCase() == 'a') {
+      hashLocate(event.target.getAttribute('href'));
+    }
+  });
+</script>
+<div class="theme-toggle">
+  <input type="checkbox" id="theme-switch">
+  <label for="theme-switch">
+    <div class="toggle"></div>
+    <div class="names">
+      <p class="light">Light</p>
+      <p class="dark">Dark</p>
+    </div>
+  </label>
+</div>
+
+
+
+
+<script>
+  (function() {
+    var sw = document.getElementById('theme-switch');
+    var html = document.getElementsByTagName('html')[0];
+    var nightModeOption = ('auto' || 'auto').toLowerCase();
+    var storage = nightModeOption === 'manual'
+        ? localStorage
+        : sessionStorage;
+    var themeData = loadThemeData();
+
+    function saveThemeData(data) {
+      storage.setItem('theme', JSON.stringify(data));
+    }
+
+    function loadThemeData() {
+      var data = storage.getItem('theme');
+      try {
+        data = JSON.parse(data ? data : '');
+      } catch(e) {
+        data = { nightShift: undefined, autoToggleAt: 0 };
+        saveThemeData(data);
+      }
+      return data;
+    }
+
+    function handleThemeToggle(nightShift) {
+      themeData.nightShift = nightShift;
+      saveThemeData(themeData);
+      html.dataset.theme = nightShift ? 'dark' : 'light';
+      setTimeout(function() {
+        sw.checked = nightShift ? true : false;
+      }, 50);
+    }
+
+    function autoThemeToggle() {
+      // Next time point of theme toggle
+      var now = new Date();
+      var toggleAt = new Date();
+      var hours = now.getHours();
+      var nightShift = hours >= 19 || hours <=7;
+
+      if (nightShift) {
+        if (hours > 7) {
+          toggleAt.setDate(toggleAt.getDate() + 1);
+        }
+        toggleAt.setHours(7);
+      } else {
+        toggleAt.setHours(19);
+      }
+
+      toggleAt.setMinutes(0);
+      toggleAt.setSeconds(0);
+      toggleAt.setMilliseconds(0)
+
+      var delay = toggleAt.getTime() - now.getTime();
+
+      // auto toggle theme mode
+      setTimeout(function() {
+        handleThemeToggle(!nightShift);
+      }, delay);
+
+      return {
+        nightShift: nightShift,
+        toggleAt: toggleAt.getTime()
+      };
+    }
+
+    // Listen the theme toggle event
+    sw.addEventListener('change', function(event) {
+      handleThemeToggle(event.target.checked);
+    });
+
+    if (nightModeOption == 'auto') {
+      var data = autoThemeToggle();
+
+      // Toggle theme by local setting
+      if (data.toggleAt > themeData.autoToggleAt) {
+        themeData.autoToggleAt = data.toggleAt;
+        handleThemeToggle(data.nightShift);
+      } else {
+        handleThemeToggle(themeData.nightShift);
+      }
+    } else if (nightModeOption == 'manual') {
+      handleThemeToggle(themeData.nightShift);
+    } else {
+      var nightShift = themeData.nightShift;
+      if (nightShift === undefined) {
+        nightShift = nightModeOption === 'on';
+      }
+      handleThemeToggle(nightShift);
+    }
+  })();
+</script>
+<div id="click-to-top" class="click-to-top">
+  <i class="fa fa-arrow-up"></i>
+</div>
+<script>
+  (function () {
+    const clickToTop = document.getElementById('click-to-top');
+    window.addEventListener('scroll', () => {
+      if (window.scrollY > 100) {
+        clickToTop.classList.add('show')
+      }else {
+        clickToTop.classList.remove('show')
+      }
+    });
+    clickToTop.addEventListener('click', () => {
+      window.smoothScrollTo(0);
+    });
+  })();
+</script>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <div class="framework">
+  <section class="main">
+
+     <div class="post">
+  <section>
+
+
+
+
+
+
+
+
+
+<header class="post-header">
+  <h1 class="post-title p-name" itemprop="name headline">关于Kafka分层存储你应该知道的事情</h1>
+  <h2 class="post-subtitle">关于Kafka分层存储你应该知道的事情</h2>
+
+  <div class="post-meta">
+    <time class="dt-published" datetime="2025-07-07T00:00:00+08:00" itemprop="datePublished"><i class="fa fa-calendar"></i> Jul 07, 2025
+    </time>
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <span class="post-reading-time left-vsplit"><i class="fa fa-clock-o"></i> About 3 mins</span>
+  </div>
+<div class="post-tags"><a class="post-tag" href="/tags.html#Kafka">#Kafka</a></div></header>
+<article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+
+    <div class="post-content e-content" itemprop="articleBody">
+
+      <p><img src="https://github.com/wtopps/wtopps.github.io/blob/master/images/Kafka%20Head%20Pic.jpeg?raw=true" alt="banner"></p>
+
+<h2 id="overview">Overview</h2>
+
+<p>分层存储是 Apache Kafka 3.6.0 提供的一项新的功能，它支持独立扩展计算和存储资源，提供更好的客户端隔离，并允许更快地维护 Kafka 集群。让我们深入了解这项新功能的动机、设计和实施细节。在这篇文章中，我们将重点介绍分层存储的实现，因此我们假定你已经很好地理解了 Kafka 的架构和主要组件。</p>
+
+<h2 id="tiering">Tiering</h2>
+
+<p>分层的概念在软件行业并不陌生。三层架构是一种成熟的软件应用程序架构，它将应用程序分为三个逻辑和物理计算层：呈现层（或用户界面）、应用层（处理数据）和数据层（存储和管理与应用程序相关的数据）。</p>
+
+<p>分层存储指的是一种存储架构，它根据数据的访问模式、性能要求和成本考虑，使用不同类别或层级的存储来有效地管理和存储数据。这样可以确保最重要和最频繁访问的数据保存在高性能的 “热 “存储（本地）中，而不太重要或不太频繁访问的数据则转移到成本较低、性能较低的 “热 “存储（远程）中。</p>
+
+<p>我们还可以将 “冷 “存储定义为定期备份系统，但这通常是一个单独的流程。这三个层级如下图 1 所示。</p>
+
+<p><img src="https://developers.redhat.com/sites/default/files/tiers-smaller.png.webp" alt="Tiers of storage"></p>
+
+<p>使用分层存储时，数据在任何时候都停留在一种介质类型上，并随着数据访问模式的变化在介质之间移动。数据不是复制，而是移动到不同的存储介质上，选择最能平衡可用性、性能和存储介质成本的位置。这样，就能更好地利用存储硬件，同时最大限度地提高关键任务应用程序的性能。某些数据可能仍被缓存，但这只是出于性能考虑。</p>
+
+<h2 id="the-need-for-remote-storage">The need for remote storage</h2>
+
+<p>Apache Kafka 设计用于从数千个客户端摄取大量数据。到目前为止，一个Topic分区的副本是由多个分段文件(Segment)组成的，而这些分段文件完全托管在 Kafka 代理的单个磁盘上，因此你可以存储的数据量是有限的。</p>
+
+<p>如果要保存历史数据怎么办？这就是需要远程存储的地方。常规主题的历史数据需要存储在某个地方。事件来源和变更数据捕获是两种可能需要历史数据的架构模式。我们可能需要它们来进行灾难恢复、初始化新的应用程序、在修复业务逻辑问题后重建应用程序状态、重新训练机器学习模型。</p>
+
+<p>在 Kafka 外部保存历史数据基本上有两种方法：</p>
+
+<ul>
+  <li>通过额外进程将Kafka中的数据全部读取并拷贝至远程存储。这样做的缺点是，数据消费者必须根据数据的年龄构建不同版本的应用程序，以便从不同的系统中读取数据。有时，需要使用 Kafka Connect 来导出和导入数据。</li>
+  <li>使用运行在 Kafka 机器上的自定义程序，检查不活动的数据段，并将其移动到远程存储中。这些段已达到 <code class="language-plaintext highlighter-rouge">segment.bytes</code> 所定义的最大大小，并已关闭和以只读方式重新打开。这种解决方案的优点是无需向 Kafka 回馈重新处理的成本，但需要维护另一个程序。</li>
+</ul>
+
+<h2 id="tiered-storage-in-kafka">Tiered storage in Kafka</h2>
+
+<p>自定义程序解决方案类似于 Kafka 3.6.0 中作为早期访问发布的新分层存储功能（KIP-405）。这项新功能提供了一种标准化的内置机制，可根据保留配置自动将本地存储（如 SSD/NVMe）中的非活动片段移动到远程存储（如 S3/HDFS），并在客户端要求时从远程存储读回数据。可以通过插件支持各种外部存储系统，这些插件并不是 Kafka 项目的一部分。</p>
+
+<p>分层存储必须在Cluster级别通过 <code class="language-plaintext highlighter-rouge">remote.log.storage.system.enable</code> 启用，在Topic级别通过 <code class="language-plaintext highlighter-rouge">remote.storage.enable</code> 启用。在Topic级别可以配置两种保留期：本地存储的保留期为 <code class="language-plaintext highlighter-rouge">local.log.retention.ms</code>，远程存储的保留期为 <code class="language-plaintext highlighter-rouge">log.retention.ms</code>（也可使用基于大小的保留期）。</p>
+
+<p>Kafka Broker 会尽快将数据移动到远程存储，但在某些情况下，如高摄取率(ingestion rate)或连接问题，本地存储中存储的数据可能会多于指定的本地保留策略。任何超过本地保留阈值的数据在成功上传到远程存储之前都不会被清除。只有Leader节点的非活动日志段才会上载到远程存储，而不是Followers，但你仍然可以从Followers那里获取数据。</p>
+
+<p>当消费者请求本地尚未提供但在可用偏移范围内的记录（信息）时，Broker会从远程存储中获取它们，并在本地缓存索引文件。因此建议为此预留磁盘空间（默认为 1 GiB，可通过 <code class="language-plaintext highlighter-rouge">remote.log.index.file.cache.total.size.bytes</code> 进行配置）。</p>
+
+<p>分层存储有多种好处：</p>
+
+<ul>
+  <li>弹性(Elasticity)： 计算和存储资源分离，现在可以独立扩展，由于本地数据减少，某些集群操作会变得更快。</li>
+  <li>隔离性(Isolation)： 对延迟敏感的数据可照常从本地层提供，而历史数据可使用不同的代码路径和线程从远程层提供，无需更改 Kafka 客户端。</li>
+  <li>成本效益(Cost efficiency)： 远程对象存储系统的成本低于本地快速磁盘。Kafka 存储变得更便宜，而且几乎不受限制。</li>
+</ul>
+
+<p>此外还有一些限制，将在今后的版本中加以解决：</p>
+
+<ul>
+  <li>不支持多个日志目录 (JBOD) 和压缩Topic（包括转换为常规Topic的压缩Topic）。</li>
+  <li>要在Topic上禁用分层，需要先将数据传输到另一个Topic或外部存储，然后删除Topic。</li>
+</ul>
+
+<p>一个仍在开发中的重要功能是可以动态设置Broker级配额，以限制我们上传和下载段(segments)的速度（KIP-956）。这对于避免过度使用Broker资源和远程存储性能下降非常有用。例如，在现有Topic上首次启用分层存储时就会出现这种情况。</p>
+
+<p>远程存储操作有几个指标，可用于监控和创建有关远程存储服务的告警（例如，缓慢的远程上传/下载速率、高远程上传/下载错误率、繁忙的上传/下载线程池）。</p>
+
+<p>在 Kafka 3.7.0 中，有新指标可报告每个Topic的段或字节复制和删除滞后情况：</p>
+
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">kafka.server:type=BrokerTopicMetrics,name=RemoteCopyLagSegments,topic=([-.w]+)</code></li>
+  <li><code class="language-plaintext highlighter-rouge">kafka.server:type=BrokerTopicMetrics,name=RemoteCopyLagBytes,topic=([-.w]+)</code></li>
+  <li><code class="language-plaintext highlighter-rouge">kafka.server:type=BrokerTopicMetrics,name=RemoteDeleteLagBytes,topic=([-.w]+)</code></li>
+  <li><code class="language-plaintext highlighter-rouge">kafka.server:type=BrokerTopicMetrics,name=RemoteDeleteLagSegments,topic=([-.w]+)</code></li>
+</ul>
+
+<h2 id="kafka-internals">Kafka internals</h2>
+
+<p>现在，我们将深入了解 Apache Kafka 的内部结构，看看消息是如何产生和消费的。然后，我们将了解分层存储如何与之集成，以及所有组件如何相互配合。如果您已经熟悉 Kafka 存储的内部结构，可以直接跳到分层存储如何工作部分。</p>
+
+<h3 id="how-records-are-stored">How records are stored</h3>
+
+<p>让我们先看看记录是如何存储在磁盘上的。在 Kafka 中，我们有两个主要的子系统：由处理用户数据的组件组成的 “数据平面 “和由处理集群元数据（控制器选举、Topic配置和集群）的组件组成的 “控制平面”。如图 2 所示。</p>
+
+<p><img src="https://developers.redhat.com/sites/default/files/2024-02-08-kafka-tiered-storage-deep-dive-fig2.png" alt="Data and control planes"></p>
+
+<blockquote>
+  <p>默认情况下，当一批新的记录到达时，它会首先写入操作系统的页面缓存(Page Cache)，然后才异步刷新到磁盘。如果 Kafka JVM 因某种原因崩溃，最近的信息仍在页面缓存中，并将被操作系统刷新。但是，这并不能防止机器崩溃时数据丢失。这就是启用主题复制的重要原因：拥有多个复制意味着只有多个代理同时崩溃时，数据才有可能丢失。为了进一步提高容错能力，可以使用机架感知的 Kafka 集群，将Topic副本均匀地分布在同一地理区域的数据中心中。</p>
+</blockquote>
+
+<p>当应用程序调用 <code class="language-plaintext highlighter-rouge">producer.send()</code> 时，生产者会确定目标 Broker。记录可能不会立即发送，而是会根据时间或大小配置属性进行累积并批量发送。Broker 的网络线程之一会接收到 <code class="language-plaintext highlighter-rouge">ProduceRequest</code>，该网络线程将请求转换为 <code class="language-plaintext highlighter-rouge">ProduceRequest</code> 并传递给 IO 线程。在将数据追加到分区段（日志和索引文件）之前，IO 线程会对请求进行验证。参见图3。</p>
+
+<p><img src="https://developers.redhat.com/sites/default/files/data-plane.png" alt="Data plane message flow"></p>
+
+<p>默认情况下，只有在生产请求被其他Broker复制后，Broker才会确认该请求。这不会阻塞 IO 线程。复制完成后，Broker会生成一个<code class="language-plaintext highlighter-rouge">ProduceResponse</code>。最后，网络线程将该响应发送给生产者。</p>
+
+<p>Kafka 消费者发送 Fetch 请求，指定所需的Topic、分区和偏移量。代理的网络线程会将请求传递给 IO 线程，IO 线程会将偏移量与段索引文件中的相应条目进行比较。这一步决定了从日志文件中读取的确切字节数。</p>
+
+<h2 id="how-tiered-storage-works">How tiered storage works</h2>
+
+<p>日志段(log segment)由记录数据和相关元数据组成，覆盖分区副本中连续的偏移范围。在Broker的磁盘上，这些数据存储在多个文件中，日志本身保存记录批次，索引文件支持对日志的有效访问，等等。分层存储功能包括将这些文件移入或移出远程对象存储。</p>
+
+<p>为了向日志添加数据，IO 线程会通知 ReplicaManager，这就是分层存储的插件。主要组件包括 <code class="language-plaintext highlighter-rouge">RemoteLogManager（RLM）</code>、<code class="language-plaintext highlighter-rouge">RemoteStorageManager（RSM）</code>和 <code class="language-plaintext highlighter-rouge">RemoteLogMetadataManager（RLMM）</code>。<code class="language-plaintext highlighter-rouge">RSM</code> 和 <code class="language-plaintext highlighter-rouge">RLMM</code> 都是可插拔接口，因此可以支持不同类型的远程存储系统。如图 4 所示。</p>
+
+<p><img src="https://developers.redhat.com/sites/default/files/2024-02-08-kafka-tiered-storage-deep-dive-fig4.png" alt="Tiered storage high level architecture"></p>
+
+<p>出于性能考虑，使用了两个缓存。由 <code class="language-plaintext highlighter-rouge">TopicBasedRemoteLogMetadataManager</code>（默认 RLMM 实现）维护的内存 <code class="language-plaintext highlighter-rouge">RemoteLogMetadataCache</code>，其中包含所有未删除的远程分段的元数据。由 <code class="language-plaintext highlighter-rouge">RemoteLogManager </code>维护并存储在 <code class="language-plaintext highlighter-rouge">remote-log-index-cache </code>文件夹中的基于文件的 <code class="language-plaintext highlighter-rouge">RemoteIndexCache</code>，有助于避免每次获取调用都从远程存储中重新获取偏移量、时间索引等索引文件。</p>
+
+<h3 id="remotestoragemanager">RemoteStorageManager</h3>
+
+<p><code class="language-plaintext highlighter-rouge">RemoteStorageManager</code> 提供了远程日志段的生命周期，包括从远程存储中复制、获取和删除。</p>
+
+<p><code class="language-plaintext highlighter-rouge">RemoteStorageManager</code> 提供的日志段元数据是 <code class="language-plaintext highlighter-rouge">RemoteLogSegmentMetadata</code> 实例，它描述了上传到远程存储的日志段。它包含一个普遍唯一的 <code class="language-plaintext highlighter-rouge">RemoteLogSegmentId</code>，是已外部化到远程存储的段数据的标识符。<code class="language-plaintext highlighter-rouge">RemoteLogSegmentId</code> 由Topic名称、Topic ID、分区编号和 UUID 组成。</p>
+
+<p>日志段数据（LogSegmentData）包含需要存储在远程存储中的特定日志段的实际数据和索引。</p>
+
+<p>这就是带有索引和辅助状态的远程段在远程存储中的样子：</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>test-0-00000000000000000000-knnxbs3FSRyKdPcSAOQC-w.index
+test-0-00000000000000000000-knnxbs3FSRyKdPcSAOQC-w.snapshot
+test-0-00000000000000000000-knnxbs3FSRyKdPcSAOQC-w.leader_epoch_checkpoint
+test-0-00000000000000000000-knnxbs3FSRyKdPcSAOQC-w.timeindex
+test-0-00000000000000000000-knnxbs3FSRyKdPcSAOQC-w.log
+test-0-00000000000000001005-SpGkL2YWRMC5DIw5TJP_EA.index
+test-0-00000000000000001005-SpGkL2YWRMC5DIw5TJP_EA.leader_epoch_checkpoint
+test-0-00000000000000001005-SpGkL2YWRMC5DIw5TJP_EA.log
+test-0-00000000000000001005-SpGkL2YWRMC5DIw5TJP_EA.snapshot
+test-0-00000000000000001005-SpGkL2YWRMC5DIw5TJP_EA.timeindex
+</code></pre></div></div>
+
+<p>文件名不一定必须是这种格式，它由 <code class="language-plaintext highlighter-rouge">RemoteStorageManager</code> 插件定义，但基本上，它通常包含这些信息，以便相互区分：</p>
+
+<ul>
+  <li>Topic name</li>
+  <li>Partition ID</li>
+  <li>Log segment base offset</li>
+  <li>Remote segment UUID</li>
+  <li>FILE_TYPE</li>
+</ul>
+
+<p>FILE_TYPE 可以是以下类型之一：</p>
+
+<ul>
+  <li>
+<code class="language-plaintext highlighter-rouge">leader-epoch-checkpoint</code> 文件，其中包含该分区的 <code class="language-plaintext highlighter-rouge">leader_epoch</code> 到 <code class="language-plaintext highlighter-rouge">start_offset</code> 映射的元数据。</li>
+  <li>偏移索引文件，包含日志段的偏移索引。</li>
+  <li>时间索引文件包含日志段的时间索引。</li>
+  <li>生产者快照文件包含生产者 ID 与某些元数据（如日志段的序列号和纪元）的映射。</li>
+  <li>可选的事务索引文件包含日志段的中止事务。这是一个可选文件，只有在启用事务生产者时才会存在。</li>
+</ul>
+
+<p>需要注意的是，虽然 KIP-405 中的规范并不强制执行存储在远程存储器中的文件名格式，但在从远程存储器获取数据时，除了可选的事务索引外，任何丢失的文件都会导致异常和获取失败。</p>
+
+<h3 id="remotelogmetadatamanager">RemoteLogMetadataManager</h3>
+
+<p><code class="language-plaintext highlighter-rouge">RemoteLogMetadataManager</code> 用于存储关于上传段的 <code class="language-plaintext highlighter-rouge">RemoteLogSegmentMetadata</code>，需要一个支持强一致性的存储系统，而有些存储系统只支持最终一致性。</p>
+
+<p>这就是 Kafka 提供基于Topic的 <code class="language-plaintext highlighter-rouge">TopicBasedRemoteLogMetadataManager</code> 的原因，它使用名为 <code class="language-plaintext highlighter-rouge">__remote_log_metadata</code> 的内部非压缩Topic来存储元数据记录。每个元数据操作都有一个相关的记录类型，该类型定义在 <code class="language-plaintext highlighter-rouge">storage/src/main/resources/message</code> 中。</p>
+
+<h3 id="remotelogmanager">RemoteLogManager</h3>
+
+<p>启用分层存储后，Broker会启动 <code class="language-plaintext highlighter-rouge">RemoteLogManager</code>，该组件负责维护拥有远程日志段的Topic分区列表。它负责初始化 <code class="language-plaintext highlighter-rouge">RemoteStorageManager</code> 和 <code class="language-plaintext highlighter-rouge">RemoteLogMetadataManager</code>，处理有关Leader节点/Follower节点的变更和分区停止的事件，向其他Broker侧组件提供操作以获取有关远程日志段的索引和元数据。</p>
+
+<p>当所有组件启动后，<code class="language-plaintext highlighter-rouge">ReplicaManager</code> 会等待副本对任意分区获取领导权（leadership）。</p>
+
+<p>此时，系统会为每个受管理的Topic分区创建一个<code class="language-plaintext highlighter-rouge">RLMTask</code>，并通过 <code class="language-plaintext highlighter-rouge">RLMScheduledThreadPool</code> 按 <code class="language-plaintext highlighter-rouge">remote.log.manager.task.interval.ms</code> 配置的间隔周期性地调度执行。</p>
+
+<p>当每次调度执行时，<code class="language-plaintext highlighter-rouge">RLMTask</code>会执行两个子任务：</p>
+
+<ul>
+  <li>将日志段（log segments）复制到远程存储</li>
+  <li>从远程存储中删除日志段</li>
+</ul>
+
+<h3 id="logsegment-copy">LogSegment copy</h3>
+
+<p>为了确定哪些 LogSegment 符合复制到远端存储的条件，RLMTask 会比较两个偏移量：</p>
+
+<ol>
+  <li>
+<strong>最后稳定偏移量 (LSO)</strong>
+    <ul>
+      <li>对于非事务性记录：等于高水位线（high watermark）</li>
+      <li>对于事务性记录：等于最后提交的偏移量</li>
+    </ul>
+  </li>
+  <li>
+<strong>最后远端偏移量 (LRO)</strong>
+    <ul>
+      <li>表示已存储在远端存储中的最后偏移量</li>
+      <li>通过 RemoteLogMetadataManager 获取</li>
+    </ul>
+  </li>
+</ol>
+
+<p>当 LSO &gt; LRO 时，RLMTask 会检查该偏移量范围内是否存在任何非活跃状态的 segment。这些非活跃 segment 即符合复制到远端存储的条件。该过程的示意图可参考图5。</p>
+
+<p><img src="https://developers.redhat.com/sites/default/files/2024-02-08-kafka-tiered-storage-deep-dive-fig5.png" alt="Sequence diagram for segment copy"></p>
+
+<h3 id="logsegment-deletion">LogSegment deletion</h3>
+
+<p>远程日志保留机制与本地日志保留机制类似，区别在于日志段存储于远程存储中。其核心逻辑依然是通过 <code class="language-plaintext highlighter-rouge">retention.bytes</code> 或 <code class="language-plaintext highlighter-rouge">retention.ms</code> 参数删除旧的日志段。</p>
+
+<p>RLMTask 严重依赖 <code class="language-plaintext highlighter-rouge">RemoteLogMetadataManager</code> 中存储的元数据来识别待删除的候选日志段。需注意：</p>
+
+<ul>
+  <li>
+<code class="language-plaintext highlighter-rouge">retention.bytes</code> 的计算范围：包含本地日志段与远程日志段的总大小</li>
+  <li>
+<code class="language-plaintext highlighter-rouge">retention.ms</code> 的判定基准：同时覆盖本地与远程的日志时间戳</li>
+</ul>
+
+<h3 id="consumer-fetch">Consumer fetch</h3>
+
+<p>针对分层存储场景，消费者Fetch请求的处理逻辑发生如下变更。</p>
+
+<p>当所需偏移量数据已迁移至远程存储时，<code class="language-plaintext highlighter-rouge">ReplicaManager</code>将抛出<code class="language-plaintext highlighter-rouge">OffsetOutOfRangeException</code>。此时系统会将请求暂存至<code class="language-plaintext highlighter-rouge">RemoteFetchPurgatory</code>队列，并通过向<code class="language-plaintext highlighter-rouge">RemoteStorageThreadPool</code>线程池提交<code class="language-plaintext highlighter-rouge">RemoteLogReader</code>任务的方式，将该请求委托给<code class="language-plaintext highlighter-rouge">RemoteLogManager</code>处理。</p>
+
+<p>每个<code class="language-plaintext highlighter-rouge">RemoteLogReader</code>每次仅处理一个远程Fetch请求。当远程读取请求处于<code class="language-plaintext highlighter-rouge">RemoteFetchPurgatory</code>等待队列时，当前系统会复用<code class="language-plaintext highlighter-rouge">fetch.max.wait.ms</code>作为延迟超时参数。</p>
+
+<p>这种设计存在明显缺陷，因为该参数原始设计用途是控制当本地无可用数据时Fetch请求的等待时长。根据KIP-1018提案，后续将通过引入远程读取延迟超时（remote fetch delay timeout）专用配置参数来优化此问题，具体架构如图6所示。</p>
+
+<p><img src="https://developers.redhat.com/sites/default/files/2024-02-08-kafka-tiered-storage-deep-dive-fig6.png" alt="Sequence diagram for consumer Fetch request"></p>
+
+<h3 id="follower-fetch">Follower fetch</h3>
+
+<p>对于采用分层存储的Topic，Follower副本的同步逻辑有如下重要调整：当Follower分区副本从Leader获取数据时若触发<code class="language-plaintext highlighter-rouge">OffsetMovedToTieredStorageException</code>异常，即表明请求的offset数据已不在Leader本地存储中，此时Follower需基于远端分段元数据（remote segment metadata）重建辅助状态。</p>
+
+<p>副本的辅助状态包括<code class="language-plaintext highlighter-rouge">leader-epoch</code>检查点（日志复制协议用它来维护Broker间的日志一致性）和producer-id快照（事务子系统使用它）。</p>
+
+<p>副本会调用带有<code class="language-plaintext highlighter-rouge">EarliestLocalTimestamp</code>参数的<code class="language-plaintext highlighter-rouge">ListsOffsets</code> API来确定需要重建该状态的截止偏移量。在辅助状态构建完成后，副本将截断本地日志，将拉取偏移量重置为远端日志末端偏移量加1，然后恢复从leader本地存储拉取数据。</p>
+
+<h2 id="conclusion">Conclusion</h2>
+
+<p>我们深入探讨了Kafka采用远端存储的必要性，特别是对于容灾恢复、数据分析和机器学习等关键场景中历史数据的保留需求。</p>
+
+<p>Kafka分层存储的引入提供了一个标准化、内建的解决方案。通过基于数据访问模式、性能需求和成本考量配置不同存储层级，该方案在确保高效数据管理的同时，实现了资源利用的最优化。</p>
+
+<p>我们还解析了支撑远端日志子系统的技术架构，详细阐释了<code class="language-plaintext highlighter-rouge">RemoteLogManager</code>（远端日志管理器）、<code class="language-plaintext highlighter-rouge">RemoteStorageManager</code>（远端存储管理器）和<code class="language-plaintext highlighter-rouge">RemoteLogMetadataManager</code>（远端日志元数据管理器）等组件的功能。</p>
+
+<p>分层存储代表着Kafka生态系统在数据管理领域的重要突破，为现代化分布式架构提供了兼顾存储效率与检索性能的稳健解决方案。</p>
+
+
+    </div>
+
+</article>
+<div class="post-nav">
+<a class="previous" href="/mysql/2025/05/27/%E5%85%B3%E4%BA%8EMySQL8.4LTS%E4%BD%A0%E5%BA%94%E8%AF%A5%E7%9F%A5%E9%81%93%E7%9A%84%E4%BA%8B%E6%83%85.html" title="关于MySQL8.4LTS你应该知道的事情">关于MySQL8.4LTS你应该知道的事情</a><span></span>
+</div>
+<div class="post-related">
+      <div>Related Articles</div>
+      <ul>
+        <li class="top-post">
+          <a class="post-link" href="/redis/2025/04/17/%E5%85%B3%E4%BA%8EValkey%E4%BD%A0%E9%9C%80%E8%A6%81%E7%9F%A5%E9%81%93%E7%9A%84%E4%BA%8B%E6%83%85.html" title="关于Valkey你需要知道的事情">
+            关于Valkey你需要知道的事情<span class="post-badges">
+  <span class="post-badge badge-top">TOP</span>
+  <span class="post-badge badge-new">NEW</span>
+</span>
+</a>
+        </li>
+<li class="top-post">
+          <a class="post-link" href="/mysql/2024/12/12/%E8%AE%B0%E4%B8%80%E6%AC%A1%E4%B8%9A%E5%8A%A1MySQL%E6%AD%BB%E9%94%81case.html" title="记一次业务MySQL死锁">
+            记一次业务MySQL死锁<span class="post-badges">
+  <span class="post-badge badge-top">TOP</span>
+  <span class="post-badge badge-new">NEW</span>
+</span>
+</a>
+        </li>
+<li class="top-post">
+          <a class="post-link" href="/java/2024/09/25/Java-ThreadPoolExecutor%E7%BA%BF%E7%A8%8B%E6%B1%A0%E6%A6%82%E8%BF%B0.html" title="Java ThreadPoolExecutor线程池概述">
+            Java ThreadPoolExecutor线程池概述<span class="post-badges">
+  <span class="post-badge badge-top">TOP</span>
+  <span class="post-badge badge-new">NEW</span>
+</span>
+</a>
+        </li>
+<li class="top-post">
+          <a class="post-link" href="/java/2025/03/26/CompletableFuture%E4%BD%A0%E9%9C%80%E8%A6%81%E7%9F%A5%E9%81%93%E7%9A%84%E4%BA%8B%E6%83%85.html" title="CompletableFuture你需要知道的事情.">
+            CompletableFuture你需要知道的事情.<span class="post-badges">
+  <span class="post-badge badge-top">TOP</span>
+  <span class="post-badge badge-new">NEW</span>
+</span>
+</a>
+        </li>
+</ul>
+    </div>
+<div class="post-comments"></div></section>
+</div>
+
+
+  </section>
+  <section class="sidebar" style="margin-left: 15px;">
+    <!-- Get sidebar items --><style type="text/css" media="screen">
+.post-menu ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+</style>
+
+<div class="post-menu">
+  <div class="post-menu-title">TOC</div>
+  <div class="post-menu-content"></div>
+</div>
+
+<script>
+  function generateContent() {
+    var menu = document.querySelector(".post-menu");
+    var menuContent =  menu.querySelector(".post-menu-content");
+    var headings = document.querySelector(".post-content").querySelectorAll("h2, h3, h4, h5, h6");
+
+    // Hide menu when no headings
+    if (headings.length === 0) {
+      return menu.style.display = "none";
+    }
+
+    // Generate post menu
+    var menuHTML = '';
+    for (var i = 0; i < headings.length; i++) {
+      var h = headings[i];
+      menuHTML += (
+        '<li class="h-' + h.tagName.toLowerCase() + '">'
+        + '<a href="#h-' + h.getAttribute('id') + '">' + h.textContent + '</a></li>');
+    }
+
+    menuContent.innerHTML = '<ul>' + menuHTML + '</ul>';
+
+    // The header element
+    var header = document.querySelector('header.site-header');
+
+    function doMenuCollapse(index, over_items) {
+      var items = menuContent.firstChild.children;
+
+      if (over_items == undefined) {
+        over_items = 20;
+      }
+
+      if (items.length < over_items) {
+        return;
+      }
+
+      var activeItem = items[index];
+      var beginItem = activeItem
+      var endItem = activeItem
+      var beginIndex = index;
+      var endIndex = index + 1;
+      while (beginIndex >= 0
+        && !items[beginIndex].classList.contains('h-h2')) {
+        beginIndex -= 1;
+      }
+      while (endIndex < items.length
+        && !items[endIndex].classList.contains('h-h2')) {
+        endIndex += 1;
+      }
+      for (var i = 0; i < beginIndex; i++) {
+        item = items[i]
+        if (!item.classList.contains('h-h2')) {
+          item.style.display = 'none';
+        }
+      }
+      for (var i = beginIndex + 1; i < endIndex; i++) {
+        item = items[i]
+        // if (!item.classList.contains('h-h2')) {
+          item.style.display = '';
+        // }
+      }
+      for (var i = endIndex; i < items.length; i++) {
+        item = items[i]
+        if (!item.classList.contains('h-h2')) {
+          item.style.display = 'none';
+        }
+      }
+    }
+
+    // Init menu collapsed
+    doMenuCollapse(-1);
+
+    // Active the menu item
+    window.addEventListener('scroll', function (event) {
+      var lastActive = menuContent.querySelector('.active');
+      var changed = true;
+      var activeIndex = -1;
+      for (var i = headings.length - 1; i >= 0; i--) {
+        var h = headings[i];
+        var headingRect = h.getBoundingClientRect();
+        var headerRect = header.getBoundingClientRect();
+        var headerTop = Math.floor(headerRect.top);
+        var headerHeight = Math.floor(headerRect.height);
+        var headerHeight = headerTop + headerHeight + 20;
+        if (headingRect.top <= headerHeight) {
+          var id = 'h-' + h.getAttribute('id');
+          var a = menuContent.querySelector('a[href="#' + id  + '"]');
+          var curActive = a.parentNode;
+          if (curActive) {
+            curActive.classList.add('active');
+            activeIndex = i;
+          }
+          if (lastActive == curActive) {
+            changed = false;
+          }
+          break;
+        }
+      }
+      if (changed) {
+        if (lastActive) {
+          lastActive.classList.remove('active');
+        }
+        doMenuCollapse(activeIndex);
+      }
+      event.preventDefault();
+    });
+  }
+  generateContent();
+</script>
+</section>
+</div>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/"></data>
+
+  <div class="wrapper">
+    <div class="site-footer-inner">
+<div>Unpublished Work <span class="copyleft">©</span> 2017-2025 GitHub User</div>
+      <div>Powered by <a title="Jekyll is a simple, blog-aware, static site
+      generator." href="https://jekyllrb.com/">Jekyll</a> &amp; <a title="Yat, yet
+      another theme." href="https://github.com/jeffreytse/jekyll-theme-yat">Yat Theme</a>.</div>
+      <div class="footer-col rss-subscribe">Subscribe <a href="/feed.xml">via RSS</a>
+</div>
+    </div>
+  </div>
+</footer>
+</body>
+</html>

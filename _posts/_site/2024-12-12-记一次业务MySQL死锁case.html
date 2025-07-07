@@ -1,0 +1,107 @@
+<p><img src="https://github.com/wtopps/wtopps.github.io/blob/master/images/Problem%20Investigation.jpeg?raw=true" alt="banner" /></p>
+
+<h2 id="问题">问题</h2>
+
+<p>线上服务出现服务告警，查询日志现场，错误信息如下：</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Caused by: com.mysql.cj.jdbc.exceptions.MySQLTransactionRollbackException: Deadlock found when trying to get lock<span class="p">;</span> try restarting transaction
+	at com.mysql.cj.jdbc.exceptions.SQLError.createSQLException<span class="o">(</span>SQLError.java:124<span class="o">)</span>
+	at com.mysql.cj.jdbc.exceptions.SQLExceptionsMapping.translateException<span class="o">(</span>SQLExceptionsMapping.java:122<span class="o">)</span>
+	at com.mysql.cj.jdbc.ClientPreparedStatement.executeInternal<span class="o">(</span>ClientPreparedStatement.java:916<span class="o">)</span>
+	at com.mysql.cj.jdbc.ClientPreparedStatement.executeQuery<span class="o">(</span>ClientPreparedStatement.java:972<span class="o">)</span>
+	at com.alibaba.druid.pool.DruidPooledPreparedStatement.executeQuery<span class="o">(</span>DruidPooledPreparedStatement.java:213<span class="o">)</span>
+	at org.hibernate.engine.jdbc.internal.ResultSetReturnImpl.extract<span class="o">(</span>ResultSetReturnImpl.java:57<span class="o">)</span>
+	... 113 common frames omitted
+	
+....
+
+Deadlock found when trying to get lock<span class="p">;</span> try restarting transaction
+</code></pre></div></div>
+
+<p>根据日志信息，很显然是一个MySQL死锁的case。</p>
+
+<h2 id="问题分析">问题分析</h2>
+
+<p>根据报错信息，定位到报错的代码：</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">for</span> <span class="o">(</span><span class="nc">AuditProcessRecord</span> <span class="n">auditProcessRecord</span> <span class="o">:</span> <span class="n">auditProcessRecords</span><span class="o">)</span> <span class="o">{</span>
+    <span class="k">if</span> <span class="o">(</span><span class="n">auditProcessRecord</span><span class="o">.</span><span class="na">getId</span><span class="o">().</span><span class="na">equals</span><span class="o">(</span><span class="n">auditProcessRecordId</span><span class="o">))</span> <span class="o">{</span>
+        <span class="n">auditProcessRecord</span><span class="o">.</span><span class="na">setAuditStatus</span><span class="o">(</span><span class="nc">AuditProcessStatus</span><span class="o">.</span><span class="na">AUDIT_PASS</span><span class="o">.</span><span class="na">getStatus</span><span class="o">());</span>
+        <span class="n">auditProcessRecordRepo</span><span class="o">.</span><span class="na">save</span><span class="o">(</span><span class="n">auditProcessRecord</span><span class="o">);</span>
+        <span class="k">break</span><span class="o">;</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+<span class="c1">// 检查是否存在审核中的流程，如果存在，继续等待剩余流程结束</span>
+<span class="c1">// 事务中，加读锁，当前读</span>
+<span class="c1">// 不加锁，快照读</span>
+<span class="kt">int</span> <span class="n">auditingRecordCount</span> <span class="o">=</span> <span class="n">auditProcessRecordRepo</span><span class="o">.</span><span class="na">existsAuditingRecordInLock</span><span class="o">(</span><span class="n">auditId</span><span class="o">);</span>
+<span class="k">if</span> <span class="o">(</span><span class="n">auditingRecordCount</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="o">)</span> <span class="o">{</span>
+    <span class="n">log</span><span class="o">.</span><span class="na">info</span><span class="o">(</span><span class="s">"LotteryAudit process is pending auditItem, waiting. lotteryId={}, auditId={}"</span><span class="o">,</span>
+            <span class="n">lotteryAuditRecord</span><span class="o">.</span><span class="na">getLotteryId</span><span class="o">(),</span> <span class="n">auditId</span><span class="o">);</span>
+    <span class="k">return</span><span class="o">;</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<p>报错的方法是existsAuditingRecordInLock，看一下实现：</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nd">@Query</span><span class="o">(</span><span class="n">value</span> <span class="o">=</span> <span class="s">"select count(*) from audit_process_record where audit_id = ?1 and audit_status = 0 LOCK IN SHARE MODE"</span><span class="o">,</span><span class="n">nativeQuery</span> <span class="o">=</span> <span class="kc">true</span><span class="o">)</span>
+<span class="nc">Integer</span> <span class="nf">existsAuditingRecordInLock</span><span class="o">(</span><span class="nc">String</span> <span class="n">auditId</span><span class="o">);</span>
+</code></pre></div></div>
+
+<p>existsAuditingRecordInLock的实现可以看到，使用了共享锁查询audit_process_record的行数，线上MySQL的事务级别使用RR，使用共享锁的目的，应该是希望避免快照读，而是使用当前读，并发场景下，可以查询到其他线程的最新数据，但问题也恰恰出在这里。</p>
+
+<h4 id="执行过程分析">执行过程分析</h4>
+
+<p>假定有两个线程，同时执行上面的代码，两个线程同时处理不同的 auditProcessRecordId，但是相同的 auditId：</p>
+
+<p>线程A：</p>
+
+<ol>
+  <li>BEGIN;</li>
+  <li>更新记录1：
+UPDATE audit_process_record SET audit_status = 1 WHERE id = 1  // 获得id=1记录的排他锁</li>
+  <li>SELECT COUNT(*) … LOCK IN SHARE MODE   // 尝试获取audit_id=1的所有记录的共享锁
+需要获取id=2记录的共享锁，但被线程B的排他锁阻塞</li>
+</ol>
+
+<p>线程B：</p>
+<ol>
+  <li>BEGIN;</li>
+  <li>更新记录2：
+UPDATE audit_process_record SET audit_status = 1 WHERE id = 2  // 获得id=2记录的排他锁</li>
+  <li>SELECT COUNT(*) … LOCK IN SHARE MODE   // 尝试获取audit_id=1的所有记录的共享锁
+需要获取id=1记录的共享锁，但被线程A的排他锁阻塞</li>
+</ol>
+
+<p>死锁原因：</p>
+
+<p>线程A先获得记录1的排他锁，然后要获取所有记录（包括记录2）的共享锁</p>
+
+<p>线程B先获得记录2的排他锁，然后要获取所有记录（包括记录1）的共享锁</p>
+
+<p>形成循环等待：</p>
+
+<p>​	A持有记录1排他锁，等待记录2的共享锁</p>
+
+<p>​	B持有记录2排他锁，等待记录1的共享锁</p>
+
+<h2 id="问题解决">问题解决</h2>
+
+<p>方法一：</p>
+
+<p>使用FOR UPDATE替代LOCK IN SHARE MODE</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="no">SELECT</span> <span class="nf">COUNT</span><span class="o">(*)</span> <span class="no">FROM</span> <span class="n">audit_process_record</span> <span class="no">WHERE</span> <span class="n">audit_id</span> <span class="o">=</span> <span class="o">?</span><span class="mi">1</span> <span class="no">AND</span> <span class="n">audit_status</span> <span class="o">=</span> <span class="mi">0</span> 
+<span class="no">FOR</span> <span class="no">UPDATE</span>
+</code></pre></div></div>
+
+<p>FOR UPDATE是独占锁（排他锁），它在读取数据时会锁定记录，并且同时防止其他事务读取或修改这些记录。在事务中使用 FOR UPDATE 时，其他事务将无法对加锁的记录执行 SELECT 或任何修改操作，直到当前事务提交或回滚。</p>
+
+<p>方法二：</p>
+
+<p>调整事物隔离级别，RR变为RC</p>
+
+<p>方法三：</p>
+
+<p>使用其他的分布式锁，例如Redis或者ZK，代替MySQL的锁操作。</p>
+

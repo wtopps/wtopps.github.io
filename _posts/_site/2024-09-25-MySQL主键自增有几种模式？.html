@@ -1,0 +1,111 @@
+<p><img src="https://github.com/wtopps/wtopps.github.io/blob/master/images/MySQL.jpeg?raw=true" alt="banner" /></p>
+
+<h2 id="前言">前言</h2>
+
+<p>在大多数的业务场景下，我们的数据表的一般会默认使用主键自增长(<code class="language-plaintext highlighter-rouge">AUTO_INCREMENT</code>)模式，在执行<code class="language-plaintext highlighter-rouge">insert</code>语句时，MySQL会自动为数据行生成主键ID，保证其单调递增和不重复的。一般情况下，我们很少会关注<code class="language-plaintext highlighter-rouge">AUTO_INCREMENT</code>的策略模型，事实上，InnoDB提供了一个可配置的自增长模型机制，可以显著提高向带有<code class="language-plaintext highlighter-rouge">AUTO_INCREMENT</code>列的表添加记录的SQL语句的可扩展性和性能。</p>
+
+<p>本篇，我们就来简要了解一下MySQL InnoDB的主键自增长策略模式。</p>
+
+<h2 id="insert种类">INSERT种类</h2>
+
+<p>MySQL将<code class="language-plaintext highlighter-rouge">INSERT</code>操作分为三类：</p>
+
+<p>1、<code class="language-plaintext highlighter-rouge">Simple inserts</code></p>
+
+<p>插入的记录行数是可以事先确定的。包括最常见的单条<code class="language-plaintext highlighter-rouge">INSERT</code>、<code class="language-plaintext highlighter-rouge">REPLACE</code>，但不包括<code class="language-plaintext highlighter-rouge">INSERT ... ON DUPLICATE KEY UPDATE</code></p>
+
+<p>2、<code class="language-plaintext highlighter-rouge">Bulk inserts</code></p>
+
+<p>插入的记录行数是无法事先确定的。包括 <code class="language-plaintext highlighter-rouge">INSERT ... SELECT</code>,<code class="language-plaintext highlighter-rouge"> REPLACE ... SELECT</code>, <code class="language-plaintext highlighter-rouge">LOAD DATA</code>，不包括普通的<code class="language-plaintext highlighter-rouge">INSERT</code>操作</p>
+
+<p>3、<code class="language-plaintext highlighter-rouge">Mixed-mode inserts</code></p>
+
+<p>该种类型也属于<code class="language-plaintext highlighter-rouge">Simple inserts</code>类型，插入的记录行数是可以事先确定的，但与<code class="language-plaintext highlighter-rouge">Simple inserts</code>不同的是，<code class="language-plaintext highlighter-rouge">INSERT</code>语句中有部分记录自行指定了自增长字段的值，例如：</p>
+
+<div class="language-sql highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">INSERT</span> <span class="k">INTO</span> <span class="n">t1</span> <span class="p">(</span><span class="n">c1</span><span class="p">,</span><span class="n">c2</span><span class="p">)</span> <span class="k">VALUES</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="s1">'a'</span><span class="p">),</span> <span class="p">(</span><span class="k">NULL</span><span class="p">,</span><span class="s1">'b'</span><span class="p">),</span> <span class="p">(</span><span class="mi">5</span><span class="p">,</span><span class="s1">'c'</span><span class="p">),</span> <span class="p">(</span><span class="k">NULL</span><span class="p">,</span><span class="s1">'d'</span><span class="p">);</span>
+</code></pre></div></div>
+
+<p>该模式也包括了<code class="language-plaintext highlighter-rouge">INSERT ... ON DUPLICATE KEY UPDATE</code></p>
+
+<h2 id="自增长锁模型auto_increment-lock-modes">自增长锁模型（AUTO_INCREMENT Lock Modes）</h2>
+
+<p><code class="language-plaintext highlighter-rouge">InnoDB</code>引擎提供了三种锁模型来支持<code class="language-plaintext highlighter-rouge">AUTO_INCREMENT </code>，可以通过<code class="language-plaintext highlighter-rouge">innodb_autoinc_lock_mode</code>参数来进行指定，取值范围为(0，1，2)，分别对应”传统模式”、”连续模式”、”交错模式”，下面我们来依次看一下三种锁模式。</p>
+
+<h3 id="传统锁模式traditional-lock-mode">传统锁模式(Traditional lock mode)</h3>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>innodb_autoinc_lock_mode = 0
+</code></pre></div></div>
+
+<p>该种模式下，它会对所有的<code class="language-plaintext highlighter-rouge">Insert</code>模式操作都去获取一个特殊的表级别的自增长锁(<code class="language-plaintext highlighter-rouge">AUTO-INC</code>)，这种锁会持续到语句结束，以确保执行的<code class="language-plaintext highlighter-rouge">Insert</code>语句以可预测且可重复的顺序分配自动递增值。</p>
+
+<p>这种模式更多是为了兼容老版本的MySQL运行。实际生产环境中不推荐使用。</p>
+
+<p>由于对于所有的<code class="language-plaintext highlighter-rouge">Insert</code>执行时，都会尝试去获取表级别的自增锁，可以预见该种模式的并发性会非常的差，当同时存在多个事务同时执行<code class="language-plaintext highlighter-rouge">Insert</code>操作，只有其中一个事务可以获取到自增锁，而其他的事务必须等待其执行完毕释放锁后，才可以进行执行<code class="language-plaintext highlighter-rouge">Insert</code>操作。</p>
+
+<p>我们来看一个例子：</p>
+
+<div class="language-sql highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">CREATE</span> <span class="k">TABLE</span> <span class="n">t1</span> <span class="p">(</span>
+  <span class="n">c1</span> <span class="nb">INT</span><span class="p">(</span><span class="mi">11</span><span class="p">)</span> <span class="k">NOT</span> <span class="k">NULL</span> <span class="n">AUTO_INCREMENT</span><span class="p">,</span>
+  <span class="n">c2</span> <span class="nb">VARCHAR</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span> <span class="k">DEFAULT</span> <span class="k">NULL</span><span class="p">,</span>
+  <span class="k">PRIMARY</span> <span class="k">KEY</span> <span class="p">(</span><span class="n">c1</span><span class="p">)</span>
+<span class="p">)</span> <span class="n">ENGINE</span><span class="o">=</span><span class="n">InnoDB</span><span class="p">;</span>
+</code></pre></div></div>
+
+<p>我们有一张表<code class="language-plaintext highlighter-rouge">t1</code>，假定同时存在两个事务执行，并都使用自增长字段：</p>
+
+<div class="language-sql highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">Tx1</span><span class="p">:</span> <span class="k">INSERT</span> <span class="k">INTO</span> <span class="n">t1</span> <span class="p">(</span><span class="n">c2</span><span class="p">)</span> <span class="k">SELECT</span> <span class="mi">1000</span> <span class="k">rows</span> <span class="k">from</span> <span class="n">another</span> <span class="k">table</span> <span class="p">...</span>
+<span class="n">Tx2</span><span class="p">:</span> <span class="k">INSERT</span> <span class="k">INTO</span> <span class="n">t1</span> <span class="p">(</span><span class="n">c2</span><span class="p">)</span> <span class="k">VALUES</span> <span class="p">(</span><span class="s1">'xxx'</span><span class="p">);</span>
+</code></pre></div></div>
+
+<p>对于上面的场景，两个事务无法同时并行操作，如果<code class="language-plaintext highlighter-rouge">Tx1</code>先执行，则会获取<code class="language-plaintext highlighter-rouge">t1</code>的自增锁，直到该条语句执行结束，然后<code class="language-plaintext highlighter-rouge">Tx2</code>才可以重新获取锁进行执行插入，需要注意的是，表级自增锁的持有时间范围是语句级别，并非事务级别。</p>
+
+<p>该种模式下，虽然对于<code class="language-plaintext highlighter-rouge">Insert</code>的并发度非常差，但可以保证自增字段的连续性，并且对于基于<code class="language-plaintext highlighter-rouge">SQL BINLOG</code>的主从同步，可以保证从库的自增字段与主库一致。</p>
+
+<h3 id="连续锁模式consecutive-lock-mode">连续锁模式(Consecutive lock mode)</h3>
+
+<div class="language-sql highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">innodb_autoinc_lock_mode</span> <span class="o">=</span> <span class="mi">1</span>
+</code></pre></div></div>
+
+<p>在MySQL8.0之前，该种模式是InnoDB的默认自增模式。</p>
+
+<p>该种模式下，对于普通<code class="language-plaintext highlighter-rouge">Insert</code>语句，申请到自增锁后就马上释放，并非语句执行结束。但是对于<code class="language-plaintext highlighter-rouge">bulk insert</code>这样的批量插入数据语句，仍然会申请表级别的自增锁，会持有锁直到语句结束后才被释放。</p>
+
+<p>需要注意的是，虽然单条<code class="language-plaintext highlighter-rouge">Insert</code>语句会避免使用表级自增锁，但是当其他的事务正在持有表级自增锁，那么在当前事务内，<code class="language-plaintext highlighter-rouge">Insert</code>操作时也会被阻塞，等待其他事务释放锁资源。</p>
+
+<p>相较于传统锁模式，连续锁模式在语义上没有大的区别，但对于普通单条的<code class="language-plaintext highlighter-rouge">Insert</code>并发度有一定的提升。</p>
+
+<h3 id="交叉锁模式interleaved-lock-mode">交叉锁模式(Interleaved lock mode)</h3>
+
+<div class="language-sql highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">innodb_autoinc_lock_mode</span> <span class="o">=</span> <span class="mi">2</span>
+</code></pre></div></div>
+
+<p>在MySQL8.0中，该种模式是InnoDB的默认自增模式。</p>
+
+<p>该种模式下，对于<code class="language-plaintext highlighter-rouge">Insert</code>语句的执行不会使用表级别的自增锁，这意味着多个事务的多个<code class="language-plaintext highlighter-rouge">Insert</code>可以并发执行，是所有模型中执行效率最高的模式。</p>
+
+<p>但在该模式下，存在两个问题：</p>
+
+<p>​	1、在这种模式下，如果<code class="language-plaintext highlighter-rouge">binlog</code>格式为<code class="language-plaintext highlighter-rouge">statement (SBR)</code>，可能会引起数据不一致。也就是说，在主库的自增字段的值，同步到从库时，可能会不一致。</p>
+
+<p>​	2、对于<code class="language-plaintext highlighter-rouge">bulk inserts</code>语句来说，它得到的自增值可能不是连续的。但是对于普通的<code class="language-plaintext highlighter-rouge">Insert</code>语句，则不会出现这个问题。</p>
+
+<h2 id="总结">总结</h2>
+
+<p>OK，我们了解了MySQL InnoDB中自增长字段的三种执行模式，我们简单进行一下总结：</p>
+
+<p><code class="language-plaintext highlighter-rouge">Traditional lock mode</code>传统锁模式：</p>
+
+<p>此种模式可以说是最保守的执行模式，可以完全保证自增长键的连续性，但由于是通过表级锁进行的实现，性能较差，主要是为了兼容老版本，在目前的生产环境中不可能采用</p>
+
+<p><code class="language-plaintext highlighter-rouge">Consecutive lock mode</code>连续锁模式：</p>
+
+<p>传统锁模式的进阶版本，MySQL5.7及其之前的默认模式，该种模式对于普通的<code class="language-plaintext highlighter-rouge">Insert</code>语句进行了优化，相较于传统锁模式大大的提升了并发度，但对于<code class="language-plaintext highlighter-rouge">bulk inserts</code>等批量操作，仍会进行等待锁资源，如果可以保证不会使用<code class="language-plaintext highlighter-rouge">bulk inserts</code>等操作的话，该种模式是没有问题的，对于主从复制也较为友好，对于任何种类的<code class="language-plaintext highlighter-rouge">binlog</code>同步类型，都可以保证主从一致性</p>
+
+<p><code class="language-plaintext highlighter-rouge">Interleaved lock mode</code>交叉锁模式：</p>
+
+<p>MySQL8.0之后版本的默认模式，目前看起来的最优解模式，该种模式完全不使用表级锁，可以真正的实现多事务<code class="language-plaintext highlighter-rouge">Insert</code>并发执行，缺点是对于<code class="language-plaintext highlighter-rouge">bulk inserts</code>语句执行时可能会出现自增长值不连续的情况，同时对于主从复制的<code class="language-plaintext highlighter-rouge">statement  binlog</code>，无法保证主从的一致性。</p>
+
+<p>本篇关于MySQL自增长键的介绍就到这里，关于更多的细节，可以查阅官方文档的解释：</p>
+
+<p>https://dev.mysql.com/doc/refman/8.0/en/innodb-auto-increment-handling.html</p>
+

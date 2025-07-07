@@ -1,0 +1,153 @@
+<p><img src="https://github.com/wtopps/wtopps.github.io/blob/master/images/Redis8%20release.png?raw=true" alt="banner" /></p>
+
+<h2 id="redis-80-is-coming">Redis 8.0 is Coming</h2>
+
+<p>近日，Redis宣布8.0版本正式发布。</p>
+
+<p>官方宣称Redis 8 是迄今为止性能最强、可扩展性最高的 Redis 版本。它拥有超过 30 项性能改进，包括命令速度提升高达 87%，每秒操作吞吐量提升高达 2 倍，复制速度提升高达 18%，以及通过 Redis 查询引擎提供高达 16 倍的查询处理能力。本次发布新增了 8 种数据结构，包括<strong>向量集合 (vector set)、JSON、时间序列</strong>以及五种概率结构，包括<strong>布隆过滤器、布谷鸟过滤器、计数最小化草图、top-k 和 t-digest</strong>（其中一些之前作为单独的 Redis 模块提供）。这些新的数据结构可以帮助用户更好地解决当前用例，并为下一代快速和实时应用构建。</p>
+
+<ul>
+  <li>布隆过滤器与布谷鸟过滤器 (<strong>Bloom</strong> filter &amp; <strong>Cuckoo</strong> filter)：用于检查给定值是否已出现在数据流中</li>
+  <li>计数最小化草图 (<strong>Count-min</strong> <strong>sketch)</strong>：用于估计给定值在数据流中出现的次数</li>
+  <li><strong>top-k</strong>：查找数据流中最频繁的值</li>
+  <li><strong>t-digest</strong>：用于查询数据流中哪些值的比例小于 / 大于给定值</li>
+</ul>
+
+<p>值得注意的是，Redis8.0调整了其开源协议，采用了OSI （Open Source Initiative）认证的 AGPLv3 许可证，并保留了现有的 RSALv2 和 SSPLv1 许可证选项，这一战略性的许可转变旨在重建与开源社区的信任，同时继续保护软件免受未经授权的商业利用。</p>
+
+<p>下面我们来对Redis8.0的新特效一一进行详解。</p>
+
+<p>https://redis.io/blog/redis-8-ga/</p>
+
+<h2 id="一name-change">一、Name Change</h2>
+
+<p>改名？难道不叫Redis了吗？事实并非如此，在Redis8.0中，将Redis Community Edition 和 Redis Stack 合并为一个名为 Redis Open Source的单一产品，一般来说，我们使用的Redis指的是Redis Community，如果你想要使用部布隆过滤器等特性，你需要安装额外的模块，也就是Redis Stack，两者的区别如下：</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>对比项</th>
+      <th>Redis Community Edition</th>
+      <th>Redis Stack</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>核心组件</strong></td>
+      <td>仅包含 Redis 开源数据库</td>
+      <td>Redis + 多个官方扩展模块</td>
+    </tr>
+    <tr>
+      <td><strong>包含的模块</strong></td>
+      <td>❌ 无</td>
+      <td>✅ RedisSearch（全文搜索）<br />✅ RedisJSON（JSON数据处理）<br />✅ RedisGraph（图数据库）<br />✅ RedisTimeseries（时间序列）<br />✅ RedisBloom（概率数据结构）</td>
+    </tr>
+    <tr>
+      <td><strong>许可证</strong></td>
+      <td>BSD-3（完全自由使用）</td>
+      <td>Redis Source Available License (RSAL)<br />（部分使用受限）</td>
+    </tr>
+    <tr>
+      <td><strong>适用场景</strong></td>
+      <td>纯 Redis KV 存储</td>
+      <td>增强型 Redis，支持搜索、JSON、时序、图数据</td>
+    </tr>
+    <tr>
+      <td><strong>商业支持</strong></td>
+      <td>❌ 无官方支持</td>
+      <td>❌ 无官方支持（需购买 Redis Enterprise）</td>
+    </tr>
+    <tr>
+      <td><strong>云托管</strong></td>
+      <td>✅ 可商用</td>
+      <td>❌ 禁止 SaaS 提供商托管（如 AWS Elasticache 不能直接使用）</td>
+    </tr>
+    <tr>
+      <td><strong>定位</strong></td>
+      <td>Redis 基础版</td>
+      <td>Redis “瑞士军刀” 增强版</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>Redis 8.0 将之前 Redis Stack 中的核心模块（RedisJSON, RediSearch, RedisTimeSeries, RedisBloom）整合到了 Redis Open Source 的核心中。 这意味着这些功能不再需要作为额外的模块安装，而是 Redis Open Source 的内置功能。</p>
+
+<h2 id="二new-data-structures">二、New Data Structures</h2>
+
+<h3 id="vector-sets-beta">Vector Sets (Beta)</h3>
+
+<p>Vector Sets (Beta) 是一种新的数据类型，目前处于测试阶段，专为高维向量搜索而设计，这是AI和机器学习工作负载的关键组成部分。</p>
+
+<p>Vector Sets扩展了 Sorted Sets 的概念，允许存储和查询高维向量嵌入，从而增强了 Redis 在语义搜索和推荐系统等人工智能用例中的能力。</p>
+
+<p>Vector Sets 支持使用余弦或欧几里得距离在 AI 模型中进行相似性搜索，并且设计上与 ML 框架和嵌入输出兼容，它与 Redis Query Engine 中现有的向量搜索功能相辅相成。由于 Vector Sets 仍处于测试阶段 ，其 API 或功能在未来版本中可能会发生变化。</p>
+
+<p>目前阶段，在生产环境中使用时应非常谨慎，具体的使用效果还需要社区的验证。</p>
+
+<h3 id="json">JSON</h3>
+
+<p>JSON是日常开发中再常见不过的数据结果了，在之前的版本中，对于JSON，只能将JSON作为文本存储在String或者Hash中，在业务代码中进行逻辑处理，较为繁琐，Redis 8.0新增了对JSON结构的支持，允许将 JSON 文档存储为 Redis 中的键，从而改进了传统 Redis 用例的处理方式，同时提供了使用 JSONPath 语言来检索和操作文档的命令，可以对 JSON 结构中的特定元素进行细粒度和高效的访问，并且支持对 JSON 文档的部分进行原子更新，而无需先检索整个文档。</p>
+
+<p>原生JSON的支持显著增强了 Redis 处理现代数据格式的能力，JSON格式在 Web 应用程序和 API 中非常常见。这减少了客户端的序列化/反序列化需求，从而提高了性能和开发人员体验。通过直接支持 JSON，Redis 更自然地适用于已经使用 JSON 作为主要数据交换格式的应用程序，简化了数据处理并提高了效率。</p>
+
+<p>Command Doc：https://redis.io/docs/latest/commands/json.set/</p>
+
+<h3 id="time-series">Time Series</h3>
+
+<p>提到时序数据库，你肯定第一反应会想到<em>Prometheus</em>，时序数据库目前是采集系统级监控数据的首选，Redis 8.0中也新增了时序数据结构的支持，允许非常快速地摄取和检索时间序列数据，并利用高效的压缩算法来最大限度地减少内存占用。它还支持定义压缩（下采样）规则，以实现高效的长期存储。</p>
+
+<h3 id="probabilistic-data-structures">Probabilistic Data Structures</h3>
+
+<p>除了已经提供的 HyperLogLog 之外，Redis 8 还引入了五个新的概率数据结构 。这些结构使用户能够更快地获得关于数据流和大型数据集的常见问题的答案 。它们在内存使用和处理速度方面具有显著的优势，但这是以牺牲绝对精度为代价的。新的结构包括用于检查元素是否存在的布隆过滤器和 Cuckoo 过滤器、用于估计元素频率的 Count-min sketch、用于查找最频繁元素的 Top-K 以及用于近似百分位数的 t-digest 6。</p>
+
+<p>这些概率数据结构的加入扩展了 Redis 在实时分析和数据流处理方面的能力，使得能够在资源消耗最小的情况下对大型数据集进行高效的近似查询。在不需要绝对精确的计数或成员检查的场景中，这些概率结构提供了一种高效的替代方案，允许以减少的内存开销更快地获得洞察。</p>
+
+<h2 id="significant-performance-improvements">Significant performance improvements</h2>
+
+<p>Redis 8.0宣称包含超过 30 项性能和资源利用率改进，此次发布实现了 Redis 单个新版本中最大的性能飞跃。</p>
+
+<p>与 Redis 7.2.5 相比，Redis 8 将某些命令的延迟降低了高达 87%。对 149 项测试的基准测试表明，90 个命令的运行速度更快，延迟更低，p50 延迟降低幅度从 5.4% 到 87.4% 不等。经过优化的特定命令包括 GET、EXISTS、LRANGE、HSET、XREAD、SCAN、ZADD、ZUNION、PFCOUNT 和 HSCAN。</p>
+
+<p><img src="https://redis.io/wp-content/uploads/2025/05/Redis-8.0-Blog-Post-Graph.png?&amp;auto=webp&amp;quality=85,75&amp;width=800" alt="performance" /></p>
+
+<p>与之前的版本相比，Redis 8 的每秒操作吞吐量提高了高达 2 倍。吞吐量的显著提高增强了 Redis 处理高并发工作负载和高要求应用程序的能力。</p>
+
+<p>Redis 8.0 中新的复制机制的速度提高了高达 18%。此项改进缩短了初始同步和持续复制所需的时间，从而提高了 Redis 部署的可靠性和可用性。</p>
+
+<p>进行如此大的性能提升，核心基于新的内部架构的演进，Redis8.0中引入了一个新的 I/O 线程实现，具有读写线程，可实现更高的吞吐量，尤其是在多核环境中 。可以通过设置 io-threads 配置参数来启用此功能 。在多核英特尔 CPU 上设置为 8 时，测得的吞吐量提升范围为 37% 到 112%。新的异步 I/O 线程解决方案是事件驱动的，可以更好地并行处理客户端的读写操作，从而提高在高核心数服务器上的可扩展性。</p>
+
+<p>引入读写 I/O 线程标志着 Redis 在命令处理方面从传统的单线程模型发生了重大转变，使其能够更有效地利用现代多核架构来提高吞吐量。虽然 Redis 的单线程特性在简单性和避免锁竞争方面具有优势，但它在历史上限制了其在多核系统上的扩展能力。新的线程模型解决了这个限制。</p>
+
+<p>Redis 8.0 具有改进的复制机制，该机制更高效、更强大，并支持 AOF 偏移量。</p>
+
+<p>在复制过程中，同时启动两个复制流：一个用于传输主节点，另一个用于传输在此期间发生的更改流。这种新机制允许主节点在复制期间以更高的速率处理操作，减少了在主节点上保留更改所需的缓冲区大小，并加快了复制完成速度。</p>
+
+<p><img src="https://redis.io/wp-content/uploads/2025/05/Redis-8.0-Blog-Image.png?&amp;auto=webp&amp;quality=85,75&amp;width=800" alt="replica" /></p>
+
+<p>根据Redis官方文档披露的测试数据，对10 GB数据集进行了完整的同步，其额外的流量为2684亿个写作操作，在复制过程中产生了25 GB的变化。有了新的复制机制，主节点可以在复制过程中以高7.5％的平均速度处理写操作。复制的时间也少18％，主节点上的峰值复制缓冲区大小降低了35％。</p>
+
+<h3 id="others">Others</h3>
+
+<p>除以上新特性之外，本次版本还有其他升级，在此简要介绍：</p>
+
+<ul>
+  <li>Query Engine 集成到核心组件，支持搜索、查询和向量工作负载的水平和垂直扩展，水平扩展支持在集群数据库中进行查询，从而允许管理具有索引的非常大的数据集，并通过扩展到更多 Redis 进程来支持更高的读写吞吐量。垂直扩展允许添加更多处理能力来提高查询吞吐量，从而实现比以前高达 16 倍的吞吐量。</li>
+  <li>增强功能的哈希命令：
+    <ul>
+      <li>HGETDEL：获取并删除哈希字段</li>
+      <li>HGETEX：获取哈希字段的值，并可选择设置过期时间</li>
+      <li>HSETEX：设置哈希字段的值并设置过期时间</li>
+    </ul>
+  </li>
+  <li>ACL增强以及安全漏洞的修复</li>
+</ul>
+
+<h2 id="ending">Ending</h2>
+
+<p>以上，就是Redis8.0的简要介绍，本文仅介绍了部分关于Redis8.0的新特性，关于更加详细的信息，还请参阅Redis官方文档。</p>
+
+<p>可以看到，Redis8.0是迄今为止最强大的Redis版本，如今的Redis已不是一个单单的缓存数据库，而是集缓存、搜索、向量、时序数据为一体的强大数据库，关于Redis8.0是实际表现，还是期待社区的更多反馈，也非常期待在生产环境早日使用Redis8.0。</p>
+
+<h3 id="references">References</h3>
+
+<p><code class="language-plaintext highlighter-rouge">[1]</code>: <em>https://redis.io/docs/latest/commands/json.set/</em></p>

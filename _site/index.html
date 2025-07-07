@@ -954,31 +954,141 @@ function googleTranslateElementInit() {
 
 <li class="post-item top-post">
   <h2 class="post-title">
-    <a class="post-link" href="/mysql/2024/09/25/MySQL%E4%B8%BA%E4%BB%80%E4%B9%88%E6%9C%89%E4%BA%86redolog%E8%BF%98%E9%9C%80%E8%A6%81double-write-buffer.html">
-      MySQL为什么有了redolog还需要double write buffer<span class="post-badges">
+    <a class="post-link" href="/kafka/2025/07/07/%E5%85%B3%E4%BA%8EKafka%E5%88%86%E5%B1%82%E5%AD%98%E5%82%A8%E4%BD%A0%E5%BA%94%E8%AF%A5%E7%9F%A5%E9%81%93%E7%9A%84%E4%BA%8B%E6%83%85.html">
+      关于Kafka分层存储你应该知道的事情<span class="post-badges">
   <span class="post-badge badge-top">TOP</span>
   <span class="post-badge badge-new">NEW</span>
 </span>
 </a>
   </h2>
   <div class="post-meta">
-    <span class="post-date"><i class="fa fa-calendar"></i> Sep 25, 2024</span><span class="post-reading-time left-vsplit"><i class="fa fa-clock-o"></i> About 1 min</span>
+    <span class="post-date"><i class="fa fa-calendar"></i> Jul 07, 2025</span><span class="post-reading-time left-vsplit"><i class="fa fa-clock-o"></i> About 3 mins</span>
   </div>
   <div class="post-excerpt">
-<a class="post-image" href="/mysql/2024/09/25/MySQL%E4%B8%BA%E4%BB%80%E4%B9%88%E6%9C%89%E4%BA%86redolog%E8%BF%98%E9%9C%80%E8%A6%81double-write-buffer.html" style="flex: 0 1 38.2%">
-      <div style="background-image: url(https://github.com/jeffreytse/jekyll-theme-yat/assets/9413601/2ed22d49-90b1-4f7e-8e8f-b77b21dee505); height: 160px"></div>
-    </a><a class="post-text" href="/mysql/2024/09/25/MySQL%E4%B8%BA%E4%BB%80%E4%B9%88%E6%9C%89%E4%BA%86redolog%E8%BF%98%E9%9C%80%E8%A6%81double-write-buffer.html">
+<a class="post-image" href="/kafka/2025/07/07/%E5%85%B3%E4%BA%8EKafka%E5%88%86%E5%B1%82%E5%AD%98%E5%82%A8%E4%BD%A0%E5%BA%94%E8%AF%A5%E7%9F%A5%E9%81%93%E7%9A%84%E4%BA%8B%E6%83%85.html" style="flex: 0 1 38.2%">
+      <div style="background-image: url(https://github.com/wtopps/wtopps.github.io/blob/master/images/Kafka%20Head%20Pic.jpeg?raw=true); height: 160px"></div>
+    </a><a class="post-text" href="/kafka/2025/07/07/%E5%85%B3%E4%BA%8EKafka%E5%88%86%E5%B1%82%E5%AD%98%E5%82%A8%E4%BD%A0%E5%BA%94%E8%AF%A5%E7%9F%A5%E9%81%93%E7%9A%84%E4%BA%8B%E6%83%85.html">
       <p>
 
-问题
+Overview
 
-我们知道MySQL InnoDB引擎使用redolog作为异常容灾恢复的机制，当MySQL进程发生异常退出、机器断电等，在重新启动时，使用redolog恢复。
+分层存储是 Apache Kafka 3.6.0 提供的一项新的功能，它支持独立扩展计算和存储资源，提供更好的客户端隔离，并允许更快地维护 Kafka 集群。让我们深入了解这项新功能的动机、设计和实施细节。在这篇文章中，我们将重点介绍分层存储的实现，因此我们假定你已经很好地理解了 Kafka 的架构和主要组件。
 
-OK，redolog是被MySQL设计为异常崩溃恢复的，double write buffer同样是为了保证数据完整性，那么既然已经有了redolog，为什么还需要double write buffer（双写缓冲区）呢？
+Tiering
 
-double write buffer
+分层的概念在软件行业并不陌生。三层架构是一种成熟的软件应用程序架构，它将应用程序分为三个逻辑和物理计算层：呈现层（或用户界面）、应用层（处理数据）和数据层（存储和管理与应用程序相关的数据）。
 
-InnoDB用double write buffer（双写缓冲区）来避免页没写完整所导致的数据损坏。当一个磁盘写操作不能完整地完成时，不完整的页写入就可能发生，16KB的页可能只有一部分被写到磁盘上。有多种多样的原因（崩溃、Bug，等等）可能导致页没有写... <span class="read_more">Read More</span></p>
+分层存储指的是一种存储架构，它根据数据的访问模式、性能要求和成本考虑，使用不同类别或层级的存储来有效地管理和存储数据。这样可以确保最重要和最频... <span class="read_more">Read More</span></p>
+    </a>
+  </div>
+  <div class="post-tags"><a class="post-tag" href="/tags.html#Kafka">#Kafka</a></div>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li class="post-item top-post">
+  <h2 class="post-title">
+    <a class="post-link" href="/mysql/2025/05/27/%E5%85%B3%E4%BA%8EMySQL8.4LTS%E4%BD%A0%E5%BA%94%E8%AF%A5%E7%9F%A5%E9%81%93%E7%9A%84%E4%BA%8B%E6%83%85.html">
+      关于MySQL8.4LTS你应该知道的事情<span class="post-badges">
+  <span class="post-badge badge-top">TOP</span>
+  <span class="post-badge badge-new">NEW</span>
+</span>
+</a>
+  </h2>
+  <div class="post-meta">
+    <span class="post-date"><i class="fa fa-calendar"></i> May 27, 2025</span><span class="post-reading-time left-vsplit"><i class="fa fa-clock-o"></i> About 3 mins</span>
+  </div>
+  <div class="post-excerpt">
+<a class="post-image" href="/mysql/2025/05/27/%E5%85%B3%E4%BA%8EMySQL8.4LTS%E4%BD%A0%E5%BA%94%E8%AF%A5%E7%9F%A5%E9%81%93%E7%9A%84%E4%BA%8B%E6%83%85.html" style="flex: 0 1 38.2%">
+      <div style="background-image: url(https://github.com/wtopps/wtopps.github.io/blob/master/images/MySQL8.4.jpeg?raw=true); height: 160px"></div>
+    </a><a class="post-text" href="/mysql/2025/05/27/%E5%85%B3%E4%BA%8EMySQL8.4LTS%E4%BD%A0%E5%BA%94%E8%AF%A5%E7%9F%A5%E9%81%93%E7%9A%84%E4%BA%8B%E6%83%85.html">
+      <p>
+
+MySQL 8.4
+
+MySQL8.4是官方第一个正式指定为长期支持（LTS）版本，也是一个重要的里程碑版本，MySQL官方对该版本将提供长达五年的主要支持和额外的三年扩展支持，总支持周期预计持续到 2032 年 4 月左右。
+
+与此前的 MySQL 8.0 版本相比，MySQL 8.4 引入了诸多变化，包括功能成熟化为默认设置、部分功能被弃用或移除。但在8.4中，并未引入新的“革命性的新特性”，更多的是对部分参数的小调整，以及性能的优化提升。
+
+本篇，我就来一起看一下MySQL8.4对比8.0版本，有哪些改变。
+
+Performance improvement
+
+MySQL 8.4 在性能方面取得了显著进步，特别是在特定工作负载和内部机制上进行了优化，旨在提供更快的查询执行、更高... <span class="read_more">Read More</span></p>
     </a>
   </div>
   <div class="post-tags"><a class="post-tag" href="/tags.html#MySQL">#MySQL</a></div>
@@ -1062,7 +1172,692 @@ InnoDB用double write buffer（双写缓冲区）来避免页没写完整所导�
 
 <li class="post-item top-post">
   <h2 class="post-title">
-    <a class="post-link" href="/others/2024/12/12/%E8%AE%B0%E4%B8%80%E6%AC%A1%E4%B8%9A%E5%8A%A1MySQL%E6%AD%BB%E9%94%81case.html">
+    <a class="post-link" href="/redis/2025/05/15/%E5%85%B3%E4%BA%8ERedis8.0%E4%BD%A0%E9%9C%80%E8%A6%81%E7%9F%A5%E9%81%93%E7%9A%84%E4%BA%8B%E6%83%85.html">
+      关于Redis8.0你需要知道的事情<span class="post-badges">
+  <span class="post-badge badge-top">TOP</span>
+  <span class="post-badge badge-new">NEW</span>
+</span>
+</a>
+  </h2>
+  <div class="post-meta">
+    <span class="post-date"><i class="fa fa-calendar"></i> May 15, 2025</span><span class="post-reading-time left-vsplit"><i class="fa fa-clock-o"></i> About 2 mins</span>
+  </div>
+  <div class="post-excerpt">
+<a class="post-image" href="/redis/2025/05/15/%E5%85%B3%E4%BA%8ERedis8.0%E4%BD%A0%E9%9C%80%E8%A6%81%E7%9F%A5%E9%81%93%E7%9A%84%E4%BA%8B%E6%83%85.html" style="flex: 0 1 38.2%">
+      <div style="background-image: url(https://github.com/wtopps/wtopps.github.io/blob/master/images/Redis8%20release.png?raw=true); height: 160px"></div>
+    </a><a class="post-text" href="/redis/2025/05/15/%E5%85%B3%E4%BA%8ERedis8.0%E4%BD%A0%E9%9C%80%E8%A6%81%E7%9F%A5%E9%81%93%E7%9A%84%E4%BA%8B%E6%83%85.html">
+      <p>
+
+Redis 8.0 is Coming
+
+近日，Redis宣布8.0版本正式发布。
+
+官方宣称Redis 8 是迄今为止性能最强、可扩展性最高的 Redis 版本。它拥有超过 30 项性能改进，包括命令速度提升高达 87%，每秒操作吞吐量提升高达 2 倍，复制速度提升高达 18%，以及通过 Redis 查询引擎提供高达 16 倍的查询处理能力。本次发布新增了 8 种数据结构，包括向量集合 (vector set)、JSON、时间序列以及五种概率结构，包括布隆过滤器、布谷鸟过滤器、计数最小化草图、top-k 和 t-digest（其中一些之前作为单独的 Redis 模块提供）。这些新的数据结构可以帮助用户更好地解决当前用例，并为下一代快速和实时应用构建。
+
+
+  布隆过滤器与布谷鸟过... <span class="read_more">Read More</span></p>
+    </a>
+  </div>
+  <div class="post-tags"><a class="post-tag" href="/tags.html#Redis">#Redis</a></div>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li class="post-item top-post">
+  <h2 class="post-title">
+    <a class="post-link" href="/others/2025/04/28/Nacos%E9%85%8D%E7%BD%AE%E6%97%A0%E6%B3%95%E8%87%AA%E5%8A%A8%E5%88%B7%E6%96%B0%E9%97%AE%E9%A2%98%E6%8E%92%E6%9F%A5.html">
+      Nacos配置无法自动刷新问题排查<span class="post-badges">
+  <span class="post-badge badge-top">TOP</span>
+  <span class="post-badge badge-new">NEW</span>
+</span>
+</a>
+  </h2>
+  <div class="post-meta">
+    <span class="post-date"><i class="fa fa-calendar"></i> Apr 28, 2025</span><span class="post-reading-time left-vsplit"><i class="fa fa-clock-o"></i> About 9 mins</span>
+  </div>
+  <div class="post-excerpt">
+<a class="post-image" href="/others/2025/04/28/Nacos%E9%85%8D%E7%BD%AE%E6%97%A0%E6%B3%95%E8%87%AA%E5%8A%A8%E5%88%B7%E6%96%B0%E9%97%AE%E9%A2%98%E6%8E%92%E6%9F%A5.html" style="flex: 0 1 38.2%">
+      <div style="background-image: url(https://github.com/wtopps/wtopps.github.io/blob/master/images/Nacos%20Logo.jpeg?raw=true); height: 160px"></div>
+    </a><a class="post-text" href="/others/2025/04/28/Nacos%E9%85%8D%E7%BD%AE%E6%97%A0%E6%B3%95%E8%87%AA%E5%8A%A8%E5%88%B7%E6%96%B0%E9%97%AE%E9%A2%98%E6%8E%92%E6%9F%A5.html">
+      <p>
+
+背景
+
+Nacos SpringBoot版本中，提供了@NacosValue注解，支持控制台修改值时，自动刷新，但是今天遇见了无法自动刷新的问题。
+
+环境
+SpringBoot 2.2.x
+nacos-client：2.1.0
+nacos-config-spring-boot-starter：0.2.12
+
+问题排查
+首先确认，nacos的配置信息：
+nacos:
+  config:
+    bootstrap:
+      enable: true
+      log-enable: false
+    server-addr: xxx
+    type: yaml
+    auto-refresh: true
+    data-ids: my-config.yml
+
+确认aut... <span class="read_more">Read More</span></p>
+    </a>
+  </div>
+  <div class="post-tags"><a class="post-tag" href="/tags.html#Nacos">#Nacos</a></div>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li class="post-item top-post">
+  <h2 class="post-title">
+    <a class="post-link" href="/redis/2025/04/17/%E5%85%B3%E4%BA%8EValkey%E4%BD%A0%E9%9C%80%E8%A6%81%E7%9F%A5%E9%81%93%E7%9A%84%E4%BA%8B%E6%83%85.html">
+      关于Valkey你需要知道的事情<span class="post-badges">
+  <span class="post-badge badge-top">TOP</span>
+  <span class="post-badge badge-new">NEW</span>
+</span>
+</a>
+  </h2>
+  <div class="post-meta">
+    <span class="post-date"><i class="fa fa-calendar"></i> Apr 17, 2025</span><span class="post-reading-time left-vsplit"><i class="fa fa-clock-o"></i> About 4 mins</span>
+  </div>
+  <div class="post-excerpt">
+<a class="post-image" href="/redis/2025/04/17/%E5%85%B3%E4%BA%8EValkey%E4%BD%A0%E9%9C%80%E8%A6%81%E7%9F%A5%E9%81%93%E7%9A%84%E4%BA%8B%E6%83%85.html" style="flex: 0 1 38.2%">
+      <div style="background-image: url(https://raw.githubusercontent.com/wtopps/wtopps.github.io/refs/heads/master/images/Valkey.webp); height: 160px"></div>
+    </a><a class="post-text" href="/redis/2025/04/17/%E5%85%B3%E4%BA%8EValkey%E4%BD%A0%E9%9C%80%E8%A6%81%E7%9F%A5%E9%81%93%E7%9A%84%E4%BA%8B%E6%83%85.html">
+      <p>
+
+前言
+
+
+  Valkey is an open source (BSD) high-performance key/value datastore that supports a variety of workloads such as caching, message queues, and can act as a primary database. The project is backed by the Linux Foundation, ensuring it will remain open source forever.
+
+
+Valkey 是 Redis 的一个开源分支（fork），由 Linux 基金会支持，于 2024 年 3 月因 Redis 许可证从 BSD... <span class="read_more">Read More</span></p>
+    </a>
+  </div>
+  <div class="post-tags"><a class="post-tag" href="/tags.html#Redis">#Redis</a></div>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li class="post-item top-post">
+  <h2 class="post-title">
+    <a class="post-link" href="/java/2025/03/26/CompletableFuture%E4%BD%A0%E9%9C%80%E8%A6%81%E7%9F%A5%E9%81%93%E7%9A%84%E4%BA%8B%E6%83%85.html">
+      CompletableFuture你需要知道的事情.<span class="post-badges">
+  <span class="post-badge badge-top">TOP</span>
+  <span class="post-badge badge-new">NEW</span>
+</span>
+</a>
+  </h2>
+  <div class="post-meta">
+    <span class="post-date"><i class="fa fa-calendar"></i> Mar 26, 2025</span><span class="post-reading-time left-vsplit"><i class="fa fa-clock-o"></i> About 14 mins</span>
+  </div>
+  <div class="post-excerpt">
+<a class="post-image" href="/java/2025/03/26/CompletableFuture%E4%BD%A0%E9%9C%80%E8%A6%81%E7%9F%A5%E9%81%93%E7%9A%84%E4%BA%8B%E6%83%85.html" style="flex: 0 1 38.2%">
+      <div style="background-image: url(https://github.com/wtopps/wtopps.github.io/blob/master/images/CompletableFuture.jpeg?raw=true); height: 160px"></div>
+    </a><a class="post-text" href="/java/2025/03/26/CompletableFuture%E4%BD%A0%E9%9C%80%E8%A6%81%E7%9F%A5%E9%81%93%E7%9A%84%E4%BA%8B%E6%83%85.html">
+      <p>
+
+问题
+
+面试官：请使用多线程分别打印“Hello World”，当全部线程执行完成后，打印“Finish”。
+
+
+
+这是一道非常经典的面试题，Java的面试中高频出现，主要考察多线程的使用和join()的应用，我们来尝试实现一下：
+
+
+
+public class ThreadJoinDemo {
+
+    public static void main(String[] args) throws Exception {
+        Thread threadA = new MyThread();
+        Thread threadB = new MyThread();
+        threadA.setName("threadA");
+        threadB... <span class="read_more">Read More</span></p>
+    </a>
+  </div>
+  <div class="post-tags"><a class="post-tag" href="/tags.html#Java">#Java</a></div>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li class="post-item top-post">
+  <h2 class="post-title">
+    <a class="post-link" href="/mysql/2025/03/17/SQL%E5%B0%8F%E8%8F%9C%E4%B9%8BTOP-N%E6%9F%A5%E6%89%BE%E9%97%AE%E9%A2%98.html">
+      SQL小菜之TOP N查找问题.<span class="post-badges">
+  <span class="post-badge badge-top">TOP</span>
+  <span class="post-badge badge-new">NEW</span>
+</span>
+</a>
+  </h2>
+  <div class="post-meta">
+    <span class="post-date"><i class="fa fa-calendar"></i> Mar 17, 2025</span><span class="post-reading-time left-vsplit"><i class="fa fa-clock-o"></i> About 5 mins</span>
+  </div>
+  <div class="post-excerpt">
+<a class="post-image" href="/mysql/2025/03/17/SQL%E5%B0%8F%E8%8F%9C%E4%B9%8BTOP-N%E6%9F%A5%E6%89%BE%E9%97%AE%E9%A2%98.html" style="flex: 0 1 38.2%">
+      <div style="background-image: url(https://github.com/wtopps/wtopps.github.io/blob/master/images/MySQL%20Skill.jpeg?raw=true); height: 160px"></div>
+    </a><a class="post-text" href="/mysql/2025/03/17/SQL%E5%B0%8F%E8%8F%9C%E4%B9%8BTOP-N%E6%9F%A5%E6%89%BE%E9%97%AE%E9%A2%98.html">
+      <p>
+
+前言
+
+SQL的编写是后端面试中非常常见，其中TOP N查找问题也是高频出现的问题，今天我们来看两道SQL TOPN问题。
+
+问题
+
+我们有一张雇员表Employee：
+
+CREATE TABLE `Employee` (
+  `id` int DEFAULT NULL,
+  `salary` int DEFAULT NULL,
+  `department` varchar(16) DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
+
+
+Question1：
+
+查询并返回 Employee 表中第二高的 不同 薪水 。如果不存在第二高的薪水，
+查询应该返回 null。
+
+查询... <span class="read_more">Read More</span></p>
+    </a>
+  </div>
+  <div class="post-tags"><a class="post-tag" href="/tags.html#MySQL">#MySQL</a></div>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li class="post-item top-post">
+  <h2 class="post-title">
+    <a class="post-link" href="/redis/2025/01/23/Redis%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81%E5%AE%9E%E7%8E%B0%E6%8C%87%E5%8C%97.html">
+      Redis分布式锁实现指北<span class="post-badges">
+  <span class="post-badge badge-top">TOP</span>
+  <span class="post-badge badge-new">NEW</span>
+</span>
+</a>
+  </h2>
+  <div class="post-meta">
+    <span class="post-date"><i class="fa fa-calendar"></i> Jan 23, 2025</span><span class="post-reading-time left-vsplit"><i class="fa fa-clock-o"></i> About 36 mins</span>
+  </div>
+  <div class="post-excerpt">
+<a class="post-image" href="/redis/2025/01/23/Redis%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81%E5%AE%9E%E7%8E%B0%E6%8C%87%E5%8C%97.html" style="flex: 0 1 38.2%">
+      <div style="background-image: url(https://github.com/wtopps/wtopps.github.io/blob/master/images/Redis%20Lock.jpeg?raw=true); height: 160px"></div>
+    </a><a class="post-text" href="/redis/2025/01/23/Redis%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81%E5%AE%9E%E7%8E%B0%E6%8C%87%E5%8C%97.html">
+      <p>
+
+背景
+
+分布式锁在业务场景中的应用十分广泛，当你的服务部署在分布式的多节点集群中，在执行某一个方法时，需要控制并发的情况，保证同一时间只有一个请求可以执行，你一定需要分布式锁来实现。
+
+最常见的分布式锁，一般就是Redis和ZK（亦或者MySQL的for update也可以充当），当然也有很多其他的实现，本篇的主角，就是Redis，我们来逐步使用实现一个简单易用的Redis分布式锁。
+
+RedisLock
+
+首先，我们先来回忆一下Java的Lock是怎么玩的：
+
+ReentrantLock lock = new ReentrantLock();
+try {
+    lock.lock();
+    // do something...
+} finally {
+    lock.un... <span class="read_more">Read More</span></p>
+    </a>
+  </div>
+  <div class="post-tags"><a class="post-tag" href="/tags.html#Redis">#Redis</a></div>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li class="post-item top-post">
+  <h2 class="post-title">
+    <a class="post-link" href="/mysql/2024/12/12/%E8%AE%B0%E4%B8%80%E6%AC%A1%E4%B8%9A%E5%8A%A1MySQL%E6%AD%BB%E9%94%81case.html">
       记一次业务MySQL死锁<span class="post-badges">
   <span class="post-badge badge-top">TOP</span>
   <span class="post-badge badge-new">NEW</span>
@@ -1073,9 +1868,9 @@ InnoDB用double write buffer（双写缓冲区）来避免页没写完整所导�
     <span class="post-date"><i class="fa fa-calendar"></i> Dec 12, 2024</span><span class="post-reading-time left-vsplit"><i class="fa fa-clock-o"></i> About 2 mins</span>
   </div>
   <div class="post-excerpt">
-<a class="post-image" href="/others/2024/12/12/%E8%AE%B0%E4%B8%80%E6%AC%A1%E4%B8%9A%E5%8A%A1MySQL%E6%AD%BB%E9%94%81case.html" style="flex: 0 1 38.2%">
-      <div style="background-image: url(https://raw.githubusercontent.com/wtopps/wtopps.github.io/refs/heads/master/images/image1.webp); height: 160px"></div>
-    </a><a class="post-text" href="/others/2024/12/12/%E8%AE%B0%E4%B8%80%E6%AC%A1%E4%B8%9A%E5%8A%A1MySQL%E6%AD%BB%E9%94%81case.html">
+<a class="post-image" href="/mysql/2024/12/12/%E8%AE%B0%E4%B8%80%E6%AC%A1%E4%B8%9A%E5%8A%A1MySQL%E6%AD%BB%E9%94%81case.html" style="flex: 0 1 38.2%">
+      <div style="background-image: url(https://github.com/wtopps/wtopps.github.io/blob/master/images/Problem%20Investigation.jpeg?raw=true); height: 160px"></div>
+    </a><a class="post-text" href="/mysql/2024/12/12/%E8%AE%B0%E4%B8%80%E6%AC%A1%E4%B8%9A%E5%8A%A1MySQL%E6%AD%BB%E9%94%81case.html">
       <p>
 
 问题
@@ -1087,7 +1882,7 @@ Caused by: com.mysql.cj.jdbc.exceptions.MySQLTransactionRollbackException: Deadl
 	at com.mysql.cj.jdbc.exceptions.SQLExceptionsMapping.translateException(SQLExceptionsMappin... <span class="read_more">Read More</span></p>
     </a>
   </div>
-  <div class="post-tags"><a class="post-tag" href="/tags.html#Serialization">#Serialization</a></div>
+  <div class="post-tags"><a class="post-tag" href="/tags.html#MySQL">#MySQL</a></div>
 </li>
 
 
@@ -1180,7 +1975,7 @@ Caused by: com.mysql.cj.jdbc.exceptions.MySQLTransactionRollbackException: Deadl
   </div>
   <div class="post-excerpt">
 <a class="post-image" href="/others/2024/11/11/Protobuf-Varint%E5%BA%8F%E5%88%97%E5%8C%96%E5%8E%9F%E7%90%86.html" style="flex: 0 1 38.2%">
-      <div style="background-image: url(https://raw.githubusercontent.com/wtopps/wtopps.github.io/refs/heads/master/images/image1.webp); height: 160px"></div>
+      <div style="background-image: url(https://github.com/wtopps/wtopps.github.io/blob/master/images/Protobuf.jpeg?raw=true); height: 160px"></div>
     </a><a class="post-text" href="/others/2024/11/11/Protobuf-Varint%E5%BA%8F%E5%88%97%E5%8C%96%E5%8E%9F%E7%90%86.html">
       <p>
 
@@ -1291,7 +2086,7 @@ Varint 序列化的工作原理
   </div>
   <div class="post-excerpt">
 <a class="post-image" href="/system/design/2024/09/25/%E4%BA%BF%E7%BA%A7%E6%8E%92%E8%A1%8C%E6%A6%9C%E8%AE%BE%E8%AE%A1.html" style="flex: 0 1 38.2%">
-      <div style="background-image: url(https://github.com/jeffreytse/jekyll-theme-yat/assets/9413601/2ed22d49-90b1-4f7e-8e8f-b77b21dee505); height: 160px"></div>
+      <div style="background-image: url(https://github.com/wtopps/wtopps.github.io/blob/master/images/Rank.jpeg?raw=true); height: 160px"></div>
     </a><a class="post-text" href="/system/design/2024/09/25/%E4%BA%BF%E7%BA%A7%E6%8E%92%E8%A1%8C%E6%A6%9C%E8%AE%BE%E8%AE%A1.html">
       <p>
 
@@ -1397,41 +2192,34 @@ public class Perform... <span class="read_more">Read More</span></p>
 
 <li class="post-item top-post">
   <h2 class="post-title">
-    <a class="post-link" href="/others/2025/01/23/Redis%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81%E5%AE%9E%E7%8E%B0%E6%8C%87%E5%8C%97.html">
-      Redis分布式锁实现指北<span class="post-badges">
+    <a class="post-link" href="/mysql/2024/09/25/MySQL%E4%B8%BA%E4%BB%80%E4%B9%88%E6%9C%89%E4%BA%86redolog%E8%BF%98%E9%9C%80%E8%A6%81double-write-buffer.html">
+      MySQL为什么有了redolog还需要double write buffer<span class="post-badges">
   <span class="post-badge badge-top">TOP</span>
   <span class="post-badge badge-new">NEW</span>
 </span>
 </a>
   </h2>
   <div class="post-meta">
-    <span class="post-date"><i class="fa fa-calendar"></i> Jan 23, 2025</span><span class="post-reading-time left-vsplit"><i class="fa fa-clock-o"></i> About 36 mins</span>
+    <span class="post-date"><i class="fa fa-calendar"></i> Sep 25, 2024</span><span class="post-reading-time left-vsplit"><i class="fa fa-clock-o"></i> About 1 min</span>
   </div>
   <div class="post-excerpt">
-<a class="post-image" href="/others/2025/01/23/Redis%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81%E5%AE%9E%E7%8E%B0%E6%8C%87%E5%8C%97.html" style="flex: 0 1 38.2%">
-      <div style="background-image: url(https://raw.githubusercontent.com/wtopps/wtopps.github.io/refs/heads/master/images/image1.webp); height: 160px"></div>
-    </a><a class="post-text" href="/others/2025/01/23/Redis%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81%E5%AE%9E%E7%8E%B0%E6%8C%87%E5%8C%97.html">
+<a class="post-image" href="/mysql/2024/09/25/MySQL%E4%B8%BA%E4%BB%80%E4%B9%88%E6%9C%89%E4%BA%86redolog%E8%BF%98%E9%9C%80%E8%A6%81double-write-buffer.html" style="flex: 0 1 38.2%">
+      <div style="background-image: url(https://github.com/wtopps/wtopps.github.io/blob/master/images/MySQL.jpeg?raw=true); height: 160px"></div>
+    </a><a class="post-text" href="/mysql/2024/09/25/MySQL%E4%B8%BA%E4%BB%80%E4%B9%88%E6%9C%89%E4%BA%86redolog%E8%BF%98%E9%9C%80%E8%A6%81double-write-buffer.html">
       <p>
 
-背景
+问题
 
-分布式锁在业务场景中的应用十分广泛，当你的服务部署在分布式的多节点集群中，在执行某一个方法时，需要控制并发的情况，保证同一时间只有一个请求可以执行，你一定需要分布式锁来实现。
+我们知道MySQL InnoDB引擎使用redolog作为异常容灾恢复的机制，当MySQL进程发生异常退出、机器断电等，在重新启动时，使用redolog恢复。
 
-最常见的分布式锁，一般就是Redis和ZK（亦或者MySQL的for update也可以充当），当然也有很多其他的实现，本篇的主角，就是Redis，我们来逐步使用实现一个简单易用的Redis分布式锁。
+OK，redolog是被MySQL设计为异常崩溃恢复的，double write buffer同样是为了保证数据完整性，那么既然已经有了redolog，为什么还需要double write buffer（双写缓冲区）呢？
 
-RedisLock
+double write buffer
 
-首先，我们先来回忆一下Java的Lock是怎么玩的：
-
-ReentrantLock lock = new ReentrantLock();
-try {
-    lock.lock();
-    // do something...
-} finally {
-    lock.un... <span class="read_more">Read More</span></p>
+InnoDB用double write buffer（双写缓冲区）来避免页没写完整所导致的数据损坏。当一个磁盘写操作不能完整地完成时，不完整的页写入就可能发生，16KB的页可能只有一部分被写到磁盘上。有多种多样的原因（崩溃、Bug，等等）可能导致页没有写... <span class="read_more">Read More</span></p>
     </a>
   </div>
-  <div class="post-tags"><a class="post-tag" href="/tags.html#Redis">#Redis</a></div>
+  <div class="post-tags"><a class="post-tag" href="/tags.html#MySQL">#MySQL</a></div>
 </li>
 
 
@@ -1524,7 +2312,7 @@ try {
   </div>
   <div class="post-excerpt">
 <a class="post-image" href="/java/2024/09/25/Java-ThreadPoolExecutor%E7%BA%BF%E7%A8%8B%E6%B1%A0%E6%A6%82%E8%BF%B0.html" style="flex: 0 1 38.2%">
-      <div style="background-image: url(https://github.com/jeffreytse/jekyll-theme-yat/assets/9413601/2ed22d49-90b1-4f7e-8e8f-b77b21dee505); height: 160px"></div>
+      <div style="background-image: url(https://github.com/wtopps/wtopps.github.io/blob/master/images/ThreadPool.jpeg?raw=true); height: 160px"></div>
     </a><a class="post-text" href="/java/2024/09/25/Java-ThreadPoolExecutor%E7%BA%BF%E7%A8%8B%E6%B1%A0%E6%A6%82%E8%BF%B0.html">
       <p>
 
@@ -1650,7 +2438,7 @@ try {
   </div>
   <div class="post-excerpt">
 <a class="post-image" href="/mysql/2024/09/25/MySQL%E6%85%A2SQL%E6%8E%A2%E7%A9%B6.html" style="flex: 0 1 38.2%">
-      <div style="background-image: url(https://github.com/jeffreytse/jekyll-theme-yat/assets/9413601/2ed22d49-90b1-4f7e-8e8f-b77b21dee505); height: 160px"></div>
+      <div style="background-image: url(https://github.com/wtopps/wtopps.github.io/blob/master/images/MySQL.jpeg?raw=true); height: 160px"></div>
     </a><a class="post-text" href="/mysql/2024/09/25/MySQL%E6%85%A2SQL%E6%8E%A2%E7%A9%B6.html">
       <p>
 
@@ -1772,7 +2560,7 @@ try {
   </div>
   <div class="post-excerpt">
 <a class="post-image" href="/mysql/2024/09/25/MySQL%E4%B8%BB%E9%94%AE%E8%87%AA%E5%A2%9E%E6%9C%89%E5%87%A0%E7%A7%8D%E6%A8%A1%E5%BC%8F.html" style="flex: 0 1 38.2%">
-      <div style="background-image: url(https://github.com/jeffreytse/jekyll-theme-yat/assets/9413601/2ed22d49-90b1-4f7e-8e8f-b77b21dee505); height: 160px"></div>
+      <div style="background-image: url(https://github.com/wtopps/wtopps.github.io/blob/master/images/MySQL.jpeg?raw=true); height: 160px"></div>
     </a><a class="post-text" href="/mysql/2024/09/25/MySQL%E4%B8%BB%E9%94%AE%E8%87%AA%E5%A2%9E%E6%9C%89%E5%87%A0%E7%A7%8D%E6%A8%A1%E5%BC%8F.html">
       <p>
 
@@ -1884,7 +2672,7 @@ MySQL将INSERT操作分为三类：
   </div>
   <div class="post-excerpt">
 <a class="post-image" href="/redis/2024/09/25/Redis-key%E8%BF%87%E6%9C%9F%E5%88%A0%E9%99%A4%E6%9C%BA%E5%88%B6.html" style="flex: 0 1 38.2%">
-      <div style="background-image: url(https://github.com/jeffreytse/jekyll-theme-yat/assets/9413601/2ed22d49-90b1-4f7e-8e8f-b77b21dee505); height: 160px"></div>
+      <div style="background-image: url(https://github.com/wtopps/wtopps.github.io/blob/master/images/Redis.jpeg?raw=true); height: 160px"></div>
     </a><a class="post-text" href="/redis/2024/09/25/Redis-key%E8%BF%87%E6%9C%9F%E5%88%A0%E9%99%A4%E6%9C%BA%E5%88%B6.html">
       <p>
 
@@ -2002,7 +2790,7 @@ Redis中的key过期淘汰机制是由两种方式实现：
   </div>
   <div class="post-excerpt">
 <a class="post-image" href="/redis/2024/09/25/Redis6.0-Client-Side%E7%BC%93%E5%AD%98%E6%98%AF%E4%BB%80%E4%B9%88.html" style="flex: 0 1 38.2%">
-      <div style="background-image: url(https://github.com/jeffreytse/jekyll-theme-yat/assets/9413601/2ed22d49-90b1-4f7e-8e8f-b77b21dee505); height: 160px"></div>
+      <div style="background-image: url(https://github.com/wtopps/wtopps.github.io/blob/master/images/Redis.jpeg?raw=true); height: 160px"></div>
     </a><a class="post-text" href="/redis/2024/09/25/Redis6.0-Client-Side%E7%BC%93%E5%AD%98%E6%98%AF%E4%BB%80%E4%B9%88.html">
       <p>
 
@@ -2055,7 +2843,7 @@ Why Client-side Caching？
   <ul>
     <li>
       <a href="/index.html">
-        All<span>10</span>
+        All<span>17</span>
       </a>
     </li>
 
@@ -2068,25 +2856,31 @@ Why Client-side Caching？
     
       <li>
         <a href="/categories.html#h-Java">
-          Java <span>1</span>
+          Java <span>2</span>
+        </a>
+      </li>
+    
+      <li>
+        <a href="/categories.html#h-Kafka">
+          Kafka <span>1</span>
         </a>
       </li>
     
       <li>
         <a href="/categories.html#h-MySQL">
-          MySQL <span>3</span>
+          MySQL <span>6</span>
         </a>
       </li>
     
       <li>
         <a href="/categories.html#h-Others">
-          Others <span>3</span>
+          Others <span>2</span>
         </a>
       </li>
     
       <li>
         <a href="/categories.html#h-Redis">
-          Redis <span>2</span>
+          Redis <span>5</span>
         </a>
       </li>
     
